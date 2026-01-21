@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+
+    <!-- tailwind link -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- google icons link -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body class="bg-white">
+
+    <!-- hover wrapper -->
+    <div class="group fixed inset-y-0 left-0 z-50">
+
+        <!-- hover -->
+        <div class="absolute left-0 top-0 h-full w-4"></div>
+
+        <!-- sidebar -->
+        <aside class="h-screen w-64 flex flex-col justify-between
+                      transform -translate-x-full
+                      group-hover:translate-x-0
+                      transition-transform duration-300 ease-in-out
+                      shadow-lg"
+               style="background-color:#fcd1e5;">
+
+            <div>
+                <!-- isabella logo -->
+                <div class="flex flex-col items-center pt-6 pb-8">
+                    <img src="~/Content/images/isabellaLogo.jpg"
+                         class="w-36 object-contain"
+                         alt="Isabella Logo" />
+                </div>
+
+                <!-- menu -->
+                <nav class="px-6 space-y-4">
+
+                    <!-- active page -->
+                    <a href="#"
+                       class="flex items-center gap-3 px-4 py-2 rounded-lg text-white font-medium"
+                       style="background-color:#ec4899;">
+                        <span class="material-icons text-white">calendar_month</span>
+                        <span>Booking Calendar</span>
+                    </a>
+
+                    <a href="#"
+                       class="flex items-center gap-3 px-4 py-2 rounded-lg text-black hover:bg-pink-200 transition">
+                        <span class="material-icons">payments</span>
+                        <span>Manage Payment</span>
+                    </a>
+
+                    <a href="#"
+                       class="flex items-center gap-3 px-4 py-2 rounded-lg text-black hover:bg-pink-200 transition">
+                        <span class="material-icons">group</span>
+                        <span>Accounts</span>
+                    </a>
+
+                    <a href="#"
+                       class="flex items-center gap-3 px-4 py-2 rounded-lg text-black hover:bg-pink-200 transition">
+                        <span class="material-icons">receipt_long</span>
+                        <span>Logs</span>
+                    </a>
+
+                </nav>
+            </div>
+
+            <!-- user -->
+            <div class="px-6 pb-6 space-y-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow">
+                        <span class="material-icons text-pink-500">person</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold">Isabella</p>
+                        <p class="text-xs text-pink-600">Owner</p>
+                    </div>
+                </div>
+
+                <!-- logout -->
+                <a href="#"
+                   class="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg text-white text-sm font-medium hover:opacity-90 transition"
+                   style="background-color:#ec4899;">
+                    <span class="material-icons text-sm">logout</span>
+                    Logout
+                </a>
+            </div>
+
+        </aside>
+    </div>
+
+    <!-- laman ng page -->
+    <main class="min-h-screen">
+        @RenderBody()
+    </main>
+
+</body>
+</html>
