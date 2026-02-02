@@ -17,5 +17,13 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+        public ActionResult AccountsPage()
+        {
+            return View();
+        }
+        public ActionResult LogsPage()
+        {
+            return View();
+        }
     }
 }

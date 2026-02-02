@@ -972,6 +972,8 @@
     <Content Include="Views\Main\HomePage.cshtml" />
     <Content Include="Scripts\version.json" />
     <Content Include="Views\Main\LoginPage.cshtml" />
+    <Content Include="Views\Main\AccountsPage.cshtml" />
+    <Content Include="Views\Main\LogsPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
