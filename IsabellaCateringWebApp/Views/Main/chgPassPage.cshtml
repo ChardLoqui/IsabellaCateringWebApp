@@ -91,23 +91,14 @@
                     </header>
 
                     <!-- Email -->
-                    <div class="flex flex-col">
-                        <label for="logEmail" class="mb-1 text-black text-sm font-semibold">Email</label>
-                        @*email input*@
-                        <input id="logEmail" ng-model="lEmail"
-                               type="text"
-                               class="w-full rounded bg-white p-2 focus:outline-none" />
-                    </div>
-
-                    <!-- Password -->
                     <div class="flex flex-col relative">
                         <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
-                            Password
+                            Old Password
                         </label>
 
                         <div class="relative">
                             @* Password input*@
-                            <input id="logPWord" ng-model="lPassword"
+                            <input id="logPWord" ng-model="Password"
                                    type="password"
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
@@ -117,10 +108,45 @@
                                 visibility_off
                             </span>
                         </div>
+                    </div>
 
-                        <a href="#" class="mt-1 text-xs text-pink-500 hover:text-pink-900">
-                            Forgot Password?
-                        </a>
+                    <div class="flex flex-col relative">
+                        <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                            New Password
+                        </label>
+
+                        <div class="relative">
+                            @* Password input*@
+                            <input id="logPWord" ng-model="Password"
+                                   type="password"
+                                   class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
+
+                            <!-- Toggle icon -->
+                            <span id="togglePassword"
+                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                                visibility_off
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="flex flex-col relative">
+                        <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                            Confirm Password
+                        </label>
+
+                        <div class="relative">
+                            @* Password input*@
+                            <input id="logPWord" ng-model="cPassword"
+                                   type="password"
+                                   class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
+
+                            <!-- Toggle icon -->
+                            <span id="togglePassword"
+                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                                visibility_off
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Button -->
@@ -135,5 +161,5 @@
         </div>
 
     </body>
-    }
 }
+

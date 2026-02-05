@@ -1042,6 +1042,7 @@
     <Content Include="Views\Main\LoginPage.cshtml" />
     <Content Include="Views\Main\AccountsPage.cshtml" />
     <Content Include="Views\Main\LogsPage.cshtml" />
+    <Content Include="Views\Main\chgPassPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

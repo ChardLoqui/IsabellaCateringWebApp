@@ -28,6 +28,11 @@ namespace IsabellaCateringWebApp.Controllers
             return View();
         }
 
+        public ActionResult chgPassPage()
+        {
+            return View();
+        }
+        // get creds for login
         public JsonResult JsonLogGetCreds(tblUsersModel userInfo)
         {
             try
@@ -59,7 +64,7 @@ namespace IsabellaCateringWebApp.Controllers
                 throw new ArgumentException($"There is an ERROR while upserting in database +++{ex.Message}+++ : +++{ex.StackTrace}+++ : +++{ex.InnerException}+++");
             }
         }
-
+        //get current session
         public JsonResult getCurrentSession()
         {
             try
@@ -76,5 +81,40 @@ namespace IsabellaCateringWebApp.Controllers
                 throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
         }
+        //bago, to add user
+        [HttpPost]
+        public JsonResult usrInfo(tblUsersModel userData)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var userInfo = new tblUsersModel()
+                    {
+                        permissionID = userData.permissionID,
+                        firstName = userData.firstName,
+                        lastName = userData.lastName,
+                        email = userData.email,
+                        password = userData.password,
+                        isActive = userData.isActive,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.users_tbl.Add(userInfo);
+                    db.SaveChanges();
+
+                }
+
+                return Json(new { success = true, message = "Saved successfully!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
+
     }
 }
