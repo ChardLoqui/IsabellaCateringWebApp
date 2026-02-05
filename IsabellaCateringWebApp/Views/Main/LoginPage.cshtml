@@ -2,8 +2,6 @@
     Layout = "~/Views/Shared/_MainLayout.cshtml";
     ViewBag.Title = "Log In";
 
-}
-
 <body>
 
     <div class="flex h-screen w-full">
@@ -94,20 +92,20 @@
 
                 <!-- Email -->
                 <div class="flex flex-col">
-                    <label for="email" class="mb-1 text-black text-sm font-semibold">Email</label>
-                    <input id="email"
+                    <label for="logEmail" class="mb-1 text-black text-sm font-semibold">Email</label>
+                    <input id="logEmail" ng-model="lEmail"
                            type="text"
                            class="w-full rounded bg-white p-2 focus:outline-none" />
                 </div>
 
                 <!-- Password -->
                 <div class="flex flex-col relative">
-                    <label for="password" class="mb-1 text-black text-sm font-semibold">
+                    <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
                         Password
                     </label>
 
                     <div class="relative">
-                        <input id="password"
+                        <input id="logPWord" ng-model="lPassword"
                                type="password"
                                class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
@@ -124,7 +122,7 @@
                 </div>
 
                 <!-- Button -->
-                <button type="submit"
+                <button type="button" ng-click="logInService()"
                         class="w-full rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-lg">
                     Log in
                 </button>
@@ -134,5 +132,6 @@
     </div>
 
 </body>
+    } 
 
 
