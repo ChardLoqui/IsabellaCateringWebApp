@@ -58,19 +58,27 @@
         var getData = IsabellaCateringWebAppService.AddUsrCall(userInfo);
 
         getData.then(function (response) {
-            Swal.fire({
-                title: "Success!",
-                text: "Account created successfully!",
-                icon: "success"
-            });
+            if (response.data.success) {
+                Swal.fire({
+                    title: "Success!",
+                    text: "Account created successfully!",
+                    icon: "success"
+                });
 
-            if (!$scope.multiArray) $scope.multiArray = [];
-            $scope.multiArray.push(userInfo);
+                if (!$scope.multiArray) $scope.multiArray = [];
+                $scope.multiArray.push(userInfo);
+            } else {
+                Swal.fire({
+                    title: "Database Error!",
+                    text: response.data.message,
+                    icon: "error"
+                });
+            }
 
         }, function (error) {
             Swal.fire({
-                title: "Error!",
-                text: "Failed to create account.",
+                title: "Server Error!",
+                text: "Failed to communicate with the server.",
                 icon: "error"
             });
         });

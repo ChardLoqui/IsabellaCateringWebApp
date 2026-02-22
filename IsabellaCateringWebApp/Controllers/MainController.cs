@@ -81,6 +81,7 @@ namespace IsabellaCateringWebApp.Controllers
                 throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
         }
+
         //bago, to add user
         [HttpPost]
         public JsonResult usrInfo(tblUsersModel userData)
@@ -110,7 +111,17 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                string realError = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    realError = ex.InnerException.Message;
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        realError = ex.InnerException.InnerException.Message;
+                    }
+                }
+
+                return Json(new { success = false, message = realError });
             }
         }
 
