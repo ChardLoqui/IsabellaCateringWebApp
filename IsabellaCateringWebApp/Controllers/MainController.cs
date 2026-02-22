@@ -81,6 +81,7 @@ namespace IsabellaCateringWebApp.Controllers
                 throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
         }
+
         //bago, to add user
         [HttpPost]
         public JsonResult usrInfo(tblUsersModel userData)
@@ -110,9 +111,94 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                string realError = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    realError = ex.InnerException.Message;
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        realError = ex.InnerException.InnerException.Message;
+                    }
+                }
+
+                return Json(new { success = false, message = realError });
+            }
+        }
+        //fetch data (users)
+        public JsonResult GetUsers()
+        {
+            using (var db = new IsabellaCateringContext())
+            {
+                var data = db.users_tbl.Select(u => new
+                {
+                    userID = u.userID,
+                    permissionID = u.permissionID,
+                    firstName = u.firstName,
+                    lastName = u.lastName,
+                    email = u.email,
+                    isActive = u.isActive,
+                    dateCreated = u.dateCreated,
+                    dateUpdated = u.dateUpdated
+                }).ToList();
+
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
+        // for update
+        [HttpPost]
+        public JsonResult UpdateUser(tblUsersModel userInfo)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.Find(userInfo.userID);
+                    if (user != null)
+                    {
+                        user.permissionID = userInfo.permissionID;
+                        user.firstName = userInfo.firstName;
+                        user.lastName = userInfo.lastName;
+                        user.isActive = userInfo.isActive;
+                        user.dateUpdated = DateTime.Now;
+
+                        db.SaveChanges();
+                        return Json(new { success = true });
+                    }
+                    return Json(new { success = false, message = "User not found." });
+                }
+            }
+            catch (Exception ex)
+            {
                 return Json(new { success = false, message = ex.Message });
             }
         }
+
+        // for delete
+        [HttpPost]
+        public JsonResult DeleteUser(int id)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.Find(id);
+                    if (user != null)
+                    {
+                        db.users_tbl.Remove(user);
+                        db.SaveChanges();
+                        return Json(new { success = true });
+                    }
+                    return Json(new { success = false, message = "User not found." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
 
 
 

@@ -26,4 +26,28 @@
         return response;
     };
 
+    //for getting the data
+    this.getUsersDataService = function () {
+        return $http.get("/Main/GetUsers");
+    }
+
+    //for Updating
+    this.UpdateUsrCall = function (userInfo) {
+        return $http({
+            method: "POST",
+            url: "/Main/UpdateUser",
+            data: JSON.stringify(userInfo),
+            headers: { 'Content-Type': 'application/json' }
+        });
+    };
+
+    //for Deleting
+    this.DeleteUsrCall = function (userID) {
+        return $http({
+            method: "POST",
+            url: "/Main/DeleteUser",
+            data: { id: userID }
+        });
+    };
+
 });
