@@ -165,17 +165,29 @@
             </thead>
 
             <tbody class="text-sm text-gray-700 font-bold bg-white">
-                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td class="p-4">213131</td>
-                    <td class="p-4">Admin</td>
-                    <td class="p-4">Richard</td>
-                    <td class="p-4">Almonte</td>
-                    <td class="p-4">almonte@gmail.com</td>
-                    <td class="p-4">1asd14t31a</td>
-                    <td class="p-4">10/24/2023</td>
+                <tr ng-repeat="user in usersData" class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+
+                    <td class="p-4">{{ user.userID }}</td>
+
                     <td class="p-4">
-                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs">Active</span>
+                        <span ng-if="user.permissionID == 1">Admin</span>
+                        <span ng-if="user.permissionID == 2">Staff</span>
+                        <span ng-if="user.permissionID == 3">User</span>
                     </td>
+
+                    <td class="p-4">{{ user.firstName }}</td>
+                    <td class="p-4">{{ user.lastName }}</td>
+                    <td class="p-4">{{ user.email }}</td>
+
+                    <td class="p-4">********</td>
+
+                    <td class="p-4">{{ user.dateUpdated | date:'MM/dd/yyyy' }}</td>
+
+                    <td class="p-4">
+                        <span ng-if="user.isActive == 1" class="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs">Active</span>
+                        <span ng-if="user.isActive == 0" class="px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs">Inactive</span>
+                    </td>
+
                     <td class="p-4 text-center">
                         <button class="text-pink-500 hover:text-pink-700 transition-all duration-200 transform hover:scale-110">
                             <span class="material-symbols-outlined flex items-center justify-center">
@@ -183,6 +195,7 @@
                             </span>
                         </button>
                     </td>
+
                 </tr>
             </tbody>
         </table>

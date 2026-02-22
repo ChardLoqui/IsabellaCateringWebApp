@@ -26,4 +26,9 @@
         return response;
     };
 
+    //for getting the data
+    this.getUsersDataService = function () {
+        return $http.get("/Main/GetUsers");
+    }
+
 });
