@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
-    <title>@ViewBag.Title</title>
 
     <!-- tailwind link -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,12 +10,14 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
-    <!-- flowbite-->
+    <!-- flowbite -->
     <script src="https://unpkg.com/flowbite@1.7.0/dist/flowbite.js"></script>
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 
-<body class="bg-white">
+<body class="bg-white" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
 
     <!-- hover wrapper -->
     <div class="group fixed inset-y-0 left-0 z-50">
@@ -100,6 +101,9 @@
     <main class="min-h-screen">
         @RenderBody()
     </main>
-
-</body>
+    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
+    <script src="~/Scripts/angular.min.js"></script>
+    <script src="~/Scripts/HolyScripts/Module.js"></script>
+    <script src="~/Scripts/HolyScripts/Controller.js"></script>
+    <script src="~/Scripts/HolyScripts/Service.js"></script>
 </html>
