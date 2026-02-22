@@ -8,41 +8,57 @@
     const passwordLogCreds = document.getElementById('logPWord');
 
     $scope.logInService = function () {
-        alert(emailLogCreds.value);
-        alert(passwordLogCreds.value);
+        // validation
+        if ($scope.loginForm.$invalid) {
+            Swal.fire({
+                title: "Login Info",
+                text: "Please fill in all required fields correctly.",
+                icon: "info"
+            });
+            return;
+        }
 
         var userInfo = {
             email: $scope.lEmail,
             password: $scope.lPassword
         }
-        var status = true;
+
         var getData = IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo);
 
         getData.then(function (returnedData) {
-            if (returnedData.data == null)
-                status = false;
-
-            alert(returnedData.data);
-
-            if (status) {
+            // para icheck creds
+            if (returnedData.data && returnedData.data.userID) {
                 $scope.redirectToHomePage();
             } else {
-                emailLogCreds.value = '';
-                passwordLogCreds.value = '';
+                // pag incorrct yung credentials
+                Swal.fire({
+                    title: "Access Denied",
+                    text: "Invalid email or password.",
+                    icon: "error"
+                });
+
+                // Clear input
+                $scope.lEmail = '';
+                $scope.lPassword = '';
+
+                // Reset character count
+                document.getElementById('emailCount').innerText = '0 / 50';
+                document.getElementById('passCount').innerText = '0 / 20';
             }
         });
     }
 
     //for testing purposes only
-    const homepage = document.getElementById('showSess'); //remove
+    const homepage = document.getElementById('showSess');
 
     $scope.checkGetCreds = function (verify) {
         var getData = IsabellaCateringWebAppService.getCurrentSessionService();
         getData.then(function (returnedData) {
-            homepage.innerHTML = `sess ID = ${returnedData.data.userID} sess perm = ${returnedData.data.permID}` //for test (to remove)
+            if (homepage) {
+                homepage.innerHTML = `sess ID = ${returnedData.data.userID} sess perm = ${returnedData.data.permID}`;
+            }
         });
-    }; 
-
+    };
 
     //bago, to add user 
     $scope.addUsrSubmit = function () {
@@ -58,21 +74,41 @@
         var getData = IsabellaCateringWebAppService.AddUsrCall(userInfo);
 
         getData.then(function (response) {
-            Swal.fire({
-                title: "Success!",
-                text: "Account created successfully!",
-                icon: "success"
-            });
-
-            if (!$scope.multiArray) $scope.multiArray = [];
-            $scope.multiArray.push(userInfo);
-
+            if (response.data.success) {
+                Swal.fire({
+                    title: "Success!",
+                    text: "Account created successfully!",
+                    icon: "success"
+                });
+                $scope.getUsersData();
+            } else {
+                Swal.fire({
+                    title: "Database Error!",
+                    text: response.data.message,
+                    icon: "error"
+                });
+            }
         }, function (error) {
             Swal.fire({
-                title: "Error!",
-                text: "Failed to create account.",
+                title: "Server Error!",
+                text: "Failed to communicate with the server.",
                 icon: "error"
             });
         });
     };
+
+    // for getting the data
+    $scope.getUsersData = function () {
+        IsabellaCateringWebAppService.getUsersDataService().then(function (returnedData) {
+            $scope.usersData = returnedData.data.map(user => {
+                if (user.dateUpdated) {
+                    const milli = parseInt(user.dateUpdated.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
+                    user.dateUpdated = new Date(milli);
+                }
+                return user;
+            });
+        });
+    };
+    $scope.getUsersData();
+
 });
