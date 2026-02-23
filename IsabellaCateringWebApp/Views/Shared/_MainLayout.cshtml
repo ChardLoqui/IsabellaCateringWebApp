@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+
+    <!-- tailwind link -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- google fonts n icons link -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- flowbite-->
+    <script src="https://unpkg.com/flowbite@1.7.0/dist/flowbite.js"></script>
+
+    <!--CSS-->
+    <link rel="stylesheet" href="~/css/styles.css" />
+
+</head>
+
+<body class="bg-white" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
+
+    <!-- hover wrapper -->
+    <div class="group fixed inset-y-0 left-0 z-50">
+
+        <!-- hover -->
+        <div class="absolute left-0 top-0 h-full w-4"></div>
+
+        <!-- sidebar -->
+        <aside class="-translate-x-full flex h-screen w-64 transform
+                      flex-col justify-between
+                      shadow-lg
+                      transition-transform duration-300 ease-in-out
+                      group-hover:translate-x-0"
+               style="background-color:#fcd1e5;">
+
+            <div>
+                <!-- isabella logo -->
+                <div class="flex flex-col items-center pb-8 pt-6">
+                    <img src="~/Content/images/isabellaLogo.jpg"
+                         class="w-36 object-contain"
+                         alt="Isabella Logo" />
+                </div>
+
+                <!-- menu -->
+                <nav class="space-y-4 px-6">
+
+                    <!-- active page -->
+                    <a href="#"
+                       class="flex items-center gap-3 rounded-lg px-4 py-2 font-medium text-white"
+                       style="background-color:#ec4899;">
+                        <span class="material-icons text-white">calendar_month</span>
+                        <span>Booking Calendar</span>
+                    </a>
+
+                    <a href="#"
+                       class="flex items-center gap-3 rounded-lg px-4 py-2 text-black transition hover:bg-pink-200">
+                        <span class="material-icons">payments</span>
+                        <span>Manage Payment</span>
+                    </a>
+
+                    <a href="#"
+                       class="flex items-center gap-3 rounded-lg px-4 py-2 text-black transition hover:bg-pink-200">
+                        <span class="material-icons">group</span>
+                        <span>Accounts</span>
+                    </a>
+
+                    <a href="#"
+                       class="flex items-center gap-3 rounded-lg px-4 py-2 text-black transition hover:bg-pink-200">
+                        <span class="material-icons">receipt_long</span>
+                        <span>Logs</span>
+                    </a>
+
+                </nav>
+            </div>
+
+            <!-- user -->
+            <div class="space-y-3 px-6 pb-6">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow">
+                        <span class="material-icons text-pink-500">person</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold">Isabella</p>
+                        <p class="text-xs text-pink-600">Owner</p>
+                    </div>
+                </div>
+
+                <!-- logout -->
+                <a href="#"
+                   class="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                   style="background-color:#ec4899;">
+                    <span class="material-icons text-sm">logout</span>
+                    Logout
+                </a>
+            </div>
+
+        </aside>
+    </div>
+
+    <!-- laman ng page -->
+    <main class="min-h-screen">
+        @RenderBody()
+    </main>
+    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
+    <script src="~/Scripts/angular.min.js"></script>
+    <script src="~/Scripts/HolyScripts/Module.js"></script>
+    <script src="~/Scripts/HolyScripts/Controller.js"></script>
+    <script src="~/Scripts/HolyScripts/Service.js"></script>
+</html>

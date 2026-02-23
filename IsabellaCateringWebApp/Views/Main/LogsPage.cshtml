@@ -1,0 +1,88 @@
+﻿@{
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.Title = "System Logs";
+
+}
+
+<body>
+    <div class="container mx-auto h-screen p-10">
+        @*header*@
+        <h1 class="text-2xl font-semibold text-black mb-6">System Logs</h1>
+
+        @*search container*@
+        <div class="flex items-center justify-between mb-8 w-full">
+
+            @* Left (search,add,create) *@
+            <div class="flex items-center gap-2">
+                <input id="email"
+                       type="text"
+                       placeholder="Search by email..."
+                       class="w-96 px-5 rounded bg-gray-100 p-2 focus:outline-none border border-transparent focus:border-pink-500 transition-all" />
+
+                <button type="submit"
+                        class="px-5 rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-md transition-colors">
+                    Search
+                </button>
+            </div>
+
+            @* Right (Pagination) *@
+            <div class="flex items-center gap-4 text-gray-800 font-bold">
+                <div class="flex items-center gap-4">
+                    @* Vertical Divider *@
+
+                    <div class="h-4 w-[1px] bg-gray-300"></div>
+
+                    <button class="hover:text-pink-500 transition-colors flex items-center">
+                        <span class="material-symbols-outlined text-xl">chevron_right</span>
+                    </button>
+                    <button class="hover:text-pink-500 transition-colors flex items-center">
+                        <span class="material-symbols-outlined text-xl">keyboard_double_arrow_right</span>
+                    </button>
+                </div>
+
+                @* Page Dropdown *@
+                <div class="flex items-center border rounded-md bg-white px-3 py-1 gap-2 shadow-sm cursor-pointer">
+                    <span class="text-sm">1</span>
+                    <span class="material-symbols-outlined text-gray-400 text-sm">expand_more</span>
+                </div>
+            </div>
+        </div>
+
+        @*table*@
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse bg-gray-100">
+                <thead>
+                    <tr class="text-left text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                        <th class="p-4">Log ID</th>
+                        <th class="p-4">Action</th>
+                        <th class="p-4">Date Updated</th>
+                        <th class="p-4">User</th>
+                    </tr>
+                </thead>
+
+                <tbody class="text-sm text-gray-700 font-bold ">
+                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td class="p-4">213131</td>
+                        <td class="p-4">Updated Booking</td>
+                        <td class="p-4">1/20/2025</td>
+                        <td class="p-4">Richard</td>
+                    </tr>
+                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td class="p-4">213131</td>
+                        <td class="p-4">Changed Payment Status</td>
+                        <td class="p-4">1/20/2025</td>
+                        <td class="p-4">Rik</td>
+                    </tr>
+                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td class="p-4">213131</td>
+                        <td class="p-4">Logged In</td>
+                        <td class="p-4">1/20/2025</td>
+                        <td class="p-4">Ykoev</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+

@@ -1,0 +1,137 @@
+﻿@{
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.Title = "Log In";
+
+<body>
+
+    <div class="flex h-screen w-full">
+        <!-- Left side -->
+        <div class="w-1/2 flex items-center justify-center">
+
+            <div class="w-1/2 h-full w-full">
+                <div id="default-carousel" class="relative w-full h-full" data-carousel="slide">
+                    <!-- Carousel wrapper -->
+                    <div class="relative h-full overflow-hidden">
+                        <!-- Item 1 -->
+                        <div class="duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img1.jpg"
+                                 class="w-full h-full object-cover"
+                                 alt="Slide 1">
+                        </div>
+
+                        <!-- Item 2 -->
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img2.jpg"
+                                 class="w-full h-full object-cover"
+                                 alt="Slide 2">
+                        </div>
+
+                        <!-- Item 3 -->
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img3.jpg"
+                                 class="w-full h-full object-cover"
+                                 alt="Slide 3">
+                        </div>
+                        <!-- Item 4 -->
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img4.jpg"
+                                 class="w-full h-full object-cover"
+                                 alt="Slide 3">
+                        </div>
+                        <!-- Item 5 -->
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img5.jpg"
+                                 class="w-full h-full object-cover"
+                                 alt="Slide 3">
+                        </div>
+                    </div>
+
+                    <!-- Indicators -->
+                    <div class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3">
+                        <button class="w-3 h-3 rounded-full bg-white" data-carousel-slide-to="0"></button>
+                        <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="1"></button>
+                        <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="2"></button>
+                        <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="3"></button>
+                        <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="4"></button>
+
+                    </div>
+
+                    <!-- Controls -->
+                    <button class="absolute top-0 left-0 z-30 flex items-center justify-center h-full px-4"
+                            data-carousel-prev>
+                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30">
+                            <span class="material-icons text-white text-2xl">
+                                chevron_left
+                            </span>
+                        </span>
+                    </button>
+
+                    <button class="absolute top-0 right-0 z-30 flex items-center justify-center h-full px-4"
+                            data-carousel-next>
+                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30">
+                            <span class="material-icons text-white text-2xl">
+                                chevron_right
+                            </span>
+                        </span>
+                    </button>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right side -->
+        <div class="w-1/2 flex items-center justify-center" style="background-color:#fcd1e5;">
+            <form class="w-3/4 max-w-md space-y-5">
+
+                <!-- Header -->
+                <header class="text-center">
+                    <img src="~/Content/images/isabellaLogo.jpg" alt="Isabella Catering and Events Logo" class="w-52 h-auto mx-auto" />
+                    <p class="text-2xl font-semibold text-black">Isabella Catering and Events</p>
+                </header>
+
+                <!-- Email -->
+                <div class="flex flex-col">
+                    <label for="logEmail" class="mb-1 text-black text-sm font-semibold">Email</label>
+                    <input id="logEmail" ng-model="lEmail"
+                           type="text"
+                           class="w-full rounded bg-white p-2 focus:outline-none" />
+                </div>
+
+                <!-- Password -->
+                <div class="flex flex-col relative">
+                    <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                        Password
+                    </label>
+
+                    <div class="relative">
+                        <input id="logPWord" ng-model="lPassword"
+                               type="password"
+                               class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
+
+                        <!-- Toggle icon -->
+                        <span id="togglePassword"
+                              class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                            visibility_off
+                        </span>
+                    </div>
+
+                    <a href="#" class="mt-1 text-xs text-black hover:text-black-70">
+                        Forgot Password?
+                    </a>
+                </div>
+
+                <!-- Button -->
+                <button type="button" ng-click="logInService()"
+                        class="w-full rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-lg">
+                    Log in
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+</body>
+    } 
+
+
