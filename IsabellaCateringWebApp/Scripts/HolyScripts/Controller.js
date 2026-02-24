@@ -4,6 +4,8 @@
         window.location.href = "/Main/HomePage"
     }
 
+
+    //======================================================== LOGIN START =======================================================
     const emailLogCreds = document.getElementById('logEmail');
     const passwordLogCreds = document.getElementById('logPWord');
 
@@ -43,6 +45,21 @@
         });
     };
 
+    const logInPasswordToggle = document.getElementById('toggleLogInPassword') 
+    const logInPassword = document.getElementById('logPWord')
+    $scope.toggleShowLogInPassword = function () {
+        if (logInPassword.type === "password") {
+            logInPassword.type = "text";
+            logInPasswordToggle.innerHTML = "visibility_on";
+        } else {
+            logInPassword.type = "password";
+            logInPasswordToggle.innerHTML = "visibility_off";
+        }
+    }
+
+    //======================================================== LOGIN END =======================================================
+
+    //======================================================== ACCOUNT MANAGEMENT START=======================================================
     //bago, to add user 
     $scope.addUsrSubmit = function () {
         var userInfo = {
@@ -100,5 +117,64 @@
         });
     };
     $scope.getUsersData();
+
+    //======================================================== ACCOUNT MANAGEMENT END =======================================================
+
+    //======================================================== PASSWORD RESET START =======================================================
+    //this is fo the 2 pages
+    $scope.sendForgetRequest = function () {
+        IsabellaCateringWebAppService.verifyEmailCreds($scope.fEmail).then(function (returnedData) {
+            if (returnedData.data != null) {
+                alert("Please check your e-mail for the Reset Password Link");
+            }
+            else {
+                alert("User Not Found");
+            }
+        });
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    $scope.verifyToken = function () {
+        IsabellaCateringWebAppService.verifyToken(token).then(function (returnedData) {
+            return returnedData.data;
+        });
+    };
+
+    $scope.changeForgotPassword = function () {
+        IsabellaCateringWebAppService.changeForgotPasswordService(token, $scope.newPassword).then(function (returnedData) {
+            if (returnedData.data == "True") {
+                alert("Password Changed \n Please log in again with the new password")
+            } else
+                alert("Password not Changed \n Please request a new link and try again later")
+        });
+    }
+
+    const forgetPasswordToggle = document.getElementById('toggleForgetPassword')
+    const forgetPassword = document.getElementById('forgetPWord')
+    $scope.toggleShowForgetPassword = function () {
+        if (forgetPassword.type === "password") {
+            forgetPassword.type = "text";
+            forgetPasswordToggle.innerHTML = "visibility_on";
+        } else {
+            forgetPassword.type = "password";
+            forgetPasswordToggle.innerHTML = "visibility_off";
+        }
+    }
+
+    const forgetCPasswordToggle = document.getElementById('toggleCForgetPassword')
+    const forgetCPassword = document.getElementById('cForgetPWord')
+    $scope.toggleShowCForgetPassword = function () {
+        if (forgetCPassword.type === "password") {
+            forgetCPassword.type = "text";
+            forgetCPasswordToggle.innerHTML = "visibility_on";
+        } else {
+            forgetCPassword.type = "password";
+            forgetCPasswordToggle.innerHTML = "visibility_off";
+        }
+    }
+
+    //======================================================== PASSWORD RESET END =======================================================
 
 });

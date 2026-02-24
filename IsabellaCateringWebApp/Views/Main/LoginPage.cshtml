@@ -1,5 +1,5 @@
 ﻿@{
-    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    Layout = "~/Views/Shared/_LogInLayout.cshtml";
     ViewBag.Title = "Log In";
 
     <body ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
@@ -112,8 +112,8 @@
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
                             <!-- Toggle icon -->
-                            <span id="togglePassword"
-                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                            <span id="toggleLogInPassword" ng-click="toggleShowLogInPassword()"
+                                  class="material-icons absolute w-7 right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
                                 visibility_off
                             </span>
                         </div>
@@ -135,5 +135,5 @@
         </div>
 
     </body>
-    }
+
 }
