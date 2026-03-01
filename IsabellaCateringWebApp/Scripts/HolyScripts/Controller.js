@@ -3,6 +3,9 @@
     $scope.redirectToHomePage = function () {
         window.location.href = "/Main/HomePage"
     }
+    $scope.redirectToForgetPassPage = function () {
+        window.location.href = "/Main/ForgetPassPage"
+    }
 
 
     //======================================================== LOGIN START =======================================================
@@ -10,8 +13,8 @@
     const passwordLogCreds = document.getElementById('logPWord');
 
     $scope.logInService = function () {
-        alert(emailLogCreds.value);
-        alert(passwordLogCreds.value);
+        //alert(emailLogCreds.value);
+        //alert(passwordLogCreds.value);
 
         var userInfo = {
             email: $scope.lEmail,
@@ -21,10 +24,10 @@
         var getData = IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo);
 
         getData.then(function (returnedData) {
-            if (returnedData.data == null)
-                status = false;
+            if (returnedData.data != '')
+                var status = true;
 
-            alert(returnedData.data);
+            //alert(returnedData.data);
 
             if (status) {
                 $scope.redirectToHomePage();
