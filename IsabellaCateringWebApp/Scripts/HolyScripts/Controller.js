@@ -17,7 +17,7 @@
             email: $scope.lEmail,
             password: $scope.lPassword
         }
-        var status = true;
+
         var getData = IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo);
 
         getData.then(function (returnedData) {
@@ -29,8 +29,20 @@
             if (status) {
                 $scope.redirectToHomePage();
             } else {
-                emailLogCreds.value = '';
-                passwordLogCreds.value = '';
+                // pag incorrct yung credentials
+                Swal.fire({
+                    title: "Access Denied",
+                    text: "Invalid email or password.",
+                    icon: "error"
+                });
+
+                // Clear input
+                $scope.lEmail = '';
+                $scope.lPassword = '';
+
+                // Reset character count
+                document.getElementById('emailCount').innerText = '0 / 50';
+                document.getElementById('passCount').innerText = '0 / 20';
             }
         });
     }
