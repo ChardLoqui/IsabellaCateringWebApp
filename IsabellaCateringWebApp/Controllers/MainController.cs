@@ -276,5 +276,88 @@ namespace IsabellaCateringWebApp.Controllers
         }
 
 
+        public JsonResult addBooking(tblBookingModel bookingData)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var newBooking = new tblBookingModel()
+                    {
+                        packageID = bookingData.packageID,
+                        dsgnTheme = bookingData.dsgnTheme,
+                        dsgnMotif = bookingData.dsgnMotif,
+                        venue = bookingData.venue,
+                        bookingDate = DateTime.Now,
+                        eventSetTime = bookingData.eventSetTime,
+                        eventTime = bookingData.eventTime,
+                        ceremTime = bookingData.ceremTime,
+                        eventMealTime = bookingData.eventMealTime,
+                        progressOne = 1,
+                        progressTwo = 1,
+                        progressThree = 1,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now,
+                        createdBy = 1,
+                        clientID = 1001,
+                        prepVenue = "yes",
+
+                    };
+
+                    // Add to DbSet and save
+                    db.booking_tbl.Add(newBooking);
+                    db.SaveChanges();
+                }
+
+                return Json(new { success = true, message = "Booking Successfully Added" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public JsonResult getBooking(int bookingID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.booking_tbl
+                                    .Where(b => b.bookingID == bookingID)
+                                    .Select(b => new
+                                    {
+                                        b.bookingID,
+                                        b.clientID,
+                                        b.packageID,
+                                        b.dsgnTheme,
+                                        b.dsgnMotif,
+                                        b.venue,
+                                        b.bookingDate,
+                                        b.eventSetTime,
+                                        b.eventTime,
+                                        b.ceremTime,
+                                        b.eventMealTime,
+                                        b.dateCreated,
+                                        b.dateUpdated,
+                                        b.progressOne,
+                                        b.progressTwo,
+                                        b.progressThree
+                                    })
+                                    .FirstOrDefault();
+
+                    if (booking == null)
+                        return Json(new { message = "Booking not found", bookingID }, JsonRequestBehavior.AllowGet);
+
+                    return Json(booking, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { message = "Error connecting to DB: " + ex.Message, bookingID }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
     }
 }

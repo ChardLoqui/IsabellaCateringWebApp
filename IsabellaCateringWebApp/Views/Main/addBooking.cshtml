@@ -1,0 +1,153 @@
+﻿@{
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+}
+
+<!DOCTYPE html>
+<html>
+<body class="bg-gray-50">
+    <div class="flex min-h-screen w-full items-center justify-center p-4">
+
+        <form name="eventForm" ng-submit="bookEvent()" novalidate>
+            <!-- Card -->
+            <div class="flex w-full max-w-4xl flex-col rounded-2xl border bg-white shadow-xl">
+
+                <!-- Steps -->
+                <div class="flex flex-row items-center justify-center px-6 py-6 sm:gap-12 md:gap-4 md:py-12">
+                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-pink-500 font-bold text-white sm:h-8 sm:w-8 md:h-12 md:w-12">1</div>
+                    <div class="z-0 h-1 flex-1 bg-pink-300"></div>
+                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-pink-500 font-bold text-white sm:h-8 sm:w-8 md:h-12 md:w-12">2</div>
+                    <div class="z-0 h-1 flex-1 bg-pink-300"></div>
+                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-pink-500 font-bold text-white sm:h-8 sm:w-8 md:h-12 md:w-12">3</div>
+                </div>
+
+                <!-- Form Grid -->
+                <div class="grid w-full grid-cols-1 gap-6 px-6 pb-8 sm:px-8 md:grid-cols-3 md:px-12">
+
+                    <!-- Heading -->
+                    <h1 class="font-heading col-span-full mb-2 text-2xl sm:text-3xl md:text-4xl">
+                        <span class="underline decoration-pink-500 decoration-4 underline-offset-4">
+                            Book
+                        </span> Your Event
+                    </h1>
+
+                    <!-- Event Name -->
+                    <div class="col-span-full flex flex-col">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Event Name
+                        </label>
+                        <input type="text"
+                               placeholder="e.g Isabella's Debut"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="eventName"
+                               ng-model="eventName">
+                    </div>
+
+                    <!-- Package -->
+                    <div class="flex flex-col md:col-span-2">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Package
+                        </label>
+                        <select class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base">
+                        </select>
+                    </div>
+
+                    <!-- Venue -->
+                    <div class="flex flex-col">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Venue
+                        </label>
+                        <input type="text"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="venue"
+                               ng-model="venue">
+                    </div>
+
+                    <!-- Motif -->
+                    <div class="flex flex-col">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Motif
+                        </label>
+                        <input type="text"
+                               placeholder="e.g Disney"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               ng-model="motif"
+                               name="motif">
+                    </div>
+
+                    <!-- Theme -->
+                    <div class="flex flex-col md:col-span-2">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Theme
+                        </label>
+                        <input type="text"
+                               placeholder="e.g Disney"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               ng-model="theme"
+                               name="theme">
+                    </div>
+
+                    <!-- Date -->
+                    <div class="flex flex-col">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Date of Event
+                        </label>
+                        <input type="date"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               ng-model="dateOfEvent" name="dateOfEvent">
+                    </div>
+
+                    <!-- Time Section (Clean 3-column row) -->
+                    <div class="col-span-full grid grid-cols-1 gap-6 md:grid-cols-3">
+
+                        <div class="flex flex-col">
+                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                Ceremony Time
+                            </label>
+                            <input type="time"
+                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                   ng-model="ceremTime" name="ceremTime">
+                        </div>
+
+                        <div class="flex flex-col">
+                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                Event Time
+                            </label>
+                            <input type="time"
+                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                   ng-model="eventTime" name="eventTime">
+                        </div>
+
+                        <div class="flex flex-col">
+                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                Meal Time
+                            </label>
+                            <input type="time"
+                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                   ng-model="eventMealTime" name="eventMealTime">
+                        </div>
+
+                    </div>
+
+                    <!-- Set Time (Full width for balance) -->
+                    <div class="col-span-full flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Set Time
+                        </label>
+                        <input type="time"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               ng-model="eventSetTime" name="eventSetTime">
+                    </div>
+
+                    <!-- Button -->
+                    <div class="col-span-full pt-4">
+                        <button type="submit" class="w-full rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700">
+                            Book Event
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
