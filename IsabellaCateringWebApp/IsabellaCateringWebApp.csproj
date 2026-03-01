@@ -190,8 +190,10 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\Context\IsabellaCateringContext.cs" />
+    <Compile Include="Models\Maps\tblBookingMap.cs" />
     <Compile Include="Models\Maps\tblPasswordTokensMap.cs" />
     <Compile Include="Models\Maps\tblUsersMap.cs" />
+    <Compile Include="Models\Models\tblBookingModel.cs" />
     <Compile Include="Models\Models\tblPasswordTokensModel.cs" />
     <Compile Include="Models\Models\tblUsersModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -1047,6 +1049,8 @@
     <Content Include="Views\Main\chgPassPage.cshtml" />
     <Content Include="Views\Main\ForgetPassPage.cshtml" />
     <Content Include="Views\Shared\_LogInLayout.cshtml" />
+    <Content Include="Views\Main\addBooking.cshtml" />
+    <Content Include="Views\Main\customerView.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

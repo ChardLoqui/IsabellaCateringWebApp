@@ -20,11 +20,13 @@ namespace IsabellaCateringWebApp.Models.Context
 
         public virtual DbSet<tblPasswordTokensModel> passwordtokens_tbl { get; set; }
         public virtual DbSet<tblUsersModel> users_tbl { get; set; }
+        public virtual DbSet<tblBookingModel> booking_tbl { get; set; }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Configurations.Add(new tblPasswordTokensMap());
             modelBuilder.Configurations.Add(new tblUsersMap());
+            modelBuilder.Configurations.Add(new tblBookingMap());
         }
     }
 }
