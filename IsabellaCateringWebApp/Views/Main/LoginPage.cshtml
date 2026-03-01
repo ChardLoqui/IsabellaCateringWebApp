@@ -82,7 +82,7 @@
 
             <!-- Right side -->
             <div class="w-1/2 flex items-center justify-center" style="background-color:#fcd1e5;">
-                <form class="w-3/4 max-w-md space-y-5">
+                <form class="w-3/4 max-w-md space-y-5" name="loginForm">
 
                     <!-- Header -->
                     <header class="text-center">
@@ -96,7 +96,7 @@
                         @*email input*@
                         <input id="logEmail" ng-model="lEmail"
                                type="text"
-                               class="w-full rounded bg-white p-2 focus:outline-none" />
+                               class="w-full rounded bg-white p-2 focus:outline-none" required/>
                     </div>
 
                     <!-- Password -->
@@ -109,7 +109,7 @@
                             @* Password input*@
                             <input id="logPWord" ng-model="lPassword"
                                    type="password"
-                                   class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
+                                   class="w-full rounded bg-white p-2 pr-10 focus:outline-none" required/>
 
                             <!-- Toggle icon -->
                             <span id="toggleLogInPassword" ng-click="toggleShowLogInPassword()"
@@ -117,10 +117,11 @@
                                 visibility_off
                             </span>
                         </div>
-
-                        <a href="#" class="mt-1 text-xs text-pink-500 hover:text-pink-900" ng-click="redirectToForgetPassPage()">
-                            Forgot Password?
-                        </a>
+                        <div>
+                            <a href="#" class="mt-1 text-xs text-pink-500 hover:text-pink-900" ng-click="redirectToForgetPassPage()">
+                                Forgot Password?
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Button -->

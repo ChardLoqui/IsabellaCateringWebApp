@@ -42,6 +42,16 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+        
+        public ActionResult customerView()
+        {
+            return View();
+        }
+
+        public ActionResult addBooking()
+        {
+            return View();
+        }
 
         // get creds for login
         public JsonResult JsonLogGetCreds(tblUsersModel userInfo)
@@ -184,37 +194,55 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
+                    var now = DateTime.UtcNow;
                     string token = GenerateToken();
                     string tokenHash = HashToken(token);
                     var verify = db.users_tbl.Where(x => x.email.Equals(userEmail)).FirstOrDefault();
                     if (verify != null)
                     {
-                        db.passwordtokens_tbl.Add(new tblPasswordTokensModel
-                        {
-                            userID = verify.userID,
-                            hashedToken = tokenHash,
-                            dateCreated = DateTime.UtcNow,
-                            dateExpiry = DateTime.UtcNow.AddMinutes(10)
-                        });
+                        var expiredTokens = db.passwordtokens_tbl
+                            .Where(x => x.dateExpiry < now)
+                            .ToList();
+                        db.passwordtokens_tbl.RemoveRange(expiredTokens);
                         db.SaveChanges();
 
-                        string link = "https://localhost:44323/Main/chgPassPage?token=" + token;
+                        var existingToken = db.passwordtokens_tbl
+                            .FirstOrDefault(x => x.userID == verify.userID
+                            && x.dateExpiry > now);
 
-                        var smtp = new SmtpClient();
-                        smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-                        smtp.PickupDirectoryLocation = @"C:\Emails";
+                        if (existingToken == null)
+                        {
+                            db.passwordtokens_tbl.Add(new tblPasswordTokensModel
+                            {
+                                userID = verify.userID,
+                                hashedToken = tokenHash,
+                                dateCreated = DateTime.UtcNow,
+                                dateExpiry = DateTime.UtcNow.AddMinutes(10)
+                            });
+                            db.SaveChanges();
 
-                        var mail = new MailMessage();
-                        mail.From = new MailAddress("no-reply@localhost");
-                        mail.To.Add(userEmail);
-                        mail.Subject = "Reset Password";
-                        mail.Body = "Your Password Reset Link " + link;
+                            string link = "https://localhost:44323/Main/chgPassPage?token=" + token;
 
-                        smtp.Send(mail);
-                        return verify.userID;
+                            var smtp = new SmtpClient();
+                            smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                            smtp.PickupDirectoryLocation = @"C:\Emails";
+
+                            var mail = new MailMessage();
+                            mail.From = new MailAddress("no-reply@localhost");
+                            mail.To.Add(userEmail);
+                            mail.Subject = "Reset Password";
+                            mail.Body = "Your Password Reset Link " + link;
+
+                            smtp.Send(mail);
+                            return verify.userID;
+                        }
+                        else
+                        {
+                            return null;
+                        } 
                     }
                     else
-                        return verify.userID;
+                        return null;
                 }
             }
             catch (Exception ex)
