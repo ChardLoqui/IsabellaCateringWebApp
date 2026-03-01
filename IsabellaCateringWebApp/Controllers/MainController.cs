@@ -1,8 +1,13 @@
 ﻿using IsabellaCateringWebApp.Models.Context;
 using IsabellaCateringWebApp.Models.Models;
+using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 
@@ -32,6 +37,12 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+
+        public ActionResult ForgetPassPage()
+        {
+            return View();
+        }
+
         // get creds for login
         public JsonResult JsonLogGetCreds(tblUsersModel userInfo)
         {
@@ -124,11 +135,12 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = realError });
             }
         }
-        //fetch data (users)
+
         public JsonResult GetUsers()
         {
             using (var db = new IsabellaCateringContext())
             {
+                // Project into an anonymous object first
                 var data = db.users_tbl.Select(u => new
                 {
                     userID = u.userID,
@@ -139,11 +151,130 @@ namespace IsabellaCateringWebApp.Controllers
                     isActive = u.isActive,
                     dateCreated = u.dateCreated,
                     dateUpdated = u.dateUpdated
-                }).ToList();
+                }).ToList(); // Execution happens here
 
                 return Json(data, JsonRequestBehavior.AllowGet);
             }
         }
+
+        //token generation
+        public string GenerateToken()
+        {
+            byte[] bytes = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(bytes);
+            }
+            return Convert.ToBase64String(bytes);
+        }
+
+        public string HashToken(string token)
+        {
+            using (var sha = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(token);
+                byte[] hash = sha.ComputeHash(bytes);
+                return Convert.ToBase64String(hash);
+            }
+        }
+
+        public int? ForgetVerifyEmail(string userEmail)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    string token = GenerateToken();
+                    string tokenHash = HashToken(token);
+                    var verify = db.users_tbl.Where(x => x.email.Equals(userEmail)).FirstOrDefault();
+                    if (verify != null)
+                    {
+                        db.passwordtokens_tbl.Add(new tblPasswordTokensModel
+                        {
+                            userID = verify.userID,
+                            hashedToken = tokenHash,
+                            dateCreated = DateTime.UtcNow,
+                            dateExpiry = DateTime.UtcNow.AddMinutes(10)
+                        });
+                        db.SaveChanges();
+
+                        string link = "https://localhost:44323/Main/chgPassPage?token=" + token;
+
+                        var smtp = new SmtpClient();
+                        smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                        smtp.PickupDirectoryLocation = @"C:\Emails";
+
+                        var mail = new MailMessage();
+                        mail.From = new MailAddress("no-reply@localhost");
+                        mail.To.Add(userEmail);
+                        mail.Subject = "Reset Password";
+                        mail.Body = "Your Password Reset Link " + link;
+
+                        smtp.Send(mail);
+                        return verify.userID;
+                    }
+                    else
+                        return verify.userID;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        public Boolean VerifyForgetToken(string token)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    string hash = HashToken(token);
+
+                    var verify = db.passwordtokens_tbl.Where(x => x.hashedToken.Equals(hash)).FirstOrDefault();
+                    if (verify == null || verify.dateExpiry < DateTime.UtcNow)
+                        return false;
+                    else
+                        return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        public Boolean changeForgotPassword(string unhashedToken, string newPassword)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    string correctedToken = unhashedToken.Replace(" ", "+");
+                    string hash = HashToken(correctedToken);
+
+                    var verify = db.passwordtokens_tbl.Where(x => x.hashedToken.Equals(hash)).FirstOrDefault();
+                    if (verify == null || verify.dateExpiry < DateTime.UtcNow)
+                    {
+                        return false;
+                    }
+                    else
+                    {   
+                        var userData = db.users_tbl.Where(x => x.userID.Equals(verify.userID)).FirstOrDefault();
+                        userData.password = newPassword;
+                        db.passwordtokens_tbl.Remove(verify);
+                        db.SaveChanges();
+                        return true;
+                    }
+                        
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
 
     }
 }
