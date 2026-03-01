@@ -47,4 +47,20 @@
 
 
     //========================================================PASSWORD RESET END=======================================================
+
+    this.getBooking = function (bookingID) {
+        console.log("getBooking called", bookingID);
+
+        return $http.get("/Main/getBooking", {
+            params: { bookingID: bookingID }
+        });
+    };
+
+    this.bookEvent = function (eventData) {
+        return $http({
+            method: "POST",
+            url: "/Main/addBooking",
+            data: eventData
+        });
+    };
 });
