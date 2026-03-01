@@ -4,8 +4,8 @@
         window.location.href = "/Main/HomePage"
     }
     $scope.redirectToForgetPassPage = function () {
-        window.location.href = "/Main/ForgetPassPage"
-    }
+        window.open("/Main/ForgetPassPage", "_blank");
+    };
 
 
     //======================================================== LOGIN START =======================================================
@@ -15,6 +15,15 @@
     $scope.logInService = function () {
         //alert(emailLogCreds.value);
         //alert(passwordLogCreds.value);
+
+        if ($scope.loginForm.$invalid) {
+            Swal.fire({
+                title: "Login Info",
+                text: "Please fill in all required fields correctly.",
+                icon: "info"
+            });
+            return;
+        }
 
         var userInfo = {
             email: $scope.lEmail,
@@ -136,14 +145,14 @@
     //======================================================== ACCOUNT MANAGEMENT END =======================================================
 
     //======================================================== PASSWORD RESET START =======================================================
-    //this is fo the 2 pages
+
     $scope.sendForgetRequest = function () {
         IsabellaCateringWebAppService.verifyEmailCreds($scope.fEmail).then(function (returnedData) {
-            if (returnedData.data != null) {
+            if (returnedData.data != '') {
                 alert("Please check your e-mail for the Reset Password Link");
             }
             else {
-                alert("User Not Found");
+                alert("User Not Found or An Existing Request is already active");
             }
         });
     };
@@ -191,6 +200,8 @@
     }
 
     //======================================================== PASSWORD RESET END =======================================================
+
+    //======================================================== CUSTOMER VIEW START =======================================================
 
     $scope.getOrderInfo = function () {
 
@@ -267,4 +278,6 @@
                 alert("Booking Failed");
             });
     };
+
+    //======================================================== CUSTOMER VIEW END =======================================================
 });
