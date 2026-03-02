@@ -64,10 +64,23 @@ namespace IsabellaCateringWebApp.Controllers
                     var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
                     if (verify == null)
                     {
-                        return null;
+                        return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet); ;
                     }
+
+                    if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
+                    {
+                        var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
+                        waitTime = waitTime == 0 ? 1 : waitTime;
+
+                        return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
+                    }
+
                     else if (verify.password == userInfo.password)
                     {
+                        verify.attempts = 0;
+                        verify.lockoutEnd= null;
+                        db.SaveChanges();
+
                         var creds = new tblUsersModel()
                         {
                             userID = verify.userID,
@@ -75,11 +88,24 @@ namespace IsabellaCateringWebApp.Controllers
                         };
                         Session["currentLog"] = creds.userID.ToString();
                         Session["currentPerm"] = creds.permissionID.ToString();
-                        return Json(creds, JsonRequestBehavior.AllowGet);
+                        return Json(new { success = true, data = creds }, JsonRequestBehavior.AllowGet);
                     }
                     else
                     {
-                        return null;
+                        verify.attempts += 1;
+
+                        if (verify.attempts >= 3)
+                        {
+                            verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
+                            db.SaveChanges();
+
+                            return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        db.SaveChanges(); // Save the incremented attempt
+
+                        int attemptsLeft = 3 - verify.attempts;
+                        return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
                     }
                 }
                 ;
