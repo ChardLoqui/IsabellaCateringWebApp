@@ -33,18 +33,44 @@
         var getData = IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo);
 
         getData.then(function (returnedData) {
-            if (returnedData.data != '')
-                var status = true;
-
-            //alert(returnedData.data);
-
-            if (status) {
+            if (returnedData.data.success)
                 $scope.redirectToHomePage();
-            } else {
+
+            else if (!returnedData.data.success && returnedData.data.message === "Invalid Credentials") {
                 // pag incorrct yung credentials
                 Swal.fire({
                     title: "Access Denied",
                     text: "Invalid email or password.",
+                    icon: "error"
+                });
+
+                // Clear input
+                $scope.lEmail = '';
+                $scope.lPassword = '';
+
+                // Reset character count
+                document.getElementById('emailCount').innerText = '0 / 50';
+                document.getElementById('passCount').innerText = '0 / 20';
+            } else if (!returnedData.data.success && returnedData.data.message === "Account Locked") {
+                // pag incorrct yung credentials
+                Swal.fire({
+                    title: "Access Denied",
+                    text: "Account locked for 15 minutes due to too many failed attempts.",
+                    icon: "error"
+                });
+
+                // Clear input
+                $scope.lEmail = '';
+                $scope.lPassword = '';
+
+                // Reset character count
+                document.getElementById('emailCount').innerText = '0 / 50';
+                document.getElementById('passCount').innerText = '0 / 20';
+            } else {
+                // pag incorrct yung credentials
+                Swal.fire({
+                    title: "Access Denied",
+                    text: returnedData.data.message,
                     icon: "error"
                 });
 

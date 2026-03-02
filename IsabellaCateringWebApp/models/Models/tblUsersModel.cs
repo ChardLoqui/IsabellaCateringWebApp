@@ -16,6 +16,8 @@ namespace IsabellaCateringWebApp.Models.Models
         public int isActive { get; set; }
         public DateTime dateCreated { get; set; }
         public DateTime dateUpdated { get; set; }
+        public int attempts { get; set; }
+        public DateTime? lockoutEnd { get; set; }
 
     }
 }
