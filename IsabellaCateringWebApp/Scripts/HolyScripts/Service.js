@@ -48,12 +48,15 @@
 
     //========================================================PASSWORD RESET END=======================================================
 
-    this.getBooking = function (bookingID) {
-        console.log("getBooking called", bookingID);
+    this.getBooking = function (booking) {
+        console.log("getBooking called", booking.bookingID);
 
-        return $http.get("/Main/getBooking", {
-            params: { bookingID: bookingID }
+        var response = $http({
+            method: "post",
+            url: "/Main/getBooking",
+            data: booking
         });
+        return response;
     };
 
     this.bookEvent = function (eventData) {
