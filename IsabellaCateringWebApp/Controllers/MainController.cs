@@ -62,7 +62,11 @@ namespace IsabellaCateringWebApp.Controllers
                 {
 
                     var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
-                    if (verify.password == userInfo.password)
+                    if (verify == null)
+                    {
+                        return null;
+                    }
+                    else if (verify.password == userInfo.password)
                     {
                         var creds = new tblUsersModel()
                         {

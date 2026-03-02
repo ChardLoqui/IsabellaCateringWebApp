@@ -147,15 +147,43 @@
     //======================================================== PASSWORD RESET START =======================================================
 
     $scope.sendForgetRequest = function () {
+
+        // check kung empty
+        if (!$scope.fEmail) {
+            Swal.fire({
+                title: "Empty Input",
+                text: "Please enter your email address.",
+                icon: "warning"
+            });
+            return;
+        }
+
         IsabellaCateringWebAppService.verifyEmailCreds($scope.fEmail).then(function (returnedData) {
             if (returnedData.data != '') {
-                alert("Please check your e-mail for the Reset Password Link");
+                //success
+                Swal.fire({
+                    title: "Email Sent!",
+                    text: "Please check your e-mail for the Reset Password Link.",
+                    icon: "success"
+                }).then(() => {
+                    // redirect
+                    window.location.href = "/Main/LoginPage";
+                });
             }
             else {
-                alert("User Not Found or An Existing Request is already active");
+                // wrong email/not found
+                Swal.fire({
+                    title: "User Not Found",
+                    text: "The email you entered is not registered in our system.",
+                    icon: "error"
+                });
+
+                // clear
+                $scope.fEmail = '';
             }
         });
     };
+
 
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -166,12 +194,36 @@
         });
     };
 
+    //4gotpass
     $scope.changeForgotPassword = function () {
+        if (!$scope.newPassword) {
+            //check if empty
+            Swal.fire({
+                title: "Required",
+                text: "Please enter a new password.",
+                icon: "warning"
+            });
+            return;
+        }
+
         IsabellaCateringWebAppService.changeForgotPasswordService(token, $scope.newPassword).then(function (returnedData) {
             if (returnedData.data == "True") {
-                alert("Password Changed \n Please log in again with the new password")
-            } else
-                alert("Password not Changed \n Please request a new link and try again later")
+                //success
+                Swal.fire({
+                    title: "Success!",
+                    text: "Password Changed. Please log in again with your new password.",
+                    icon: "success"
+                }).then(() => {
+                    window.location.href = "/Main/LoginPage";
+                });
+            } else {
+                //not saved
+                Swal.fire({
+                    title: "Error",
+                    text: "Password not Changed. Please request a new link and try again later.",
+                    icon: "error"
+                });
+            }
         });
     }
 
