@@ -16,17 +16,17 @@ namespace IsabellaCateringWebApp.Models.Models
         public string dsgnMotif { get; set; }
         public string prepVenue { get; set; }
 
-        public DateTime? bookingDate { get; set; }
+        public DateTime bookingDate { get; set; }
 
-        public DateTime? ceremTime { get; set; }
-        public DateTime? eventTime { get; set; }
+        public TimeSpan ceremTime { get; set; }
+        public TimeSpan eventTime { get; set; }
         public string venue { get; set; }
 
-        public DateTime? eventSetTime { get; set; }
-        public DateTime? eventMealTime { get; set; }
+        public TimeSpan eventSetTime { get; set; }
+        public TimeSpan eventMealTime { get; set; }
 
-        public DateTime? dateCreated { get; set; }
-        public DateTime? dateUpdated { get; set; }
+        public DateTime dateCreated { get; set; }
+        public DateTime dateUpdated { get; set; }
 
         public int progressOne { get; set; }
         public int progressTwo { get; set; }

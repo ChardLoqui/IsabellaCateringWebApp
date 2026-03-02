@@ -283,9 +283,11 @@
 
     $scope.getOrderInfo = function () {
 
-        const bookingID = 1;
-
-        IsabellaCateringWebAppService.getBooking(bookingID)
+        //const bookingID = 1;
+        var booking = {
+            bookingID: 1
+        }
+        IsabellaCateringWebAppService.getBooking(booking)
             .then(function (res) {
 
                 /* ===== DIRECT PASS-THROUGH ===== */
@@ -294,15 +296,15 @@
                     clientID: res.data.clientID,
                     packageID: res.data.packageID,
 
-                    bookingDate: res.data.bookingDate,
+                    bookingDate: convertDate(res.data.bookingDate),
                     venue: res.data.venue,
-                    eventSetTime: res.data.eventSetTime,
-                    eventTime: res.data.eventTime,
-                    ceremTime: res.data.ceremTime,
-                    eventMealTime: res.data.eventMealTime,
+                    eventSetTime: convertTime(res.data.eventSetTime),
+                    eventTime: convertTime(res.data.eventTime),
+                    ceremTime: convertTime(res.data.ceremTime),
+                    eventMealTime: convertTime(res.data.eventMealTime),
 
-                    dateCreated: res.data.dateCreated,
-                    dateUpdated: res.data.dateUpdated,
+                    dateCreated: convertDate(res.data.dateCreated),
+                    dateUpdated: convertDate(res.data.dateUpdated),
 
                     progressOne: res.data.progressOne,
                     progressTwo: res.data.progressTwo,
@@ -358,4 +360,34 @@
     };
 
     //======================================================== CUSTOMER VIEW END =======================================================
+
+    //================================================== DATE & TIME CONVERSION START ==================================================
+
+    function convertTime(timeObj) {
+        if (!timeObj || timeObj.Hours === undefined) return "";
+
+        let hours = timeObj.Hours;
+        let minutes = timeObj.Minutes;
+
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+
+        const paddedMinutes = minutes < 10 ? '0' + minutes : minutes;
+
+        return `${hours}:${paddedMinutes} ${ampm}`;
+    }
+
+    function convertDate(dateObj) {
+        if (!dateObj) return "";
+
+        const milliseconds = parseInt(dateObj.replace(/[^0-9-]/g, ''), 10);
+
+        const date = new Date(milliseconds);
+
+        return date.toLocaleString();
+    }
+
+    //=================================================== DATE & TIME CONVERSION END ===================================================
 });

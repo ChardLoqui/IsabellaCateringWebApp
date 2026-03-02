@@ -70,6 +70,7 @@ namespace IsabellaCateringWebApp.Controllers
                     if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
                     {
                         var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
+
                         waitTime = waitTime == 0 ? 1 : waitTime;
 
                         return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
@@ -375,44 +376,29 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        public JsonResult getBooking(int bookingID)
+        public JsonResult getBooking(tblBookingModel booking)
         {
             try
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    var booking = db.booking_tbl
-                                    .Where(b => b.bookingID == bookingID)
-                                    .Select(b => new
-                                    {
-                                        b.bookingID,
-                                        b.clientID,
-                                        b.packageID,
-                                        b.dsgnTheme,
-                                        b.dsgnMotif,
-                                        b.venue,
-                                        b.bookingDate,
-                                        b.eventSetTime,
-                                        b.eventTime,
-                                        b.ceremTime,
-                                        b.eventMealTime,
-                                        b.dateCreated,
-                                        b.dateUpdated,
-                                        b.progressOne,
-                                        b.progressTwo,
-                                        b.progressThree
-                                    })
+                    var bookingUpdate = db.booking_tbl
+                                    .Where(b => b.bookingID == booking.bookingID)
                                     .FirstOrDefault();
 
-                    if (booking == null)
-                        return Json(new { message = "Booking not found", bookingID }, JsonRequestBehavior.AllowGet);
-
-                    return Json(booking, JsonRequestBehavior.AllowGet);
+                    if (bookingUpdate == null)
+                    {
+                        return Json(new { message = "Booking not found", bookingID = booking.bookingID }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        return Json(bookingUpdate, JsonRequestBehavior.AllowGet);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { message = "Error connecting to DB: " + ex.Message, bookingID }, JsonRequestBehavior.AllowGet);
+                return Json(new { message = "Error connecting to DB: " + ex.Message, bookingID = booking.bookingID }, JsonRequestBehavior.AllowGet);
             }
         }
 
