@@ -5,7 +5,7 @@ using System.Web;
 
 namespace IsabellaCateringWebApp.Models.Models
 {
-    public class tblBookingModel
+    public class tblBookingsModel
     {
         public int bookingID { get; set; }
         public int createdBy { get; set; }

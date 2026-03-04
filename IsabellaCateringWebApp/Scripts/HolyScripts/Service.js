@@ -66,4 +66,14 @@
             data: eventData
         });
     };
+
+    //========================================================BOOKING CALENDAR START=======================================================
+
+    this.getCalendarBookingService = function (formattedDate) {
+        return $http.get("/Main/getCalendarBooking", {
+            params: { formattedDate: formattedDate }
+        });
+    }
+
+    //========================================================BOOKING CALENDAR END=======================================================
 });

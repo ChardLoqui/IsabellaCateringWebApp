@@ -1046,11 +1046,12 @@
     <Content Include="Views\Main\LoginPage.cshtml" />
     <Content Include="Views\Main\AccountsPage.cshtml" />
     <Content Include="Views\Main\LogsPage.cshtml" />
-    <Content Include="Views\Main\chgPassPage.cshtml" />
+    <Content Include="Views\Main\ChangePassPage.cshtml" />
     <Content Include="Views\Main\ForgetPassPage.cshtml" />
     <Content Include="Views\Shared\_LogInLayout.cshtml" />
-    <Content Include="Views\Main\addBooking.cshtml" />
-    <Content Include="Views\Main\customerView.cshtml" />
+    <Content Include="Views\Main\AddBookingPage.cshtml" />
+    <Content Include="Views\Main\CustomerViewPage.cshtml" />
+    <Content Include="Views\Main\BookingCalendarPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
