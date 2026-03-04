@@ -7,9 +7,9 @@ using System.Web;
 
 namespace IsabellaCateringWebApp.Models.Maps
 {
-    public class tblBookingMap : EntityTypeConfiguration<tblBookingModel>
+    public class tblBookingsMap : EntityTypeConfiguration<tblBookingsModel>
     {
-        public tblBookingMap()
+        public tblBookingsMap()
         {
             HasKey(i => i.bookingID);
             ToTable("booking_tbl");

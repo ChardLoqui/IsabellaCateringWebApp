@@ -33,7 +33,7 @@ namespace IsabellaCateringWebApp.Controllers
             return View();
         }
 
-        public ActionResult chgPassPage()
+        public ActionResult ChangePassPage()
         {
             return View();
         }
@@ -43,15 +43,20 @@ namespace IsabellaCateringWebApp.Controllers
             return View();
         }
         
-        public ActionResult customerView()
+        public ActionResult CustomerViewPage()
         {
             return View();
         }
 
-        public ActionResult addBooking()
+        public ActionResult AddBookingPage()
         {
             return View();
         }
+        public ActionResult BookingCalendarPage()
+        {
+            return View();
+        }
+
 
         // get creds for login
         public JsonResult JsonLogGetCreds(tblUsersModel userInfo)
@@ -335,13 +340,13 @@ namespace IsabellaCateringWebApp.Controllers
         }
 
 
-        public JsonResult addBooking(tblBookingModel bookingData)
+        public JsonResult addBooking(tblBookingsModel bookingData)
         {
             try
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    var newBooking = new tblBookingModel()
+                    var newBooking = new tblBookingsModel()
                     {
                         packageID = bookingData.packageID,
                         dsgnTheme = bookingData.dsgnTheme,
@@ -364,7 +369,7 @@ namespace IsabellaCateringWebApp.Controllers
                     };
 
                     // Add to DbSet and save
-                    db.booking_tbl.Add(newBooking);
+                    db.bookings_tbl.Add(newBooking);
                     db.SaveChanges();
                 }
 
@@ -376,13 +381,13 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        public JsonResult getBooking(tblBookingModel booking)
+        public JsonResult getBooking(tblBookingsModel booking)
         {
             try
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    var bookingUpdate = db.booking_tbl
+                    var bookingUpdate = db.bookings_tbl
                                     .Where(b => b.bookingID == booking.bookingID)
                                     .FirstOrDefault();
 
@@ -399,6 +404,33 @@ namespace IsabellaCateringWebApp.Controllers
             catch (Exception ex)
             {
                 return Json(new { message = "Error connecting to DB: " + ex.Message, bookingID = booking.bookingID }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult getCalendarBooking(string formattedDate)
+        {
+            try
+            {
+                DateTime csharpDate = DateTime.Parse(formattedDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookings = db.bookings_tbl
+                                    .Where(b => b.bookingDate == csharpDate)
+                                    .ToList();
+
+                    if (bookings == null)
+                    {
+                        return Json(new { success = false, message = "No Bookings Found!" });
+                    }
+                    else
+                    {
+                        return Json(bookings, JsonRequestBehavior.AllowGet);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { message = "Error connecting to DB: " + ex.Message}, JsonRequestBehavior.AllowGet);
             }
         }
 

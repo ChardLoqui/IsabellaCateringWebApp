@@ -390,4 +390,114 @@
     }
 
     //=================================================== DATE & TIME CONVERSION END ===================================================
+
+    //===================================================== BOOKING CALENDAR START =====================================================
+    const datepickerContainer = document.getElementById('datepicker-container');
+    const daysContainer = document.getElementById('days-container');
+    const currentMonthElement = document.getElementById('currentMonth');
+
+    let currentDate = new Date();
+    let selectedDate = null;
+    // Month navigation
+    $scope.togglePrevMonth = function () {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        $scope.renderCalendar();
+    }
+
+
+    $scope.toggleNextMonth = function () {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        $scope.renderCalendar();
+    }
+
+    $scope.renderCalendar = function () {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        currentMonthElement.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        daysContainer.innerHTML = '';
+        // Get the first day of the month (0 = Sunday, 1 = Monday, etc.)
+        let firstDayOfMonth = new Date(year, month, 1).getDay();
+        // Adjust for Monday as first day (0 = Sunday, 6 = Monday)
+        firstDayOfMonth = firstDayOfMonth === 6 ? 0 : firstDayOfMonth;
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        // Add empty cells for days before the first day of the month
+        for (let i = (daysInPrevMonth - firstDayOfMonth + 1); i <= daysInPrevMonth; i++) {
+            daysContainer.innerHTML += `<div class="toPrev border-gray-400 border"><div class="text-gray-400 flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-gray-400 hover:border-2">${i}</div></div>`;
+        }
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const isCurrentDay = new Date().getDate() === i &&
+                new Date().getMonth() === month &&
+                new Date().getFullYear() === year;
+
+            const isSelectedDay = selectedDate &&
+                selectedDate.split('-')[1] === i.toString() &&
+                parseInt(selectedDate.split('-')[0]) === month + 1 &&
+                parseInt(selectedDate.split('-')[2]) === year;
+
+            const dayClass = isSelectedDay
+                ? "flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-[#D6418B] hover:bg-[#EC4899] hover:border-2 hover:border-[#D6418B] hover:text-white bg-[#EC4899] text-white"
+                : "flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
+
+            const dayString = `${year}-${month + 1}-${i}`;
+            daysContainer.innerHTML += `<div class="current border-gray-400 border" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div></div>`;
+        }
+
+        for (let i = 1; i <= (42 - daysInMonth - firstDayOfMonth); i++) {
+            daysContainer.innerHTML += `<div class="toNext border-gray-400 border"><div class="text-gray-400 flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-gray-400 hover:border-2">${i}</div></div>`;
+        }
+
+        document.querySelectorAll('.toPrev').forEach(day => {
+            day.addEventListener('click', function () {
+                $scope.togglePrevMonth();
+            });
+        });
+
+        document.querySelectorAll('.toNext').forEach(day => {
+            day.addEventListener('click', function () {
+                $scope.toggleNextMonth();
+            });
+        });
+
+        document.querySelectorAll('.current').forEach(day => {
+            const dateParts = day.dataset.date.split('-');
+            const loadEventDate = new Date((parseInt(dateParts[0])), (parseInt(dateParts[1]) - 1), (parseInt(dateParts[2])));
+            const formattedDate = loadEventDate.toISOString();
+            IsabellaCateringWebAppService.getCalendarBookingService(day.dataset.date).then(function (response) {
+                response.data.forEach(item => {
+                    if (response.data.success) {
+                        return;
+                    }
+                    else {
+                        const eventCard = document.createElement("div");
+                        eventCard.className = "border-gray-400 border p-2 cursor-pointer";
+                        eventCard.innerText = `${item.bookingID} ${convertDate(item.bookingDate)}`;
+                        eventCard.dataset.date = day.dataset.date;
+
+                        eventCard.addEventListener("click", function () {
+                            alert(`Trial ${this.dataset.date} clicked!`);
+                        });
+                        day.appendChild(eventCard);
+                    }
+                });
+                
+            });
+        });
+
+        document.querySelectorAll('#days-container div .date-block').forEach(day => {
+            if (day.dataset && day.dataset.date) { // Only add event listeners to cells with day numbers
+                day.addEventListener('click', function () {
+                    selectedDate = this.dataset.date;
+                    document.querySelectorAll('#days-container div').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
+                    this.classList.add('bg-[#EC4899]', 'text-white', 'selected');
+                });
+            }
+        });
+    }
+    //====================================================== BOOKING CALENDAR END ======================================================
 });
