@@ -7,12 +7,12 @@ using System.Web;
 
 namespace IsabellaCateringWebApp.Models.Maps
 {
-    public class tblBookingsMap : EntityTypeConfiguration<tblBookingsModel>
+    public class tblSpecialsTypesMap : EntityTypeConfiguration<tblSpecialsTypesModel>
     {
-        public tblBookingsMap()
+        public tblSpecialsTypesMap()
         {
-            HasKey(i => i.bookingID);
-            ToTable("bookings_tbl");
+            HasKey(i => i.specialsTypID);
+            ToTable("specialstypes_tbl");
         }
     }
 }
