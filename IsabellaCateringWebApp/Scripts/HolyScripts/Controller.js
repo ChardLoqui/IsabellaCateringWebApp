@@ -1,5 +1,6 @@
 ﻿app.controller("IsabellaCateringWebAppController", function ($scope, IsabellaCateringWebAppService) {
 
+    
     $scope.redirectToHomePage = function () {
         window.location.href = "/Main/HomePage"
     }
@@ -107,7 +108,35 @@
         }
     }
 
+    
+
     //======================================================== LOGIN END =======================================================
+
+    //======================================================== NAVBAR START =======================================================
+    //test for navbar
+    $scope.sessionInfo = { name: 'Loading..', permission: '' };
+
+    $scope.loadUserSession = function () {
+        IsabellaCateringWebAppService.getCurrentSessionServiceNav().then(function (returnedData) {
+            // Validate that we have data
+            if (returnedData.data && returnedData.data.userName) {
+                $scope.sessionInfo.name = returnedData.data.userName;
+                $scope.sessionInfo.permission = returnedData.data.permID;
+
+                const roles = { "1": "Admin", "2": "Staff", "3": "User" };
+                $scope.sessionInfo.role = roles[returnedData.data.permID] || "";
+
+            }
+        }).catch(function (error) {
+            console.error("Session fetch failed:", error);
+        });
+    };
+
+    // loads navbar
+    $scope.loadUserSession();
+
+
+    //======================================================== NAVBAR END =======================================================
 
     //======================================================== ACCOUNT MANAGEMENT START=======================================================
     //bago, to add user 
@@ -500,4 +529,43 @@
         });
     }
     //====================================================== BOOKING CALENDAR END ======================================================
+
+    //====================================================== PAYMENT REMINDER START ======================================================
+
+    $scope.getPaymentData = function () {
+        IsabellaCateringWebAppService.getPaymentDataService().then(function (returnedData) {
+            $scope.paymentData = returnedData.data.map(payment => {
+                // Helper function to convert /Date(ms)/ to actual JS Date objects
+                const parseDate = (dateStr) => {
+                    if (!dateStr) return null;
+                    const milli = parseInt(dateStr.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
+                    return new Date(milli);
+                };
+
+                payment.dateCreated = parseDate(payment.dateCreated);
+                payment.dateUpdated = parseDate(payment.dateUpdated);
+                payment.dueDate = parseDate(payment.dueDate);
+
+                return payment;
+            });
+        });
+    };
+    $scope.getPaymentData();
+
+    $scope.isUpcomingDue = function (payment) {
+        if (payment.paymentStatus !== 'Unpaid') {
+            return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        const dueDate = new Date(payment.dueDate);
+
+        const diffTime = dueDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays <= 7;
+    };
+
+    //====================================================== PAYMENT REMINDER END ======================================================
 });

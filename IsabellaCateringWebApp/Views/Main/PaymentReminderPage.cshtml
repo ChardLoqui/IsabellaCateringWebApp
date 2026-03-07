@@ -1,0 +1,216 @@
+﻿@{
+    Layout = "~/Views/Shared/NavbarLayout.cshtml";
+}
+
+
+
+
+<div class="relative z-10 h-full overflow-y-auto">
+    <div class="p-8">
+        <h1 class="mb-6 text-2xl font-semibold text-black">Payment Reminder</h1>
+        @*First Row*@
+        <div class="flex flex-wrap lg:flex-nowrap items-stretch gap-6 mb-8">
+            @*Due Payments*@
+            <div class="w-full lg:w-3/4">
+                <div class="flex flex-col rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b bg-white">
+                        <div class="flex items-center gap-6">
+                            <h2 class="text-xl font-semibold text-black">Due Payments</h2>
+
+                            <div class="flex items-center gap-2">
+                                <input id="searchEmail"
+                                       type="text"
+                                       ng-model="searchQuery"
+                                       placeholder="Search table data..."
+                                       class="w-64 rounded border border-gray-200 bg-gray-50 p-2 px-4 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
+
+                                <button type="button"
+                                        class="rounded bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-600 transition-colors">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 font-bold text-gray-800">
+                            <div class="flex items-center gap-1 border-r pr-4">
+                                <button class="p-1 hover:text-pink-500 transition-colors">
+                                    <span class="material-symbols-outlined text-xl leading-none">chevron_left</span>
+                                </button>
+                                <button class="p-1 hover:text-pink-500 transition-colors">
+                                    <span class="material-symbols-outlined text-xl leading-none">chevron_right</span>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                                <span class="text-xs">Page 1</span>
+                                <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="max-h-[500px] overflow-y-auto overflow-x-hidden">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-left text-xs font-bold tracking-wider text-gray-400 uppercase border-b">
+                                    <th class="p-4 w-[10%]">Payment ID</th>
+                                    <th class="p-4 w-[10%]">AmountDue</th>
+                                    <th class="p-4 w-[15%]">Amount Paid</th>
+                                    <th class="p-4 w-[15%]">Payment Status</th>
+                                    <th class="p-4 w-[10%]">Due Date</th>
+                                    <th class="p-4 w-[10%]">Date Created</th>
+                                    <th class="p-4 w-[10%]">Date Updated</th>
+                                    <th class="p-4 w-[10%] text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm font-medium text-gray-700">
+                                <tr ng-repeat="payment in paymentData | filter:isUpcomingDue | filter:searchQuery"
+                                    class="border-b border-gray-50 transition-colors hover:bg-gray-50">
+
+                                    <td class="p-4">{{ payment.paymentID }}</td>
+                                    <td class="p-4">{{ payment.amountDue | currency:"₱" }}</td>
+                                    <td class="p-4">{{ payment.amountPaid | currency:"₱" }}</td>
+                                    <td class="p-4">
+                                        <span class="px-2 py-1 rounded text-xs font-bold bg-red-600 text-white shadow-sm">
+                                            {{ payment.paymentStatus }}
+                                        </span>
+
+                                    </td>
+                                    @*ng-class="{'text-red-600': isOverdue(payment.dueDate)}"*@
+                                    <td class="p-4 font-bold text-red-700">
+                                        {{ payment.dueDate | date:'MM/dd/yyyy' }}
+                                    </td>
+                                    <td class="p-4 text-xs text-gray-400">{{ payment.dateCreated | date:'MM/dd/yyyy' }}</td>
+                                    <td class="p-4 text-xs text-gray-400">{{ payment.dateUpdated | date:'MM/dd/yyyy' }}</td>
+
+                                    <td class="p-4 text-center">
+                                        <button class="relative p-2 rounded-full text-pink-500 hover:bg-pink-50 hover:text-pink-700 transition-all duration-200">
+                                            <span class="material-symbols-outlined text-[24px]">
+                                                notifications
+                                            </span>
+                                            <span class="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border-2 border-white"></span>
+                                            </span>
+                                        </button>
+
+                                    </td>
+                                </tr>
+
+                                <tr ng-if="(paymentData | filter:isUpcomingDue).length === 0">
+                                    <td colspan="8" class="p-10 text-center text-gray-400">
+                                        <i class="bi bi-check-circle text-3xl block mb-2"></i>
+                                        No urgent unpaid payments found.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            @*Chart*@
+            <div class="w-full lg:w-1/4">
+                <div class="h-full border border-gray-200 rounded-lg shadow-sm bg-white flex flex-col items-center justify-center">
+                    
+                    <p class="mt-4 text-sm text-gray-600">Doughnut Chart Placeholder</p>
+                </div>
+            </div>
+        </div>
+        @*Search bar & Pages*@
+    <div class="rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b bg-white">
+            <div class="flex items-center gap-6">
+                <h2 class="text-xl font-semibold text-black">Payments</h2>
+
+                <div class="flex items-center gap-2">
+                    <input id="searchEmail"
+                           type="text"
+                           ng-model="searchQuery"
+                           placeholder="Search table data..."
+                           class="w-64 rounded border border-gray-200 bg-gray-50 p-2 px-4 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
+
+                    <button type="button"
+                            class="rounded bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-600 transition-colors">
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 font-bold text-gray-800">
+                <div class="flex items-center gap-1 border-r pr-4">
+                    <button class="p-1 hover:text-pink-500 transition-colors">
+                        <span class="material-symbols-outlined text-xl leading-none">chevron_left</span>
+                    </button>
+                    <button class="p-1 hover:text-pink-500 transition-colors">
+                        <span class="material-symbols-outlined text-xl leading-none">chevron_right</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                    <span class="text-xs">Page 1</span>
+                    <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                </div>
+            </div>
+        </div>
+        @*Payments table*@
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 text-left text-xs font-bold tracking-wider text-gray-400 uppercase border-b">
+                        <th class="p-4 w-[10%]">Payment ID</th>
+                        <th class="p-4 w-[10%]">Amount Due</th>
+                        <th class="p-4 w-[15%]">Amount Paid</th>
+                        <th class="p-4 w-[15%]">Payment Status</th>
+                        <th class="p-4 w-[10%]">Due Date</th>
+                        <th class="p-4 w-[10%]">Date Created</th>
+                        <th class="p-4 w-[10%]">Date Updated</th>
+                        <th class="p-4 w-[10%] text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm font-medium text-gray-700">
+                    <tr ng-repeat="payment in paymentData | filter:searchQuery"
+                        class="border-b transition-colors"
+                        ng-class="{
+                'bg-red-50 border-red-100 hover:bg-red-100': payment.paymentStatus === 'Unpaid',
+                'border-gray-50 hover:bg-gray-50': payment.paymentStatus !== 'Unpaid'
+            }">
+
+                        <td class="p-4" ng-class="{'text-red-700 font-bold': payment.paymentStatus === 'Unpaid'}">{{ payment.paymentID }}</td>
+                        <td class="p-4">{{ payment.amountDue | currency:"₱" }}</td>
+                        <td class="p-4">{{ payment.amountPaid | currency:"₱" }}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-xs font-bold"
+                                  ng-class="{
+                        'bg-green-100 text-green-700': payment.paymentStatus === 'Paid',
+                        'bg-yellow-100 text-yellow-700': payment.paymentStatus === 'Pending',
+                        'bg-red-600 text-white shadow-sm': payment.paymentStatus === 'Unpaid'
+                      }">
+                                {{ payment.paymentStatus }}
+                            </span>
+                        </td>
+                        <td class="p-4" ng-class="{'text-red-700 font-bold': payment.paymentStatus === 'Unpaid'}">{{ payment.dueDate | date:'MM/dd/yyyy' }}</td>
+                        <td class="p-4 text-xs" ng-class="payment.paymentStatus === 'Unpaid' ? 'text-red-400' : 'text-gray-400'">{{ payment.dateCreated | date:'MM/dd/yyyy' }}</td>
+                        <td class="p-4 text-xs" ng-class="payment.paymentStatus === 'Unpaid' ? 'text-red-400' : 'text-gray-400'">{{ payment.dateUpdated | date:'MM/dd/yyyy' }}</td>
+
+                        <td class="p-4 text-center">
+                            <button ng-if="payment.paymentStatus === 'Unpaid'" class="relative p-2 rounded-full text-pink-500 hover:bg-pink-50 hover:text-pink-700 transition-all duration-200">
+                                <span class="material-symbols-outlined text-[24px]">
+                                    notifications
+                                </span>
+                                <span class="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border-2 border-white"></span>
+                                </span>
+                            </button>
+
+                            <button ng-if="payment.paymentStatus !== 'Unpaid'" class="text-gray-400 hover:text-pink-500 p-2">
+                                <span class="material-symbols-outlined">edit_square</span>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    </div>
+</div>
+
+
