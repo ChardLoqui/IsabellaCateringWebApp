@@ -31,6 +31,12 @@
         return $http.get("/Main/GetUsers");
     }
 
+
+    //test for navbar
+    this.getCurrentSessionServiceNav = function () {
+        return $http.get("/Main/getCurrentSessionNav");
+    };
+
     //========================================================PASSWORD RESET START=======================================================
 
     this.verifyEmailCreds = function (userEmail) {
@@ -76,4 +82,23 @@
     }
 
     //========================================================BOOKING CALENDAR END=======================================================
+
+    //========================================================PAYMENT REMINDER START=======================================================
+
+    //for getting the data for payments
+    this.getPaymentDataService = function () {
+        return $http.get("/Main/GetPayments");
+    }
+
+    this.AddPaymentCall = function (paymentData) {
+        var response = $http({
+            method: "post",
+            url: "/Main/paymentInfo",
+            data: paymentData
+        });
+        return response;
+    };
+
+    //========================================================PAYMENT REMINDER END=======================================================
 });
+

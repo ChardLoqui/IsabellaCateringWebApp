@@ -57,6 +57,10 @@ namespace IsabellaCateringWebApp.Controllers
             return View();
         }
 
+        public ActionResult PaymentReminderPage()
+        {
+            return View();
+        }
 
         // get creds for login
         public JsonResult JsonLogGetCreds(tblUsersModel userInfo)
@@ -137,6 +141,26 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
+        }
+
+        //for navbar (test)
+        public JsonResult getCurrentSessionNav()
+        {
+            var uID = Session["currentLog"]?.ToString();
+            var pID = Session["currentPerm"]?.ToString() ?? "";
+            string uName = "Loading..";
+
+            if (!string.IsNullOrEmpty(uID))
+            {
+                int id = int.Parse(uID);
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.FirstOrDefault(x => x.userID == id);
+                    if (user != null) uName = $"{user.firstName} {user.lastName}";
+                }
+            }
+
+            return Json(new { userName = uName, permID = pID }, JsonRequestBehavior.AllowGet);
         }
 
         //bago, to add user
@@ -433,6 +457,71 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { message = "Error connecting to DB: " + ex.Message}, JsonRequestBehavior.AllowGet);
             }
         }
+
+        public JsonResult GetPayments()
+        {
+            using (var db = new IsabellaCateringContext())
+            {
+                var data = db.payments_tbl.Select(p => new
+                {
+                    paymentID = p.paymentID,
+                    amountDue = p.amountDue,
+                    amountPaid = p.amountPaid,
+                    paymentType = p.paymentType,
+                    paymentStatus = p.paymentStatus,
+                    dueDate = p.dueDate,
+                    dateCreated = p.dateCreated,
+                    dateUpdated = p.dateUpdated
+                }).ToList();
+
+                // Use a larger MaxJsonLength to prevent silent truncation
+                var jsonResult = Json(data, JsonRequestBehavior.AllowGet);
+                jsonResult.MaxJsonLength = int.MaxValue;
+                return jsonResult;
+            }
+        }
+        [HttpPost]
+        public JsonResult paymentInfo(tblPaymentsModel paymentData)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var paymentInfo = new tblPaymentsModel()
+                    {
+                        paymentID = paymentData.paymentID,
+                        amountDue = paymentData.amountDue,
+                        amountPaid = paymentData.amountPaid,
+                        paymentType = paymentData.paymentType,
+                        paymentStatus = paymentData.paymentStatus,
+                        dueDate = paymentData.dueDate,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.payments_tbl.Add(paymentInfo);
+                    db.SaveChanges();
+
+                }
+
+                return Json(new { success = true, message = "Saved successfully!" });
+            }
+            catch (Exception ex)
+            {
+                string realError = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    realError = ex.InnerException.Message;
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        realError = ex.InnerException.InnerException.Message;
+                    }
+                }
+
+                return Json(new { success = false, message = realError });
+            }
+        }
+
 
 
     }
