@@ -81,6 +81,18 @@
         });
     }
 
+    this.getBookingDetailsService = function (bookingID) {
+        return $http.get("/Main/getBookingDetails", {
+            params: { bookingID: bookingID }
+        });
+    }
+
+    this.checkCalendarAvailabilityService = function (formattedDate) {
+        return $http.get("/Main/checkCalendarAvailability", {
+            params: { formattedDate: formattedDate }
+        });
+    }
+
     //========================================================BOOKING CALENDAR END=======================================================
 
     //========================================================PAYMENT REMINDER START=======================================================

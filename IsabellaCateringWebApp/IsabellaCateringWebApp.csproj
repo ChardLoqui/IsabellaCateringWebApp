@@ -1122,6 +1122,7 @@
     <Content Include="Views\Main\BookingCalendarPage.cshtml" />
     <Content Include="Views\Main\PaymentReminderPage.cshtml" />
     <Content Include="Views\Shared\NavbarLayout.cshtml" />
+    <Content Include="Views\Shared\_ManagementLayout.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -2,10 +2,13 @@
 
     
     $scope.redirectToHomePage = function () {
-        window.location.href = "/Main/HomePage"
+        window.location.href = "/Main/HomePage";
     }
     $scope.redirectToForgetPassPage = function () {
         window.open("/Main/ForgetPassPage", "_blank");
+    };
+    $scope.redirectToAddBookingPage = function () {
+        window.location.href = "/Main/AddBookingPage";
     };
 
 
@@ -494,24 +497,36 @@
         });
 
         document.querySelectorAll('.current').forEach(day => {
-            const dateParts = day.dataset.date.split('-');
-            const loadEventDate = new Date((parseInt(dateParts[0])), (parseInt(dateParts[1]) - 1), (parseInt(dateParts[2])));
-            const formattedDate = loadEventDate.toISOString();
-            IsabellaCateringWebAppService.getCalendarBookingService(day.dataset.date).then(function (response) {
-                response.data.forEach(item => {
-                    if (response.data.success) {
-                        return;
+            IsabellaCateringWebAppService.getCalendarBookingService(day.dataset.date).then(function (bookingResponse) {
+                bookingResponse.data.bookingData.forEach(item => {
+                    if (bookingResponse.data.success) {
+                        IsabellaCateringWebAppService.getBookingDetailsService(item.bookingID).then(function (detailsResponse) {
+                            if (detailsResponse.data.success) {
+                                const eventCard = document.createElement("div");
+                                eventCard.className = "mx-2 flex cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 h-15 placeholder-white text-xs";
+
+                                if (detailsResponse.data.clients.cCeleb2FName != null)
+                                    eventCard.innerText = `${detailsResponse.data.clients.cCeleb1FName} & ${detailsResponse.data.clients.cCeleb2FName}'s ${detailsResponse.data.events.eventDesc}, ${convertTime(item.eventTime)}`;
+                                else
+                                    eventCard.innerText = `${detailsResponse.data.clients.cCeleb1FName}'s ${detailsResponse.data.events.eventDesc}, ${convertTime(item.eventTime)}`;
+
+                                eventCard.dataset.date = day.dataset.date;
+
+                                eventCard.addEventListener("click", function () {
+                                    alert(`Trial ${this.dataset.date} clicked!`);
+                                });
+                                day.appendChild(eventCard);
+                            } else {
+                                Swal.fire({
+                                    title: "Error",
+                                    text: detailsResponse.data.message,
+                                    icon: "error"
+                                });
+                            }
+                        });
                     }
                     else {
-                        const eventCard = document.createElement("div");
-                        eventCard.className = "border-gray-400 border p-2 cursor-pointer";
-                        eventCard.innerText = `${item.bookingID} ${convertDate(item.bookingDate)}`;
-                        eventCard.dataset.date = day.dataset.date;
-
-                        eventCard.addEventListener("click", function () {
-                            alert(`Trial ${this.dataset.date} clicked!`);
-                        });
-                        day.appendChild(eventCard);
+                        return;
                     }
                 });
                 
@@ -524,6 +539,22 @@
                     selectedDate = this.dataset.date;
                     document.querySelectorAll('#days-container div').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
                     this.classList.add('bg-[#EC4899]', 'text-white', 'selected');
+                });
+            }
+        });
+    }
+
+    $scope.addBooking = function () {
+        alert(selectedDate); 
+        IsabellaCateringWebAppService.checkCalendarAvailabilityService(selectedDate).then(function (response) {
+            if (response.data.success) {
+                $scope.redirectToAddBookingPage();
+            }
+            else {
+                Swal.fire({
+                    title: "Error",
+                    text: response.data.message,
+                    icon: "error"
                 });
             }
         });
