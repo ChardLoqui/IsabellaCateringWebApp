@@ -1,6 +1,6 @@
 ﻿app.controller("IsabellaCateringWebAppController", function ($scope, IsabellaCateringWebAppService) {
 
-    
+
     $scope.redirectToHomePage = function () {
         window.location.href = "/Main/HomePage";
     }
@@ -121,41 +121,7 @@
         });
     };
 
-    //bago, to add user 
-    $scope.addUsrSubmit = function () {
-        // check inputs
-        if ($scope.addUserForm.$invalid) {
-            Swal.fire({
-                title: "Invalid Input",
-                text: "Please check your email format and ensure all fields are filled.",
-                icon: "info"
-            });
-            return;
-        }
-        // check dupe
-        if ($scope.isEmailDuplicate()) {
-            Swal.fire({
-                title: "Duplicate Email",
-                text: "This email address is already in use.",
-                icon: "warning"
-            });
-            return;
-        }
-        // pword check
-        if ($scope.password !== $scope.confirmPassword) {
-            Swal.fire({
-                title: "Password Mismatch",
-                text: "The passwords you entered do not match.",
-                icon: "error"
-            });
-            return;
-        }
-        // preps data if it's valid
-            homepage.innerHTML = `sess ID = ${returnedData.data.userID} sess perm = ${returnedData.data.permID}` //for test (to remove)
-        });
-    };
-
-    const logInPasswordToggle = document.getElementById('toggleLogInPassword') 
+    const logInPasswordToggle = document.getElementById('toggleLogInPassword')
     const logInPassword = document.getElementById('logPWord')
     $scope.toggleShowLogInPassword = function () {
         if (logInPassword.type === "password") {
@@ -167,7 +133,7 @@
         }
     }
 
-    
+
 
     //======================================================== LOGIN END =======================================================
 
@@ -200,6 +166,34 @@
     //======================================================== ACCOUNT MANAGEMENT START=======================================================
     //bago, to add user 
     $scope.addUsrSubmit = function () {
+        // check inputs
+        if ($scope.addUserForm.$invalid) {
+            Swal.fire({
+                title: "Invalid Input",
+                text: "Please check your email format and ensure all fields are filled.",
+                icon: "info"
+            });
+            return;
+        }
+        // check dupe
+        if ($scope.isEmailDuplicate()) {
+            Swal.fire({
+                title: "Duplicate Email",
+                text: "This email address is already in use.",
+                icon: "warning"
+            });
+            return;
+        }
+        // pword check
+        if ($scope.password !== $scope.confirmPassword) {
+            Swal.fire({
+                title: "Password Mismatch",
+                text: "The passwords you entered do not match.",
+                icon: "error"
+            });
+            return;
+        }
+
         var userInfo = {
             permissionID: $scope.permissionID,
             firstName: $scope.firstName,
@@ -222,36 +216,6 @@
                 Swal.fire({ title: "Error", text: response.data.message, icon: "error" });
             }
         });
-
-        var getData = IsabellaCateringWebAppService.AddUsrCall(userInfo);
-
-        getData.then(function (response) {
-            if (response.data.success) {
-                Swal.fire({
-                    title: "Success!",
-                    text: "Account created successfully!",
-                    icon: "success"
-                });
-
-                // Refresh the table data immediately after adding a new user!
-                $scope.getUsersData();
-
-            } else {
-                Swal.fire({
-                    title: "Database Error!",
-                    text: response.data.message,
-                    icon: "error"
-                });
-            }
-
-        }, function (error) {
-            Swal.fire({
-                title: "Server Error!",
-                text: "Failed to communicate with the server.",
-                icon: "error"
-            });
-        });
-
     };
 
     // for getting the data
@@ -336,7 +300,7 @@
     };
 
     $scope.searchText = "";
-    $scope.appliedSearch = ""; 
+    $scope.appliedSearch = "";
     $scope.currentPage = 1;
     $scope.pageSize = 8; // rows for table
 
@@ -363,11 +327,6 @@
     $scope.lastPage = function () {
         $scope.currentPage = $scope.numberOfPages();
     };
-
-
-});
-
-
 
 
     //======================================================== ACCOUNT MANAGEMENT END =======================================================
@@ -699,7 +658,7 @@
                         return;
                     }
                 });
-                
+
             });
         });
 
@@ -715,7 +674,7 @@
     }
 
     $scope.addBooking = function () {
-        alert(selectedDate); 
+        alert(selectedDate);
         IsabellaCateringWebAppService.checkCalendarAvailabilityService(selectedDate).then(function (response) {
             if (response.data.success) {
                 $scope.redirectToAddBookingPage();
@@ -759,7 +718,7 @@
         }
 
         const today = new Date();
-        today.setHours(0, 0, 0, 0); 
+        today.setHours(0, 0, 0, 0);
         const dueDate = new Date(payment.dueDate);
 
         const diffTime = dueDate - today;
