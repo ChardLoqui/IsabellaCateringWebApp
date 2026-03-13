@@ -7,144 +7,242 @@
     @* Header *@
     <h1 class="text-2xl font-semibold text-black mb-6">Account Management</h1>
 
-    @* Search & Pagination Container *@
-    <div class="flex items-center justify-between mb-8 w-full">
+    @* Search & Pagination *@
+<div class="flex items-center justify-between mb-8 w-full">
 
-        <div class="flex items-center gap-2">
-            <input id="searchEmail"
-                   type="text"
-                   placeholder="Search by email..."
-                   class="w-96 px-5 rounded bg-gray-100 p-2 focus:outline-none border border-transparent focus:border-pink-500 transition-all" />
+    <div class="flex items-center gap-2">
+        <input id="searchEmail"
+               type="text"
+               ng-model="searchText"
+               ng-keydown="$event.keyCode === 13 && searchUser()"
+               placeholder="Search by email..."
+               class="w-96 px-5 rounded bg-gray-100 p-2 focus:outline-none border border-transparent focus:border-pink-500 transition-all" />
 
-            <button type="button"
-                    class="px-5 rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-md transition-colors">
-                Search
-            </button>
+        <button type="button" ng-click="searchUser()"
+                class="px-5 rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-md transition-colors">
+            Search
+        </button>
 
-            <button data-modal-target="add" data-modal-toggle="add"
-                    class="px-5 rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-md transition-colors"
-                    type="button">
-                New Account +
-            </button>
+        <button data-modal-target="add" data-modal-toggle="add"
+                class="px-5 rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-md transition-colors"
+                type="button">
+            New Account +
+        </button>
 
-            <div id="add" tabindex="-1" aria-hidden="true"
-                 class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div id="add" tabindex="-1" aria-hidden="true"
+             class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
 
-                <div class="relative w-full max-w-sm p-4">
+            <div class="relative w-full max-w-sm p-4">
+                <form name="addUserForm" ng-submit="addUsrSubmit()" class="bg-white rounded-2xl shadow-xl p-7 relative" novalidate>
 
-                    <form ng-submit="addUsrSubmit()" class="bg-white rounded-2xl shadow-xl p-7 relative">
+                    <button type="button"
+                            class="absolute top-4 right-2 text-pink-500 hover:text-pink-600 font-bold"
+                            data-modal-hide="add">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
 
-                        <button type="button"
-                                class="absolute top-4 right-2 text-pink-500 hover:text-pink-600 font-bold"
-                                data-modal-hide="add">
-                            <span class="material-symbols-outlined text-2xl">close</span>
+                    <div class="flex items-end justify-between mb-5 mt-1">
+                        <div class="border-b border-gray-300 pb-1 w-[55%]">
+                            <h3 class="text-xl font-bold text-gray-800">New Account</h3>
+                        </div>
+
+                        <div class="relative w-28 pb-1">
+                            <select ng-model="permissionID" name="role" required class="appearance-none w-24 bg-pink-100 text-gray-800 text-xs font-bold rounded-lg px-2 py-2 pr-4 focus:outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer">
+                                <option value="" disabled selected>ROLE</option>
+                                <option value="1">ADMIN</option>
+                                <option value="2">STAFF</option>
+                                <option value="3">USER</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-6 flex items-center text-gray-800 pb-1">
+                                <span class="material-symbols-outlined text-base">expand_more</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-800 mb-1">Account First Name</label>
+                            <input type="text" ng-model="firstName" required
+                                   class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2 focus:ring-pink-400">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-800 mb-1">Account Last Name</label>
+                            <input type="text" ng-model="lastName" required
+                                   class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2 focus:ring-pink-400">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-gray-800">Account E-mail</label>
+                                <small id="emailAddCount" style="color: gray; font-size: 11px;">0 / 50</small>
+                            </div>
+                            <input type="email" name="emailInput" ng-model="email" required maxlength="50"
+                                   oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('emailAddCount').innerText = this.value.length + ' / 50';"
+                                   class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2"
+                                   ng-class="{'focus:ring-pink-400': !isEmailDuplicate() && !addUserForm.emailInput.$invalid, 'focus:ring-red-500 border-2 border-red-500': (addUserForm.emailInput.$invalid && addUserForm.emailInput.$dirty) || isEmailDuplicate()}">
+
+                            <p ng-show="addUserForm.emailInput.$error.email && addUserForm.emailInput.$dirty"
+                               class="text-red-500 text-[10px] font-bold mt-1">
+                                * Please enter a valid email address
+                            </p>
+
+                            <p ng-show="isEmailDuplicate()"
+                               class="text-red-500 text-[10px] font-bold mt-1">
+                                * This email is already registered
+                            </p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-gray-800">Password</label>
+                                <small id="passAddCount" style="color: gray; font-size: 11px;">0 / 20</small>
+                            </div>
+                            <div class="relative">
+                                <input id="addPWord" type="password" ng-model="password" required maxlength="20"
+                                       oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('passAddCount').innerText = this.value.length + ' / 20';"
+                                       class="w-full bg-pink-100 rounded-md px-3 py-2 pr-10 border-none focus:outline-none focus:ring-2 focus:ring-pink-400">
+                                <span onclick="togglePassVisibility('addPWord', this)"
+                                      class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 text-sm select-none">
+                                    visibility_off
+                                </span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-800 mb-1">
+                                Re-enter Password
+                            </label>
+                            <div class="relative">
+                                <input id="confirmPWord" name="confirmPWord" type="password" ng-model="confirmPassword"
+                                       required maxlength="20"
+                                       oninput="this.value = this.value.replace(/\s/g, '');"
+                                       class="w-full bg-pink-100 rounded-md px-3 py-2 pr-10 border-none focus:outline-none focus:ring-2"
+                                       ng-class="{'focus:ring-pink-400': password === confirmPassword, 'focus:ring-red-500 border-2 border-red-500': password !== confirmPassword && confirmPassword.length > 0}">
+
+                                <span onclick="togglePassVisibility('confirmPWord', this)"
+                                      class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 text-sm select-none">
+                                    visibility_off
+                                </span>
+                            </div>
+                            <p ng-show="password !== confirmPassword && confirmPassword.length > 0"
+                               class="text-red-500 text-[10px] font-bold mt-1">
+                                * Passwords do not match
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1 pb-2">
+                            <input type="checkbox" ng-model="isActive"
+                                   class="w-5 h-5 text-pink-500 bg-white border-2 border-pink-400 rounded-md focus:ring-pink-400 cursor-pointer">
+                            <label class="text-xs font-bold text-gray-800 cursor-pointer">Active Account</label>
+                        </div>
+
+                        <button type="submit"
+                                class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors text-sm w-full">
+                            Create Account
                         </button>
-
-                        <div class="flex items-end justify-between mb-5 mt-1">
-                            <div class="border-b border-gray-300 pb-1 w-[55%]">
-                                <h3 class="text-xl font-bold text-gray-800">
-                                    New Account
-                                </h3>
-                            </div>
-
-                            <div class="relative w-28 pb-1">
-                                <select ng-model="permissionID" class="appearance-none w-24 bg-pink-100 text-gray-800 text-xs font-bold rounded-lg px-2 py-2 pr-4 focus:outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer">
-                                    <option value="1">ADMIN</option>
-                                    <option value="2">STAFF</option>
-                                    <option value="3">USER</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-6 flex items-center text-gray-800 pb-1">
-                                    <span class="material-symbols-outlined text-base">expand_more</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-800 mb-1">
-                                    Account First Name
-                                </label>
-                                <input type="text" ng-model="firstName"
-                                       class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2 focus:ring-pink-400"
-                                       required>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-800 mb-1">
-                                    Account Last Name
-                                </label>
-                                <input type="text" ng-model="lastName"
-                                       class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2 focus:ring-pink-400"
-                                       required>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-800 mb-1">
-                                    Account E-mail
-                                </label>
-                                <input type="email" ng-model="email"
-                                       class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2 focus:ring-pink-400"
-                                       required>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-800 mb-1">
-                                    Password
-                                </label>
-                                <input type="password" ng-model="password"
-                                       class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2 focus:ring-pink-400"
-                                       required>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-800 mb-1">
-                                    Re-enter Password
-                                </label>
-                                <input type="password" ng-model="confirmPassword"
-                                       class="w-full bg-pink-100 rounded-md px-3 py-2 border-none focus:outline-none focus:ring-2 focus:ring-pink-400"
-                                       required>
-                            </div>
-
-                            <div class="flex items-center gap-2 pt-1 pb-2">
-                                <input type="checkbox" ng-model="isActive"
-                                       class="w-5 h-5 text-pink-500 bg-white border-2 border-pink-400 rounded-md focus:ring-pink-400 cursor-pointer">
-                                <label class="text-xs font-bold text-gray-800 cursor-pointer">
-                                    Active Account
-                                </label>
-                            </div>
-
-                            <button type="submit"
-                                    class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors text-sm">
-                                Create Account
-                            </button>
-                        </div>
-
-                    </form>
-                </div>
-            </div>
-        </div> 
-
-        <div class="flex items-center gap-4 text-gray-800 font-bold">
-            <div class="flex items-center gap-4">
-                <div class="h-4 w-[1px] bg-gray-300"></div>
-
-                <button class="hover:text-pink-500 transition-colors flex items-center">
-                    <span class="material-symbols-outlined text-xl">chevron_left</span>
-                </button>
-                <button class="hover:text-pink-500 transition-colors flex items-center">
-                    <span class="material-symbols-outlined text-xl">chevron_right</span>
-                </button>
-                <button class="hover:text-pink-500 transition-colors flex items-center">
-                    <span class="material-symbols-outlined text-xl">keyboard_double_arrow_right</span>
-                </button>
-            </div>
-
-            @* Page Dropdown *@
-            <div class="flex items-center border rounded-md bg-white px-3 py-1 gap-2 shadow-sm cursor-pointer">
-                <span class="text-sm">1</span>
-                <span class="material-symbols-outlined text-gray-400 text-sm">expand_more</span>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
+
+    <div id="updateModal" tabindex="-1" aria-hidden="true" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div class="relative w-full max-w-sm p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-7 relative">
+
+                <button type="button" class="absolute top-4 right-2 text-pink-500 hover:text-pink-600 font-bold" ng-click="closeUpdateModal()">
+                    <span class="material-symbols-outlined text-2xl">close</span>
+                </button>
+
+                <div class="flex items-end justify-between mb-5 mt-1">
+                    <div class="border-b border-gray-300 pb-1 w-[55%]">
+                        <h3 class="text-xl font-bold text-gray-800">{{selectedUser.firstName}} {{selectedUser.lastName}}</h3>
+                    </div>
+
+                    <div class="relative w-28 pb-1">
+                        <select ng-model="selectedUser.permissionID"
+                                class="appearance-none w-24 bg-pink-100 text-gray-800 text-xs font-bold rounded-lg px-2 py-2 pr-8 focus:outline-none cursor-pointer">
+                            <option ng-value="1">ADMIN</option>
+                            <option ng-value="2">STAFF</option>
+                            <option ng-value="3">USER</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-5 flex items-center text-gray-800 pb-1">
+                            <span class="material-symbols-outlined text-base">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-800 mb-1">Account First Name</label>
+                        <input type="text" ng-model="selectedUser.firstName" class="w-full bg-pink-100 rounded-md px-3 py-2 focus:ring-2 focus:ring-pink-400 border-none outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-800 mb-1">Account Last Name</label>
+                        <input type="text" ng-model="selectedUser.lastName" class="w-full bg-pink-100 rounded-md px-3 py-2 focus:ring-2 focus:ring-pink-400 border-none outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1 cursor-not-allowed">Account E-mail (Locked)</label>
+                        <input type="text" ng-model="selectedUser.email" disabled class="w-full bg-gray-200 text-gray-500 rounded-md px-3 py-2 border-none cursor-not-allowed">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1 cursor-not-allowed">Password (Locked)</label>
+                        <input type="password" value="********" disabled class="w-full bg-gray-200 text-gray-500 rounded-md px-3 py-2 border-none cursor-not-allowed">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1 cursor-not-allowed">Re-enter Password (Locked)</label>
+                        <input type="password" value="********" disabled class="w-full bg-gray-200 text-gray-500 rounded-md px-3 py-2 border-none cursor-not-allowed">
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-1 pb-2">
+                        <input type="checkbox" ng-model="selectedUser.isActive" class="w-5 h-5 text-pink-500 bg-white border-2 border-pink-400 rounded-md cursor-pointer">
+                        <label class="text-xs font-bold text-gray-800 cursor-pointer">Active Account</label>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="button" ng-click="updateUsrSubmit()" class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded-lg text-sm">Update Account</button>
+                        <button type="button" ng-click="deleteAccount()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50">Delete Account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="flex items-center gap-3 text-gray-800 font-bold">
+        <div class="flex items-center gap-1">
+            <button ng-click="setPage(1)" ng-disabled="currentPage == 1"
+                    class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
+                <span class="material-symbols-outlined text-xl">keyboard_double_arrow_left</span>
+            </button>
+
+            <button ng-click="setPage(currentPage - 1)" ng-disabled="currentPage == 1"
+                    class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
+                <span class="material-symbols-outlined text-xl">chevron_left</span>
+            </button>
+        </div>
+
+        <div class="flex items-center border rounded-md bg-white px-4 py-1 shadow-sm min-w-[40px] justify-center">
+            <span class="text-sm">{{currentPage}}</span>
+        </div>
+
+        <div class="flex items-center gap-1">
+            <button ng-click="setPage(currentPage + 1)" ng-disabled="currentPage >= numberOfPages()"
+                    class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
+                <span class="material-symbols-outlined text-xl">chevron_right</span>
+            </button>
+
+            <button ng-click="lastPage()" ng-disabled="currentPage >= numberOfPages()"
+                    class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
+                <span class="material-symbols-outlined text-xl">keyboard_double_arrow_right</span>
+            </button>
+        </div>
+    </div>
     </div>
 
     @* Table *@
@@ -165,7 +263,8 @@
             </thead>
 
             <tbody class="text-sm text-gray-700 font-bold bg-white">
-                <tr ng-repeat="user in usersData" class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <tr ng-repeat="user in filteredUsers = (usersData | filter:appliedSearch) | limitTo:pageSize:(currentPage-1)*pageSize"
+                    class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
 
                     <td class="p-4">{{ user.userID }}</td>
 
@@ -189,10 +288,8 @@
                     </td>
 
                     <td class="p-4 text-center">
-                        <button class="text-pink-500 hover:text-pink-700 transition-all duration-200 transform hover:scale-110">
-                            <span class="material-symbols-outlined flex items-center justify-center">
-                                edit_square
-                            </span>
+                        <button ng-click="selectUserForUpdate(user)" class="text-pink-500 hover:text-pink-700 transition-all transform hover:scale-110">
+                            <span class="material-symbols-outlined flex items-center justify-center">edit_square</span>
                         </button>
                     </td>
 

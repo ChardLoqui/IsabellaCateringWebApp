@@ -206,12 +206,11 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = realError });
             }
         }
-
+        //fetch data (users)
         public JsonResult GetUsers()
         {
             using (var db = new IsabellaCateringContext())
             {
-                // Project into an anonymous object first
                 var data = db.users_tbl.Select(u => new
                 {
                     userID = u.userID,
@@ -222,12 +221,16 @@ namespace IsabellaCateringWebApp.Controllers
                     isActive = u.isActive,
                     dateCreated = u.dateCreated,
                     dateUpdated = u.dateUpdated
-                }).ToList(); // Execution happens here
+                }).ToList();
 
                 return Json(data, JsonRequestBehavior.AllowGet);
             }
         }
 
+
+        // for update
+        [HttpPost]
+        public JsonResult UpdateUser(tblUsersModel userInfo)
         //token generation
         public string GenerateToken()
         {
@@ -308,6 +311,13 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // for delete
+        [HttpPost]
+        public JsonResult DeleteUser(int id)
                 throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
         }
@@ -339,6 +349,22 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
+                    var user = db.users_tbl.Find(id);
+                    if (user != null)
+                    {
+                        db.users_tbl.Remove(user);
+                        db.SaveChanges();
+                        return Json(new { success = true });
+                    }
+                    return Json(new { success = false, message = "User not found." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
                     string correctedToken = unhashedToken.Replace(" ", "+");
                     string hash = HashToken(correctedToken);
 
