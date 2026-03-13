@@ -647,7 +647,7 @@
                 : "flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
 
             const dayString = `${year}-${month + 1}-${i}`;
-            daysContainer.innerHTML += `<div class="current border-gray-400 border" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div></div>`;
+            daysContainer.innerHTML += `<div class="border-gray-400 border" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full h-[60%] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] bg-white rounded-lg border shadow-inner" data-date="${dayString}"></div></div>`;
         }
 
         for (let i = 1; i <= (42 - daysInMonth - firstDayOfMonth); i++) {
@@ -673,12 +673,14 @@
                         IsabellaCateringWebAppService.getBookingDetailsService(item.bookingID).then(function (detailsResponse) {
                             if (detailsResponse.data.success) {
                                 const eventCard = document.createElement("div");
-                                eventCard.className = "mx-2 flex cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 h-15 placeholder-white text-xs";
+                                eventCard.className = "mb-1 mx-1 flex cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 h-15 placeholder-white text-xs";
 
                                 if (detailsResponse.data.clients.cCeleb2FName != null)
-                                    eventCard.innerText = `${detailsResponse.data.clients.cCeleb1FName} & ${detailsResponse.data.clients.cCeleb2FName}'s ${detailsResponse.data.events.eventDesc}, ${convertTime(item.eventTime)}`;
+                                    eventCard.innerText = `${detailsResponse.data.clients.cCeleb1FName} & ${detailsResponse.data.clients.cCeleb2FName}'s ${detailsResponse.data.events.eventDesc},
+                                                           ${convertTime(item.eventTime)}`;
                                 else
-                                    eventCard.innerText = `${detailsResponse.data.clients.cCeleb1FName}'s ${detailsResponse.data.events.eventDesc}, ${convertTime(item.eventTime)}`;
+                                    eventCard.innerText =   `${detailsResponse.data.clients.cCeleb1FName}'s ${detailsResponse.data.events.eventDesc}, 
+                                                             ${convertTime(item.eventTime)}`;
 
                                 eventCard.dataset.date = day.dataset.date;
 
@@ -707,7 +709,7 @@
             if (day.dataset && day.dataset.date) { // Only add event listeners to cells with day numbers
                 day.addEventListener('click', function () {
                     selectedDate = this.dataset.date;
-                    document.querySelectorAll('#days-container div').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
+                    document.querySelectorAll('#days-container div .date-block').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
                     this.classList.add('bg-[#EC4899]', 'text-white', 'selected');
                 });
             }
@@ -719,6 +721,7 @@
         IsabellaCateringWebAppService.checkCalendarAvailabilityService(selectedDate).then(function (response) {
             if (response.data.success) {
                 $scope.redirectToAddBookingPage();
+                alert(response.data.selectedDate);
             }
             else {
                 Swal.fire({

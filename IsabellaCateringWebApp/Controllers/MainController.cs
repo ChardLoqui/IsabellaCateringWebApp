@@ -471,10 +471,10 @@ namespace IsabellaCateringWebApp.Controllers
                     if (bookings.Count < 5)
                     {
                         Session["bookingSelectedDate"] = formattedDate;
-                        return Json(new { success = true, message = "Create Request Granted!" }, JsonRequestBehavior.AllowGet);
+                        return Json(new { success = true, selectedDate = Session["bookingSelectedDate"], message = "Create Request Granted!" }, JsonRequestBehavior.AllowGet);
                     }
                     else
-                        return Json(new { success = false, message = "The Number of bookings for this day has reached it's limits!" }, JsonRequestBehavior.AllowGet);
+                        return Json(new { success = false, selectedDate = Session["bookingSelectedDate"], message = "The Number of bookings for this day has reached it's limits!" }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
