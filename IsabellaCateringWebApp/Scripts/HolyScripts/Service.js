@@ -50,8 +50,6 @@
         });
     };
 
-});
-
     //test for navbar
     this.getCurrentSessionServiceNav = function () {
         return $http.get("/Main/getCurrentSessionNav");

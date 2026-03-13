@@ -43,7 +43,7 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
-        
+
         public ActionResult CustomerViewPage()
         {
             return View();
@@ -89,7 +89,7 @@ namespace IsabellaCateringWebApp.Controllers
                     else if (verify.password == userInfo.password)
                     {
                         verify.attempts = 0;
-                        verify.lockoutEnd= null;
+                        verify.lockoutEnd = null;
                         db.SaveChanges();
 
                         var creds = new tblUsersModel()
@@ -206,11 +206,12 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = realError });
             }
         }
-        //fetch data (users)
+
         public JsonResult GetUsers()
         {
             using (var db = new IsabellaCateringContext())
             {
+                // Project into an anonymous object first
                 var data = db.users_tbl.Select(u => new
                 {
                     userID = u.userID,
@@ -221,16 +222,12 @@ namespace IsabellaCateringWebApp.Controllers
                     isActive = u.isActive,
                     dateCreated = u.dateCreated,
                     dateUpdated = u.dateUpdated
-                }).ToList();
+                }).ToList(); // Execution happens here
 
                 return Json(data, JsonRequestBehavior.AllowGet);
             }
         }
 
-
-        // for update
-        [HttpPost]
-        public JsonResult UpdateUser(tblUsersModel userInfo)
         //token generation
         public string GenerateToken()
         {
@@ -303,7 +300,7 @@ namespace IsabellaCateringWebApp.Controllers
                         else
                         {
                             return null;
-                        } 
+                        }
                     }
                     else
                         return null;
@@ -311,13 +308,6 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // for delete
-        [HttpPost]
-        public JsonResult DeleteUser(int id)
                 throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
         }
@@ -349,6 +339,39 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
+                    string correctedToken = unhashedToken.Replace(" ", "+");
+                    string hash = HashToken(correctedToken);
+
+                    var verify = db.passwordtokens_tbl.Where(x => x.hashedToken.Equals(hash)).FirstOrDefault();
+                    if (verify == null || verify.dateExpiry < DateTime.UtcNow)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        var userData = db.users_tbl.Where(x => x.userID.Equals(verify.userID)).FirstOrDefault();
+                        userData.password = newPassword;
+                        db.passwordtokens_tbl.Remove(verify);
+                        db.SaveChanges();
+                        return true;
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        // for delete
+        [HttpPost]
+        public JsonResult DeleteUser(int id)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
                     var user = db.users_tbl.Find(id);
                     if (user != null)
                     {
@@ -365,30 +388,35 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-                    string correctedToken = unhashedToken.Replace(" ", "+");
-                    string hash = HashToken(correctedToken);
-
-                    var verify = db.passwordtokens_tbl.Where(x => x.hashedToken.Equals(hash)).FirstOrDefault();
-                    if (verify == null || verify.dateExpiry < DateTime.UtcNow)
+        // for update
+        [HttpPost]
+        public JsonResult UpdateUser(tblUsersModel userInfo)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.Find(userInfo.userID);
+                    if (user != null)
                     {
-                        return false;
-                    }
-                    else
-                    {   
-                        var userData = db.users_tbl.Where(x => x.userID.Equals(verify.userID)).FirstOrDefault();
-                        userData.password = newPassword;
-                        db.passwordtokens_tbl.Remove(verify);
+                        user.permissionID = userInfo.permissionID;
+                        user.firstName = userInfo.firstName;
+                        user.lastName = userInfo.lastName;
+                        user.isActive = userInfo.isActive;
+                        user.dateUpdated = DateTime.Now;
+
                         db.SaveChanges();
-                        return true;
+                        return Json(new { success = true });
                     }
-                        
+                    return Json(new { success = false, message = "User not found." });
                 }
             }
             catch (Exception ex)
             {
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+                return Json(new { success = false, message = ex.Message });
             }
         }
+
 
 
         public JsonResult addBooking(tblBookingsModel bookingData)
@@ -501,7 +529,7 @@ namespace IsabellaCateringWebApp.Controllers
                     }
                     else
                     {
-                        return Json(new {bookingData = bookings, success = true, message = "No Bookings Found!" }, JsonRequestBehavior.AllowGet);
+                        return Json(new { bookingData = bookings, success = true, message = "No Bookings Found!" }, JsonRequestBehavior.AllowGet);
                     }
                 }
             }
