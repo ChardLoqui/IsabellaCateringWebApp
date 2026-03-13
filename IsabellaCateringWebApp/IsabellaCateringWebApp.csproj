@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\EntityFramework.6.5.1\build\EntityFramework.props" Condition="Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.props')" />
   <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="..\packages\EntityFramework.6.5.1\build\EntityFramework.props" Condition="Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -72,6 +72,9 @@
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.5.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=2.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="MySql.Data, Version=8.0.16.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
@@ -177,11 +180,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform">
-      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
@@ -190,7 +188,81 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\Context\IsabellaCateringContext.cs" />
+    <Compile Include="Models\Maps\tblActivityLogsMap.cs" />
+    <Compile Include="Models\Maps\tblBackdropTypesMap.cs" />
+    <Compile Include="Models\Maps\tblBookingReceiptsMap.cs" />
+    <Compile Include="Models\Maps\tblBookingsMap.cs" />
+    <Compile Include="Models\Maps\tblCenterPieceTypesMap.cs" />
+    <Compile Include="Models\Maps\tblClientsMap.cs" />
+    <Compile Include="Models\Maps\tblCouchTypesMap.cs" />
+    <Compile Include="Models\Maps\tblDebutGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblDebutTypesMap.cs" />
+    <Compile Include="Models\Maps\tblEntertainmentGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblEntertainmentTypesMap.cs" />
+    <Compile Include="Models\Maps\tblEntranceTypesMap.cs" />
+    <Compile Include="Models\Maps\tblEquipGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblEquipTypesMap.cs" />
+    <Compile Include="Models\Maps\tblEventsMap.cs" />
+    <Compile Include="Models\Maps\tblKeepsakesGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblKeepsakesTypesMap.cs" />
+    <Compile Include="Models\Maps\tblMainCourseTypesMap.cs" />
+    <Compile Include="Models\Maps\tblPackageCategoriesMap.cs" />
+    <Compile Include="Models\Maps\tblPackagesMap.cs" />
+    <Compile Include="Models\Maps\tblPackageTypesMap.cs" />
+    <Compile Include="Models\Maps\tblPasswordTokensMap.cs" />
+    <Compile Include="Models\Maps\tblPaymentRemindersMap.cs" />
+    <Compile Include="Models\Maps\tblPaymentsMap.cs" />
+    <Compile Include="Models\Maps\tblPermissionsMap.cs" />
+    <Compile Include="Models\Maps\tblPhotoGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblPhotoTypesMap.cs" />
+    <Compile Include="Models\Maps\tblPricePaxsMap.cs" />
+    <Compile Include="Models\Maps\tblSeatingTypesMap.cs" />
+    <Compile Include="Models\Maps\tblSidesGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblSidesTypesMap.cs" />
+    <Compile Include="Models\Maps\tblSpecialsGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblSpecialsTypesMap.cs" />
+    <Compile Include="Models\Maps\tblStaffGrpTypesMap.cs" />
+    <Compile Include="Models\Maps\tblStaffTypesMap.cs" />
+    <Compile Include="Models\Maps\tblTaskHistoryMap.cs" />
+    <Compile Include="Models\Maps\tblTasksMap.cs" />
     <Compile Include="Models\Maps\tblUsersMap.cs" />
+    <Compile Include="Models\Models\tblEventsModel.cs" />
+    <Compile Include="Models\Models\tblActivityLogsModel.cs" />
+    <Compile Include="Models\Models\tblBackdropTypesModel.cs" />
+    <Compile Include="Models\Models\tblBookingsModel.cs" />
+    <Compile Include="Models\Models\tblBookingReceiptsModel.cs" />
+    <Compile Include="Models\Models\tblCenterPieceTypesModel.cs" />
+    <Compile Include="Models\Models\tblClientsModel.cs" />
+    <Compile Include="Models\Models\tblCouchTypesModel.cs" />
+    <Compile Include="Models\Models\tblDebutGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblDebutTypesModel.cs" />
+    <Compile Include="Models\Models\tblEntertainmentGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblEntertainmentTypesModel.cs" />
+    <Compile Include="Models\Models\tblEntranceTypesModel.cs" />
+    <Compile Include="Models\Models\tblEquipGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblEquipTypesModel.cs" />
+    <Compile Include="Models\Models\tblKeepsakesGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblKeepsakesTypesModel.cs" />
+    <Compile Include="Models\Models\tblMainCourseTypesModel.cs" />
+    <Compile Include="Models\Models\tblPackageCategoriesModel.cs" />
+    <Compile Include="Models\Models\tblPackagesModel.cs" />
+    <Compile Include="Models\Models\tblPackageTypesModel.cs" />
+    <Compile Include="Models\Models\tblPasswordTokensModel.cs" />
+    <Compile Include="Models\Models\tblPaymentRemindersModel.cs" />
+    <Compile Include="Models\Models\tblPaymentsModel.cs" />
+    <Compile Include="Models\Models\tblPermissionsModel.cs" />
+    <Compile Include="Models\Models\tblPhotoGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblPhotoTypesModel.cs" />
+    <Compile Include="Models\Models\tblPricePaxsModel.cs" />
+    <Compile Include="Models\Models\tblSeatingTypesModel.cs" />
+    <Compile Include="Models\Models\tblSidesGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblSidesTypesModel.cs" />
+    <Compile Include="Models\Models\tblSpecialsGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblSpecialsTypesModel.cs" />
+    <Compile Include="Models\Models\tblStaffGrpTypesModel.cs" />
+    <Compile Include="Models\Models\tblStaffTypesModel.cs" />
+    <Compile Include="Models\Models\tblTaskHistoryModel.cs" />
+    <Compile Include="Models\Models\tblTasksModel.cs" />
     <Compile Include="Models\Models\tblUsersModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -1042,7 +1114,15 @@
     <Content Include="Views\Main\LoginPage.cshtml" />
     <Content Include="Views\Main\AccountsPage.cshtml" />
     <Content Include="Views\Main\LogsPage.cshtml" />
-    <Content Include="Views\Main\chgPassPage.cshtml" />
+    <Content Include="Views\Main\ChangePassPage.cshtml" />
+    <Content Include="Views\Main\ForgetPassPage.cshtml" />
+    <Content Include="Views\Shared\_LogInLayout.cshtml" />
+    <Content Include="Views\Main\AddBookingPage.cshtml" />
+    <Content Include="Views\Main\CustomerViewPage.cshtml" />
+    <Content Include="Views\Main\BookingCalendarPage.cshtml" />
+    <Content Include="Views\Main\PaymentReminderPage.cshtml" />
+    <Content Include="Views\Shared\NavbarLayout.cshtml" />
+    <Content Include="Views\Shared\_ManagementLayout.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -1106,9 +1186,9 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
     <Error Condition="!Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.5.1\build\EntityFramework.props'))" />
     <Error Condition="!Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.5.1\build\EntityFramework.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
   </Target>
   <Import Project="..\packages\EntityFramework.6.5.1\build\EntityFramework.targets" Condition="Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
