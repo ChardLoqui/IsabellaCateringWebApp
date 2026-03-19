@@ -8,6 +8,7 @@ namespace IsabellaCateringWebApp.Models.Models
     public class tblPaymentsModel
     {
         public int paymentID { get; set; }
+        public int bookingID { get; set; }
         public float amountDue { get; set; }
         public float amountPaid { get; set; }
         public string paymentType { get; set; }

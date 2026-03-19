@@ -1,6 +1,6 @@
 ﻿app.controller("IsabellaCateringWebAppController", function ($scope, IsabellaCateringWebAppService) {
 
-    
+
     $scope.redirectToHomePage = function () {
         window.location.href = "/Main/HomePage"
     }
@@ -96,7 +96,7 @@
         });
     };
 
-    const logInPasswordToggle = document.getElementById('toggleLogInPassword') 
+    const logInPasswordToggle = document.getElementById('toggleLogInPassword')
     const logInPassword = document.getElementById('logPWord')
     $scope.toggleShowLogInPassword = function () {
         if (logInPassword.type === "password") {
@@ -108,7 +108,7 @@
         }
     }
 
-    
+
 
     //======================================================== LOGIN END =======================================================
 
@@ -514,7 +514,7 @@
                         day.appendChild(eventCard);
                     }
                 });
-                
+
             });
         });
 
@@ -531,40 +531,138 @@
     //====================================================== BOOKING CALENDAR END ======================================================
 
     //====================================================== PAYMENT REMINDER START ======================================================
+    function parseDate(dateStr) {
+        if (!dateStr) return null;
+        if (dateStr instanceof Date) return dateStr;
+        if (typeof dateStr !== 'string') return null;
+        const milli = parseInt(dateStr.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
+        return isNaN(milli) ? null : new Date(milli);
+    }
+
+    
+
+    function buildGroupedPayments(payments) {
+        if (!payments || !Array.isArray(payments)) return [];
+
+        const map = {};
+
+        payments.forEach(function (p) {
+            const bID = p.bookingID;
+            if (!map[bID]) {
+                map[bID] = {
+                    bookingID: bID,
+                    payments: [],
+                    expanded: false,
+                    totalDue: 0,
+                    totalPaid: 0,
+                    unpaidCount: 0,
+                    hasUnpaid: false,
+                    overallStatus: 'Paid',
+                    nearestDueDate: null,
+                    dateCreated: p.dateCreated,
+                    dateUpdated: p.dateUpdated,
+                };
+            }
+
+            const g = map[bID];
+            g.payments.push(p);
+            g.totalDue += p.amountDue != null ? Number(p.amountDue) : 0;
+            g.totalPaid += p.amountPaid != null ? Number(p.amountPaid) : 0;
+
+            if (!g.nearestDueDate || new Date(p.dueDate) < new Date(g.nearestDueDate)) {
+                g.nearestDueDate = p.dueDate;
+            }
+
+            if (p.dateUpdated && (!g.dateUpdated || new Date(p.dateUpdated) > new Date(g.dateUpdated))) {
+                g.dateUpdated = p.dateUpdated;
+            }
+        });
+
+        return Object.values(map).map(function (g) {
+
+            g.unpaidCount = g.payments.filter(function (p) {
+                return (p.amountPaid != null ? Number(p.amountPaid) : 0) <= 0;
+            }).length;
+
+            if (g.totalPaid <= 0) {
+                g.overallStatus = 'Unpaid';
+                g.hasUnpaid = true;
+
+            } else if (g.totalPaid < g.totalDue) {
+                g.overallStatus = 'Partially Paid';
+                g.hasUnpaid = g.unpaidCount > 0; 
+
+            } else {
+                g.overallStatus = 'Fully Paid';
+                g.hasUnpaid = false;
+                g.unpaidCount = 0;
+            }
+
+            return g;
+        });
+    }
 
     $scope.getPaymentData = function () {
         IsabellaCateringWebAppService.getPaymentDataService().then(function (returnedData) {
-            $scope.paymentData = returnedData.data.map(payment => {
-                // Helper function to convert /Date(ms)/ to actual JS Date objects
-                const parseDate = (dateStr) => {
-                    if (!dateStr) return null;
-                    const milli = parseInt(dateStr.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
-                    return new Date(milli);
+
+            //console.log('RAW API DATA:', returnedData.data); 
+
+            $scope.paymentData = returnedData.data.map(function (payment) {
+                return {
+                    paymentID: payment.paymentID != null ? payment.paymentID : payment.PaymentID,
+                    bookingID: payment.bookingID != null ? payment.bookingID : payment.BookingID,
+                    amountDue: payment.amountDue != null ? payment.amountDue : payment.AmountDue,
+                    amountPaid: payment.amountPaid != null ? payment.amountPaid : payment.AmountPaid,
+                    paymentType: payment.paymentType != null ? payment.paymentType : payment.PaymentType,
+                    paymentStatus: payment.paymentStatus != null ? payment.paymentStatus : payment.PaymentStatus,
+                    dueDate: parseDate(payment.dueDate != null ? payment.dueDate : payment.DueDate),
+                    dateCreated: parseDate(payment.dateCreated != null ? payment.dateCreated : payment.DateCreated),
+                    dateUpdated: parseDate(payment.dateUpdated != null ? payment.dateUpdated : payment.DateUpdated),
                 };
-
-                payment.dateCreated = parseDate(payment.dateCreated);
-                payment.dateUpdated = parseDate(payment.dateUpdated);
-                payment.dueDate = parseDate(payment.dueDate);
-
-                return payment;
             });
+
+            //console.log('PARSED paymentData:', $scope.paymentData);
+
+            $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
+
+            //console.log('GROUPED:', $scope.groupedPayments);
         });
     };
+
     $scope.getPaymentData();
 
     $scope.isUpcomingDue = function (payment) {
-        if (payment.paymentStatus !== 'Unpaid') {
-            return false;
-        }
-
+        if (payment.paymentStatus !== 'Unpaid') return false;
         const today = new Date();
-        today.setHours(0, 0, 0, 0); 
+        today.setHours(0, 0, 0, 0);
         const dueDate = new Date(payment.dueDate);
-
-        const diffTime = dueDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+        const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
         return diffDays <= 7;
+    };
+
+    $scope.toggleGroup = function (group) {
+        if (!group) return;
+        group.expanded = !group.expanded;
+    };
+
+    $scope.openAddPaymentModal = function (bookingID) {
+        $scope.newPayment = {
+            bookingID: bookingID,
+            paymentType: 'Additional',
+            amountDue: null,
+            amountPaid: null,
+            paymentStatus: 'Unpaid',
+            dueDate: null,
+        };
+        $scope.showAddPaymentModal = true;
+    };
+
+    $scope.editPayment = function (payment) {
+        $scope.selectedPayment = angular.copy(payment);
+    };
+
+    $scope.refreshGroups = function () {
+        $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
     };
 
     //====================================================== PAYMENT REMINDER END ======================================================

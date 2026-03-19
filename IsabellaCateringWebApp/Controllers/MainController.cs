@@ -42,7 +42,7 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
-        
+
         public ActionResult CustomerViewPage()
         {
             return View();
@@ -88,7 +88,7 @@ namespace IsabellaCateringWebApp.Controllers
                     else if (verify.password == userInfo.password)
                     {
                         verify.attempts = 0;
-                        verify.lockoutEnd= null;
+                        verify.lockoutEnd = null;
                         db.SaveChanges();
 
                         var creds = new tblUsersModel()
@@ -299,7 +299,7 @@ namespace IsabellaCateringWebApp.Controllers
                         else
                         {
                             return null;
-                        } 
+                        }
                     }
                     else
                         return null;
@@ -347,14 +347,14 @@ namespace IsabellaCateringWebApp.Controllers
                         return false;
                     }
                     else
-                    {   
+                    {
                         var userData = db.users_tbl.Where(x => x.userID.Equals(verify.userID)).FirstOrDefault();
                         userData.password = newPassword;
                         db.passwordtokens_tbl.Remove(verify);
                         db.SaveChanges();
                         return true;
                     }
-                        
+
                 }
             }
             catch (Exception ex)
@@ -454,7 +454,7 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { message = "Error connecting to DB: " + ex.Message}, JsonRequestBehavior.AllowGet);
+                return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -465,6 +465,7 @@ namespace IsabellaCateringWebApp.Controllers
                 var data = db.payments_tbl.Select(p => new
                 {
                     paymentID = p.paymentID,
+                    bookingID = p.bookingID,
                     amountDue = p.amountDue,
                     amountPaid = p.amountPaid,
                     paymentType = p.paymentType,
@@ -474,7 +475,6 @@ namespace IsabellaCateringWebApp.Controllers
                     dateUpdated = p.dateUpdated
                 }).ToList();
 
-                // Use a larger MaxJsonLength to prevent silent truncation
                 var jsonResult = Json(data, JsonRequestBehavior.AllowGet);
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -490,6 +490,7 @@ namespace IsabellaCateringWebApp.Controllers
                     var paymentInfo = new tblPaymentsModel()
                     {
                         paymentID = paymentData.paymentID,
+                        bookingID = paymentData.bookingID,
                         amountDue = paymentData.amountDue,
                         amountPaid = paymentData.amountPaid,
                         paymentType = paymentData.paymentType,

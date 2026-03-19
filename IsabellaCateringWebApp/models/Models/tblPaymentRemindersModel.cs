@@ -8,7 +8,6 @@ namespace IsabellaCateringWebApp.Models.Models
     public class tblPaymentRemindersModel
     {
         public int reminderID { get; set; }
-        public int bookingID { get; set; }
         public int paymentID { get; set; }
         public int sentBy { get; set; }
         public string sentAt { get; set; }
