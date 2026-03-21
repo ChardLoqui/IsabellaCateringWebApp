@@ -21,6 +21,6 @@ namespace IsabellaCateringWebApp.Models.Models
         public string entryCode { get; set; }
         public string password { get; set; }
         public DateTime dateCreated { get; set; }
-        public DateTime dateUpdatedd { get; set; }
+        public DateTime dateUpdated { get; set; }
     }
 }
