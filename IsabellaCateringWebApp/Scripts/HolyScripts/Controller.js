@@ -705,14 +705,14 @@
                 };
             });
             $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
-            $scope.buildSummary();
+            $scope.getSummary();
         });
     };
     $scope.showEditPaymentModal = false;  
     $scope.editData = {};               
     $scope.getPaymentData();
 
-    //validations for status
+    //validations for due date
     $scope.isUpcomingDue = function (payment) {
         var paid = Number(payment.amountPaid) || 0;
         var due = Number(payment.amountDue) || 0;
@@ -1023,86 +1023,152 @@
         });
     };
 
-    //pagination & sorting for due payments
-    $scope.duePayments = {
-        currentPage: 1,
-        pageSize: 5,
-        sortField: 'paymentID',
-        sortReverse: false,
-        pageSizeOptions: [5, 10, 20]
-    };
+    //pagination & sorting
+    function makePagination(cfg) {
+        var state = {
+            currentPage: 1,
+            pageSize: cfg.defaultSize || 5,
+            sortField: cfg.defaultSort || 'id',
+            sortReverse: false,
+            pageSizeOptions: [5, 10, 20]
+        };
 
-    $scope.dueSortBy = function (field) {
-        if ($scope.duePayments.sortField === field) {
-            $scope.duePayments.sortReverse = !$scope.duePayments.sortReverse;
-        } else {
-            $scope.duePayments.sortField = field;
-            $scope.duePayments.sortReverse = false;
+        function sort(list) {
+            return list.slice().sort(function (a, b) {
+                var av = a[state.sortField], bv = b[state.sortField];
+                if (av == null) return 1;
+                if (bv == null) return -1;
+                if (typeof av === 'string') av = av.toLowerCase();
+                if (typeof bv === 'string') bv = bv.toLowerCase();
+                if (av < bv) return state.sortReverse ? 1 : -1;
+                if (av > bv) return state.sortReverse ? -1 : 1;
+                return 0;
+            });
         }
-        $scope.duePayments.currentPage = 1;
-    };
+
+        return {
+            state: state,
+
+            sortBy: function (field) {
+                state.sortField = (state.sortField === field) ? state.sortField : field;
+                state.sortReverse = (state.sortField === field) ? !state.sortReverse : false;
+                state.sortField = field;
+                state.currentPage = 1;
+            },
+
+            getPage: function (filtered) {
+                var sorted = sort(filtered);
+                var start = (state.currentPage - 1) * state.pageSize;
+                return sorted.slice(start, start + state.pageSize);
+            },
+
+            getTotalPages: function (filtered) {
+                return Math.max(1, Math.ceil(filtered.length / state.pageSize));
+            },
+
+            getPageNumbers: function (filtered) {
+                var pages = [], total = this.getTotalPages(filtered);
+                for (var i = 1; i <= total; i++) pages.push(i);
+                return pages;
+            },
+
+            goToPage: function (page, filtered) {
+                var total = this.getTotalPages(filtered);
+                if (page >= 1 && page <= total) state.currentPage = page;
+            },
+
+            setPageSize: function (size) {
+                state.pageSize = size;
+                state.currentPage = 1;
+            },
+
+            resetPage: function () { state.currentPage = 1; }
+        };
+    }
+
+    //for due payments pagination
+    var duePag = makePagination({ defaultSort: 'paymentID', defaultSize: 5 });
+    $scope.duePayments = duePag.state;
 
     $scope.getDuePaymentsFiltered = function () {
         if (!$scope.paymentData) return [];
         return $scope.paymentData.filter($scope.isUpcomingDue).filter(function (p) {
             if (!$scope.dueSearchQuery) return true;
             var q = $scope.dueSearchQuery.toLowerCase();
-            return (String(p.paymentID).indexOf(q) !== -1)
-                || (String(p.paymentType).toLowerCase().indexOf(q) !== -1)
-                || (String(p.paymentStatus).toLowerCase().indexOf(q) !== -1);
+            return String(p.paymentID).indexOf(q) !== -1
+                || String(p.paymentType).toLowerCase().indexOf(q) !== -1
+                || String(p.paymentStatus).toLowerCase().indexOf(q) !== -1;
         });
     };
 
-    $scope.getDuePaymentsSorted = function () {
-        var list = $scope.getDuePaymentsFiltered();
-        var field = $scope.duePayments.sortField;
-        var rev = $scope.duePayments.sortReverse;
-        list = list.slice().sort(function (a, b) {
-            var av = a[field], bv = b[field];
-            if (av == null) return 1;
-            if (bv == null) return -1;
-            if (typeof av === 'string') av = av.toLowerCase();
-            if (typeof bv === 'string') bv = bv.toLowerCase();
-            if (av < bv) return rev ? 1 : -1;
-            if (av > bv) return rev ? -1 : 1;
-            return 0;
-        });
-        return list;
+    $scope.dueSortBy = function (f) {
+        duePag.sortBy(f);
     };
-
     $scope.getDuePaymentsPage = function () {
-        var sorted = $scope.getDuePaymentsSorted();
-        var start = ($scope.duePayments.currentPage - 1) * $scope.duePayments.pageSize;
-        return sorted.slice(start, start + $scope.duePayments.pageSize);
+        return duePag.getPage($scope.getDuePaymentsFiltered());
     };
-
     $scope.getDueTotalPages = function () {
-        var total = $scope.getDuePaymentsFiltered().length;
-        return Math.max(1, Math.ceil(total / $scope.duePayments.pageSize));
+        return duePag.getTotalPages($scope.getDuePaymentsFiltered());
     };
-
     $scope.getDuePageNumbers = function () {
-        var pages = [];
-        for (var i = 1; i <= $scope.getDueTotalPages(); i++) pages.push(i);
-        return pages;
+        return duePag.getPageNumbers($scope.getDuePaymentsFiltered());
     };
-
-    $scope.dueGoToPage = function (page) {
-        var total = $scope.getDueTotalPages();
-        if (page < 1 || page > total) return;
-        $scope.duePayments.currentPage = page;
+    $scope.dueGoToPage = function (p) {
+        duePag.goToPage(p, $scope.getDuePaymentsFiltered());
     };
-
-    $scope.duePrevPage = function () { $scope.dueGoToPage($scope.duePayments.currentPage - 1); };
-    $scope.dueNextPage = function () { $scope.dueGoToPage($scope.duePayments.currentPage + 1); };
-
-    $scope.setDuePageSize = function (size) {
-        $scope.duePayments.pageSize = size;
-        $scope.duePayments.currentPage = 1;
+    $scope.duePrevPage = function () {
+        $scope.dueGoToPage($scope.duePayments.currentPage - 1);
+    };
+    $scope.dueNextPage = function () {
+        $scope.dueGoToPage($scope.duePayments.currentPage + 1);
+    };
+    $scope.setDuePageSize = function (s) {
+        duePag.setPageSize(s);
     };
 
     $scope.$watch('dueSearchQuery', function () {
-        $scope.duePayments.currentPage = 1;
+        duePag.resetPage();
+    });
+
+    // for payments table pagination
+    var groupsPag = makePagination({ defaultSort: 'bookingID', defaultSize: 10 });
+    $scope.paymentsTable = groupsPag.state;
+
+    $scope.getGroupsFiltered = function () {
+        if (!$scope.groupedPayments) return [];
+        return $scope.groupedPayments.filter(function (g) {
+            if (!$scope.paymentsSearchQuery) return true;
+            return String(g.bookingID).indexOf($scope.paymentsSearchQuery) !== -1;
+        });
+    };
+
+    $scope.paymentsSortBy = function (f) {
+        groupsPag.sortBy(f);
+    };
+    $scope.getGroupsPage = function () {
+        return groupsPag.getPage($scope.getGroupsFiltered());
+    };
+    $scope.getGroupsTotalPages = function () {
+        return groupsPag.getTotalPages($scope.getGroupsFiltered());
+    };
+    $scope.getGroupsPageNumbers = function () {
+        return groupsPag.getPageNumbers($scope.getGroupsFiltered());
+    };
+    $scope.groupsGoToPage = function (p) {
+        groupsPag.goToPage(p, $scope.getGroupsFiltered());
+    };
+    $scope.groupsPrevPage = function () {
+        $scope.groupsGoToPage($scope.paymentsTable.currentPage - 1);
+    };
+    $scope.groupsNextPage = function () {
+        $scope.groupsGoToPage($scope.paymentsTable.currentPage + 1);
+    };
+    $scope.setGroupsPageSize = function (s) {
+        groupsPag.setPageSize(s);
+    };
+
+    $scope.$watch('paymentsSearchQuery', function () {
+        groupsPag.resetPage();
     });
 
 
@@ -1223,86 +1289,6 @@
                 );
             });
     };
-
-
-    //Pagination & Sorting for payments table
-    $scope.paymentsTable = {
-        currentPage: 1,
-        pageSize: 10,
-        sortField: 'bookingID',
-        sortReverse: false,
-        pageSizeOptions: [5, 10, 20]
-    };
-
-    $scope.paymentsSortBy = function (field) {
-        if ($scope.paymentsTable.sortField === field) {
-            $scope.paymentsTable.sortReverse = !$scope.paymentsTable.sortReverse;
-        } else {
-            $scope.paymentsTable.sortField = field;
-            $scope.paymentsTable.sortReverse = false;
-        }
-        $scope.paymentsTable.currentPage = 1;
-    };
-
-    $scope.getGroupsFiltered = function () {
-        if (!$scope.groupedPayments) return [];
-        return $scope.groupedPayments.filter(function (g) {
-            if (!$scope.paymentsSearchQuery) return true;
-            return String(g.bookingID).indexOf($scope.paymentsSearchQuery) !== -1;
-        });
-    };
-
-    $scope.getGroupsSorted = function () {
-        var list = $scope.getGroupsFiltered();
-        var field = $scope.paymentsTable.sortField;
-        var rev = $scope.paymentsTable.sortReverse;
-        list = list.slice().sort(function (a, b) {
-            var av = a[field], bv = b[field];
-            if (av == null) return 1;
-            if (bv == null) return -1;
-            if (typeof av === 'string') av = av.toLowerCase();
-            if (typeof bv === 'string') bv = bv.toLowerCase();
-            if (av < bv) return rev ? 1 : -1;
-            if (av > bv) return rev ? -1 : 1;
-            return 0;
-        });
-        return list;
-    };
-
-    $scope.getGroupsPage = function () {
-        var sorted = $scope.getGroupsSorted();
-        var start = ($scope.paymentsTable.currentPage - 1) * $scope.paymentsTable.pageSize;
-        return sorted.slice(start, start + $scope.paymentsTable.pageSize);
-    };
-
-    $scope.getGroupsTotalPages = function () {
-        var total = $scope.getGroupsFiltered().length;
-        return Math.max(1, Math.ceil(total / $scope.paymentsTable.pageSize));
-    };
-
-    $scope.getGroupsPageNumbers = function () {
-        var pages = [];
-        for (var i = 1; i <= $scope.getGroupsTotalPages(); i++) pages.push(i);
-        return pages;
-    };
-
-    $scope.groupsGoToPage = function (page) {
-        var total = $scope.getGroupsTotalPages();
-        if (page < 1 || page > total) return;
-        $scope.paymentsTable.currentPage = page;
-    };
-
-    $scope.groupsPrevPage = function () { $scope.groupsGoToPage($scope.paymentsTable.currentPage - 1); };
-    $scope.groupsNextPage = function () { $scope.groupsGoToPage($scope.paymentsTable.currentPage + 1); };
-
-    $scope.setGroupsPageSize = function (size) {
-        $scope.paymentsTable.pageSize = size;
-        $scope.paymentsTable.currentPage = 1;
-    };
-
-    $scope.$watch('paymentsSearchQuery', function () {
-        $scope.paymentsTable.currentPage = 1;
-    });
 
 
     //Download of receipts

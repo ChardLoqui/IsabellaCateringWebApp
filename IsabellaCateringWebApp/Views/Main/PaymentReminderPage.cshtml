@@ -225,8 +225,8 @@
                 <div class="px-4 py-2 border-t bg-gray-50 text-xs text-gray-400 flex justify-between">
                     <span>
                         Showing {{ (duePayments.currentPage - 1) * duePayments.pageSize + 1 }}
-                        – {{ [duePayments.currentPage * duePayments.pageSize, getDueTotalPages() * duePayments.pageSize] | limitTo: 1 }}
-                        of {{ getDueTotalPages() * duePayments.pageSize }} records
+                        – {{ [duePayments.currentPage * duePayments.pageSize, getDuePaymentsFiltered().length] | limitTo: 1 }}
+                        of {{ getDuePaymentsFiltered().length }} records
                     </span>
                     <span>Page {{ duePayments.currentPage }} of {{ getDueTotalPages() }}</span>
                 </div>
