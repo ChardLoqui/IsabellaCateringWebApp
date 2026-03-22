@@ -126,7 +126,7 @@
     $scope.toggleShowLogInPassword = function () {
         if (logInPassword.type === "password") {
             logInPassword.type = "text";
-            logInPasswordToggle.innerHTML = "visibility_on";
+            logInPasswordToggle.innerHTML = "visibility";
         } else {
             logInPassword.type = "password";
             logInPasswordToggle.innerHTML = "visibility_off";
