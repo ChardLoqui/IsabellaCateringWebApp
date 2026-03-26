@@ -18,3 +18,94 @@ select,
 textarea {
     max-width: 280px;
 }
+
+.sidebar {
+    width: 80px;
+    transition: width 0.3s ease;
+    background: #FCD1E5;
+}
+
+    .sidebar:hover {
+        width: 260px;
+    }
+
+.main-content {
+    margin-left: 80px;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar:hover ~ .main-content {
+    margin-left: 260px;
+}
+
+.nav-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.3s ease, width 0.3s ease;
+}
+
+.sidebar:hover .nav-text {
+    opacity: 1;
+    width: auto;
+}
+
+.sidebar-logo img {
+    width: 130px;
+    transition: width 0.3s ease;
+}
+
+.sidebar:hover .sidebar-logo img {
+    width: 130px;
+}
+
+.profile-info {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, width 0.3s ease;
+}
+
+.sidebar:hover .profile-info {
+    opacity: 1;
+    width: auto;
+}
+
+.nav-item {
+    position: relative;
+}
+
+    .nav-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: #FF69B4;
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .nav-item:hover::before {
+        transform: scaleY(1);
+    }
+
+    .nav-item a:hover {
+        background-color: rgba(255, 152, 203, 0.2) !important;
+        color: #e6328c !important;
+    }
+
+        .nav-item a:hover i {
+            color: #e6328c !important;
+        }
+
+.logout-btn:hover {
+    background-color: #FF69B4 !important;
+    color: white !important;
+}
+
+    .logout-btn:hover i {
+        color: white !important;
+    }

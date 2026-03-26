@@ -1,5 +1,7 @@
 ﻿@{
-    Layout = "~/Views/Shared/_MainLayout.cshtml";
+
+    Layout = "~/Views/Shared/_ManagementLayout.cshtml";
+    ViewBag.Title = "Calendar Dashboard";
 }
 <div class="container mx-auto h-screen p-10">
     <div>
@@ -7,7 +9,7 @@
     </div>
 
     <div class="col-span-2 flex items-center justify-center" ng-init="renderCalendar()">
-        <div class="ml-auto w-[80%] h-[100%] text-[#000000]">
+        <div class="mx-auto w-[90%] h-[80%] text-[#000000]">
             <div class="flex items-center pb-4">
                 <div id="prevMonth" ng-click="togglePrevMonth()"
                      class="mx-2 flex h-[32px] w-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-full w-[20%] h-15 placeholder-white text-2xl">

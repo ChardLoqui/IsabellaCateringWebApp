@@ -1,10 +1,13 @@
 ﻿app.controller("IsabellaCateringWebAppController", function ($scope, $http, IsabellaCateringWebAppService) {
 
     $scope.redirectToHomePage = function () {
-        window.location.href = "/Main/HomePage"
+        window.location.href = "/Main/HomePage";
     }
     $scope.redirectToForgetPassPage = function () {
         window.open("/Main/ForgetPassPage", "_blank");
+    };
+    $scope.redirectToAddBookingPage = function () {
+        window.location.href = "/Main/AddBookingPage";
     };
 
 
@@ -91,7 +94,29 @@
     $scope.checkGetCreds = function (verify) {
         var getData = IsabellaCateringWebAppService.getCurrentSessionService();
         getData.then(function (returnedData) {
-            homepage.innerHTML = `sess ID = ${returnedData.data.userID} sess perm = ${returnedData.data.permID}` //for test (to remove)
+            if (homepage) {
+                homepage.innerHTML = `sess ID = ${returnedData.data.userID} sess perm = ${returnedData.data.permID}`;
+            }
+        });
+    };
+
+    //pword vis toggle
+    window.togglePassVisibility = function (id, icon) {
+        const input = document.getElementById(id);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.innerText = "visibility";
+        } else {
+            input.type = "password";
+            icon.innerText = "visibility_off";
+        }
+    };
+
+    // email dupe checker
+    $scope.isEmailDuplicate = function () {
+        if (!$scope.email || !$scope.usersData) return false;
+        return $scope.usersData.some(function (u) {
+            return u.email.toLowerCase() === $scope.email.toLowerCase();
         });
     };
 
@@ -140,6 +165,34 @@
     //======================================================== ACCOUNT MANAGEMENT START=======================================================
     //bago, to add user 
     $scope.addUsrSubmit = function () {
+        // check inputs
+        if ($scope.addUserForm.$invalid) {
+            Swal.fire({
+                title: "Invalid Input",
+                text: "Please check your email format and ensure all fields are filled.",
+                icon: "info"
+            });
+            return;
+        }
+        // check dupe
+        if ($scope.isEmailDuplicate()) {
+            Swal.fire({
+                title: "Duplicate Email",
+                text: "This email address is already in use.",
+                icon: "warning"
+            });
+            return;
+        }
+        // pword check
+        if ($scope.password !== $scope.confirmPassword) {
+            Swal.fire({
+                title: "Password Mismatch",
+                text: "The passwords you entered do not match.",
+                icon: "error"
+            });
+            return;
+        }
+
         var userInfo = {
             permissionID: $scope.permissionID,
             firstName: $scope.firstName,
@@ -148,45 +201,27 @@
             password: $scope.password,
             isActive: $scope.isActive ? 1 : 0
         };
-
-        var getData = IsabellaCateringWebAppService.AddUsrCall(userInfo);
-
-        getData.then(function (response) {
+        IsabellaCateringWebAppService.AddUsrCall(userInfo).then(function (response) {
             if (response.data.success) {
-                Swal.fire({
-                    title: "Success!",
-                    text: "Account created successfully!",
-                    icon: "success"
-                });
-
-                // Refresh the table data immediately after adding a new user!
-                $scope.getUsersData();
-
+                Swal.fire({ title: "Success!", text: "Account created!", icon: "success" });
+                // reset after passing
+                $scope.firstName = ''; $scope.lastName = ''; $scope.email = '';
+                $scope.password = ''; $scope.confirmPassword = ''; $scope.permissionID = '';
+                $scope.addUserForm.$setPristine();
+                document.getElementById('emailAddCount').innerText = '0 / 50';
+                document.getElementById('passAddCount').innerText = '0 / 20';
+                $scope.getUsersData(); //refresh table 
             } else {
-                Swal.fire({
-                    title: "Database Error!",
-                    text: response.data.message,
-                    icon: "error"
-                });
+                Swal.fire({ title: "Error", text: response.data.message, icon: "error" });
             }
-
-        }, function (error) {
-            Swal.fire({
-                title: "Server Error!",
-                text: "Failed to communicate with the server.",
-                icon: "error"
-            });
         });
-
     };
 
     // for getting the data
     $scope.getUsersData = function () {
         IsabellaCateringWebAppService.getUsersDataService().then(function (returnedData) {
-            // Map through the data and convert the /Date()/ strings to JS Dates
             $scope.usersData = returnedData.data.map(user => {
                 if (user.dateUpdated) {
-                    // Extracts the numbers from the /Date(771...)/ string
                     const milli = parseInt(user.dateUpdated.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
                     user.dateUpdated = new Date(milli);
                 }
@@ -195,6 +230,103 @@
         });
     };
     $scope.getUsersData();
+
+    // MODAL STARTTTT
+    // select user to update 
+    $scope.selectUserForUpdate = function (user) {
+        $scope.selectedUser = angular.copy(user);
+        //change active to inactive n vice versa 
+        $scope.selectedUser.isActive = user.isActive === 1;
+        document.getElementById('updateModal').classList.remove('hidden');
+    };
+
+    // save changes 
+    $scope.updateUsrSubmit = function () {
+        if (!$scope.selectedUser.firstName || !$scope.selectedUser.lastName || !$scope.selectedUser.permissionID) {
+            Swal.fire({ title: "Blank Fields", text: "Please fill in all required fields.", icon: "warning" });
+            return;
+        }
+        //fetch data from modal inputs and prepare for update
+        var updateData = {
+            userID: $scope.selectedUser.userID,
+            permissionID: $scope.selectedUser.permissionID,
+            firstName: $scope.selectedUser.firstName,
+            lastName: $scope.selectedUser.lastName,
+            isActive: $scope.selectedUser.isActive ? 1 : 0
+        };
+        // Call service to update
+        IsabellaCateringWebAppService.UpdateUsrCall(updateData).then(function (response) {
+            if (response.data.success) {
+                Swal.fire({ title: "Updated!", text: "Account has been updated successfully.", icon: "success" });
+                $scope.getUsersData(); // refresh table 
+                $scope.closeUpdateModal();
+            } else {
+                Swal.fire({ title: "Update Failed", text: response.data.message || "An error occurred.", icon: "error" });
+            }
+        }, function (error) {
+            Swal.fire({ title: "Error", text: "Server connection failed.", icon: "error" });
+        });
+    };
+
+    //delete acc function
+    $scope.deleteAccount = function () {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "This will permanently delete " + $scope.selectedUser.firstName + "'s account from the database.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#ec4899",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.DeleteUsrCall($scope.selectedUser.userID).then(function (response) {
+                    if (response.data.success) {
+                        Swal.fire("Deleted!", "Account has been removed.", "success");
+                        $scope.getUsersData();
+                        $scope.closeUpdateModal();
+                    } else {
+                        Swal.fire("Error", "Could not delete account.", "error");
+                    }
+                });
+            }
+        });
+    };
+    //MODAL ENDDDD
+
+    $scope.closeUpdateModal = function () {
+        document.getElementById('updateModal').classList.add('hidden');
+    };
+
+    $scope.searchText = "";
+    $scope.appliedSearch = "";
+    $scope.currentPage = 1;
+    $scope.pageSize = 8; // rows for table
+
+    // search button
+    $scope.searchUser = function () {
+        $scope.appliedSearch = $scope.searchText;
+        $scope.currentPage = 1; reset
+    };
+
+    // pagination
+    $scope.numberOfPages = function () {
+        if (!$scope.usersData) return 1;
+        const filtered = $scope.$eval("usersData | filter:searchText");
+        return Math.ceil(filtered.length / $scope.pageSize);
+    };
+
+    $scope.setPage = function (page) {
+        if (page >= 1 && page <= $scope.numberOfPages()) {
+            $scope.currentPage = page;
+        }
+    };
+
+    // double arrow para sa last page
+    $scope.lastPage = function () {
+        $scope.currentPage = $scope.numberOfPages();
+    };
+
 
     //======================================================== ACCOUNT MANAGEMENT END =======================================================
 
@@ -473,7 +605,7 @@
                 : "flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
 
             const dayString = `${year}-${month + 1}-${i}`;
-            daysContainer.innerHTML += `<div class="current border-gray-400 border" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div></div>`;
+            daysContainer.innerHTML += `<div class="border-gray-400 border" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full h-[60%] overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-white rounded-lg border shadow-inner" data-date="${dayString}"></div></div>`;
         }
 
         for (let i = 1; i <= (42 - daysInMonth - firstDayOfMonth); i++) {
@@ -493,24 +625,38 @@
         });
 
         document.querySelectorAll('.current').forEach(day => {
-            const dateParts = day.dataset.date.split('-');
-            const loadEventDate = new Date((parseInt(dateParts[0])), (parseInt(dateParts[1]) - 1), (parseInt(dateParts[2])));
-            const formattedDate = loadEventDate.toISOString();
-            IsabellaCateringWebAppService.getCalendarBookingService(day.dataset.date).then(function (response) {
-                response.data.forEach(item => {
-                    if (response.data.success) {
-                        return;
+            IsabellaCateringWebAppService.getCalendarBookingService(day.dataset.date).then(function (bookingResponse) {
+                bookingResponse.data.bookingData.forEach(item => {
+                    if (bookingResponse.data.success) {
+                        IsabellaCateringWebAppService.getBookingDetailsService(item.bookingID).then(function (detailsResponse) {
+                            if (detailsResponse.data.success) {
+                                const eventCard = document.createElement("div");
+                                eventCard.className = "mb-1 mx-1 flex cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 h-15 placeholder-white text-xs";
+
+                                if (detailsResponse.data.clients.cCeleb2FName != null)
+                                    eventCard.innerText = `${detailsResponse.data.clients.cCeleb1FName} & ${detailsResponse.data.clients.cCeleb2FName}'s ${detailsResponse.data.events.eventDesc}, 
+                                                            ${convertTime(item.eventTime)}`;
+                                else
+                                    eventCard.innerText = `${detailsResponse.data.clients.cCeleb1FName}'s ${detailsResponse.data.events.eventDesc}, 
+                                                            ${convertTime(item.eventTime)}`;
+
+                                eventCard.dataset.date = day.dataset.date;
+
+                                eventCard.addEventListener("click", function () {
+                                    alert(`Trial ${this.dataset.date} clicked!`);
+                                });
+                                day.appendChild(eventCard);
+                            } else {
+                                Swal.fire({
+                                    title: "Error",
+                                    text: detailsResponse.data.message,
+                                    icon: "error"
+                                });
+                            }
+                        });
                     }
                     else {
-                        const eventCard = document.createElement("div");
-                        eventCard.className = "border-gray-400 border p-2 cursor-pointer";
-                        eventCard.innerText = `${item.bookingID} ${convertDate(item.bookingDate)}`;
-                        eventCard.dataset.date = day.dataset.date;
-
-                        eventCard.addEventListener("click", function () {
-                            alert(`Trial ${this.dataset.date} clicked!`);
-                        });
-                        day.appendChild(eventCard);
+                        return;
                     }
                 });
 
@@ -521,8 +667,24 @@
             if (day.dataset && day.dataset.date) { // Only add event listeners to cells with day numbers
                 day.addEventListener('click', function () {
                     selectedDate = this.dataset.date;
-                    document.querySelectorAll('#days-container div').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
+                    document.querySelectorAll('#days-container div .date-block').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
                     this.classList.add('bg-[#EC4899]', 'text-white', 'selected');
+                });
+            }
+        });
+    }
+
+    $scope.addBooking = function () {
+        alert(selectedDate);
+        IsabellaCateringWebAppService.checkCalendarAvailabilityService(selectedDate).then(function (response) {
+            if (response.data.success) {
+                $scope.redirectToAddBookingPage();
+            }
+            else {
+                Swal.fire({
+                    title: "Error",
+                    text: response.data.message,
+                    icon: "error"
                 });
             }
         });
@@ -959,6 +1121,9 @@
         if (!$scope.editData) return 'Unpaid';
         return computeStatus($scope.editData.amountDue, $scope.editData.amountPaid);
     };
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dueDate = new Date(payment.dueDate);
 
     $scope.submitEditPayment = function () {
         var err = validatePaymentForm($scope.editData, !!$scope.editData.dueDate);

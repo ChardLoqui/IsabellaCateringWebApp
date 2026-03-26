@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Services.Description;
 
 namespace IsabellaCateringWebApp.Controllers
 {
@@ -363,6 +364,60 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        // for delete
+        [HttpPost]
+        public JsonResult DeleteUser(int id)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.Find(id);
+                    if (user != null)
+                    {
+                        db.users_tbl.Remove(user);
+                        db.SaveChanges();
+                        return Json(new { success = true });
+                    }
+                    return Json(new { success = false, message = "User not found." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // for update
+        [HttpPost]
+        public JsonResult UpdateUser(tblUsersModel userInfo)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.Find(userInfo.userID);
+                    if (user != null)
+                    {
+                        user.permissionID = userInfo.permissionID;
+                        user.firstName = userInfo.firstName;
+                        user.lastName = userInfo.lastName;
+                        user.isActive = userInfo.isActive;
+                        user.dateUpdated = DateTime.Now;
+
+                        db.SaveChanges();
+                        return Json(new { success = true });
+                    }
+                    return Json(new { success = false, message = "User not found." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
 
         public JsonResult addBooking(tblBookingsModel bookingData)
         {
@@ -397,11 +452,11 @@ namespace IsabellaCateringWebApp.Controllers
                     db.SaveChanges();
                 }
 
-                return Json(new { success = true, message = "Booking Successfully Added" });
+                return Json(new { success = true, message = "Booking Successfully Added" }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -431,6 +486,32 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        public JsonResult checkCalendarAvailability(string formattedDate)
+        {
+            try
+            {
+                DateTime csharpDate = DateTime.Parse(formattedDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookings = db.bookings_tbl
+                                        .Where(b => b.bookingDate == csharpDate)
+                                        .ToList();
+                    if (bookings.Count < 5)
+                    {
+                        Session["bookingSelectedDate"] = formattedDate;
+                        return Json(new { success = true, selectedDate = Session["bookingSelectedDate"], message = "Create Request Granted!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                        return Json(new { success = false, selectedDate = Session["bookingSelectedDate"], message = "The Number of bookings for this day has reached it's limits!" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
         public JsonResult getCalendarBooking(string formattedDate)
         {
             try
@@ -444,11 +525,11 @@ namespace IsabellaCateringWebApp.Controllers
 
                     if (bookings == null)
                     {
-                        return Json(new { success = false, message = "No Bookings Found!" });
+                        return Json(new { success = false, message = "No Bookings Found!" }, JsonRequestBehavior.AllowGet);
                     }
                     else
                     {
-                        return Json(bookings, JsonRequestBehavior.AllowGet);
+                        return Json(new { bookingData = bookings, success = true, message = "No Bookings Found!" }, JsonRequestBehavior.AllowGet);
                     }
                 }
             }
@@ -457,6 +538,57 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+        public JsonResult getBookingDetails(int bookingID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookings = db.bookings_tbl
+                                    .Where(b => b.bookingID == bookingID)
+                                    .FirstOrDefault();
+
+                    if (bookings == null)
+                    {
+                        return Json(new { success = false, message = "No Bookings Found!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        var bookingPackage = db.packages_tbl
+                                    .Where(p => p.packageID == bookings.packageID)
+                                    .FirstOrDefault();
+                        if (bookingPackage != null)
+                        {
+                            var bookingClient = db.clients_tbl
+                                    .Where(c => c.clientID == bookings.clientID)
+                                    .FirstOrDefault();
+
+                            if (bookingClient != null)
+                            {
+                                var bookingEvent = db.events_tbl
+                                        .Where(e => e.eventID == bookingClient.clientID)
+                                        .FirstOrDefault();
+
+                                return Json(new { packages = bookingPackage, clients = bookingClient, events = bookingEvent, success = true, message = "Details Found!" }, JsonRequestBehavior.AllowGet);
+                            }
+                            else
+                            {
+                                return Json(new { success = false, message = "No Client Found!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
 
 
         //start for payments

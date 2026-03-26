@@ -31,6 +31,24 @@
         return $http.get("/Main/GetUsers");
     }
 
+    //for Updating
+    this.UpdateUsrCall = function (userInfo) {
+        return $http({
+            method: "POST",
+            url: "/Main/UpdateUser",
+            data: JSON.stringify(userInfo),
+            headers: { 'Content-Type': 'application/json' }
+        });
+    };
+
+    //for Deleting
+    this.DeleteUsrCall = function (userID) {
+        return $http({
+            method: "POST",
+            url: "/Main/DeleteUser",
+            data: { id: userID }
+        });
+    };
 
     //test for navbar
     this.getCurrentSessionServiceNav = function () {
@@ -80,6 +98,18 @@
             params: { formattedDate: formattedDate }
         });
     };
+
+    this.getBookingDetailsService = function (bookingID) {
+        return $http.get("/Main/getBookingDetails", {
+            params: { bookingID: bookingID }
+        });
+    }
+
+    this.checkCalendarAvailabilityService = function (formattedDate) {
+        return $http.get("/Main/checkCalendarAvailability", {
+            params: { formattedDate: formattedDate }
+        });
+    }
 
     //========================================================BOOKING CALENDAR END=======================================================
 

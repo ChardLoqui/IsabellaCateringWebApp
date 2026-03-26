@@ -1,5 +1,5 @@
 ﻿@{
-    Layout = "~/Views/Shared/_LogInLayout.cshtml";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
     ViewBag.Title = "Log In";
 
     <body ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
@@ -36,16 +36,17 @@
                             <div class="hidden duration-700 ease-in-out" data-carousel-item>
                                 <img src="/Content/images/img4.jpg"
                                      class="w-full h-full object-cover"
-                                     alt="Slide 4">
+                                     alt="Slide 3">
                             </div>
                             <!-- Item 5 -->
                             <div class="hidden duration-700 ease-in-out" data-carousel-item>
                                 <img src="/Content/images/img5.jpg"
                                      class="w-full h-full object-cover"
-                                     alt="Slide 5">
+                                     alt="Slide 3">
                             </div>
                         </div>
 
+                        <!-- Indicators -->
                         <div class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3">
                             <button class="w-3 h-3 rounded-full bg-white" data-carousel-slide-to="0"></button>
                             <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="1"></button>
@@ -54,12 +55,34 @@
                             <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="4"></button>
 
                         </div>
+
+                        <!-- Controls -->
+                        <button class="absolute top-0 left-0 z-30 flex items-center justify-center h-full px-4"
+                                data-carousel-prev>
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30">
+                                <span class="material-icons text-white text-2xl">
+                                    chevron_left
+                                </span>
+                            </span>
+                        </button>
+
+                        <button class="absolute top-0 right-0 z-30 flex items-center justify-center h-full px-4"
+                                data-carousel-next>
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30">
+                                <span class="material-icons text-white text-2xl">
+                                    chevron_right
+                                </span>
+                            </span>
+                        </button>
+
                     </div>
                 </div>
+
             </div>
+
             <!-- Right side -->
             <div class="w-1/2 flex items-center justify-center" style="background-color:#fcd1e5;">
-                <form class="w-3/4 max-w-md space-y-5" name="loginForm">
+                <form class="w-3/4 max-w-md space-y-5">
 
                     <!-- Header -->
                     <header class="text-center">
@@ -68,48 +91,67 @@
                     </header>
 
                     <!-- Email -->
-                    <div class="flex flex-col">
-                        <div class="flex justify-between items-center mb-1">
-                            <label for="logEmail" class="text-black text-sm font-semibold">Email</label>
-                            <small id="emailCount" style="color: gray; font-size: 11px;">0 / 50</small>
+                    <div class="flex flex-col relative">
+                        <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                            Old Password
+                        </label>
+
+                        <div class="relative">
+                            @* Password input*@
+                            <input id="logPWord" ng-model="Password"
+                                   type="password"
+                                   class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
+
+                            <!-- Toggle icon -->
+                            <span id="togglePassword"
+                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                                visibility_off
+                            </span>
                         </div>
-                        @*email input*@
-                        <input id="logEmail" ng-model="lEmail"
-                               type="email" required maxlength="50"
-                               oninput="this.value = this.value.replace(/\s/g, '');
-                               document.getElementById('emailCount').innerText = this.value.length + ' / 50';"
-                               class="w-full rounded bg-white p-2 focus:outline-none" />
+                    </div>
+
+                    <div class="flex flex-col relative">
+                        <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                            New Password
+                        </label>
+
+                        <div class="relative">
+                            @* Password input*@
+                            <input id="logPWord" ng-model="Password"
+                                   type="password"
+                                   class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
+
+                            <!-- Toggle icon -->
+                            <span id="togglePassword"
+                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                                visibility_off
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Password -->
                     <div class="flex flex-col relative">
-                        <div class="flex justify-between items-center mb-1">
-                            <label for="logPWord" class="text-black text-sm font-semibold">Password</label>
-                            <small id="passCount" style="color: gray; font-size: 11px;">0 / 20</small>
-                        </div>
-                        @* Password input*@
+                        <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                            Confirm Password
+                        </label>
+
                         <div class="relative">
-                            <input id="logPWord" ng-model="lPassword"
-                                   type="password" required maxlength="20"
-                                   oninput="this.value = this.value.replace(/\s/g, '');
-                                   document.getElementById('passCount').innerText = this.value.length + ' / 20';"
+                            @* Password input*@
+                            <input id="logPWord" ng-model="cPassword"
+                                   type="password"
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
                             <!-- Toggle icon -->
-                            <span id="toggleLogInPassword" ng-click="toggleShowLogInPassword()"
-                                  class="material-icons absolute w-7 right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                            <span id="togglePassword"
+                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
                                 visibility_off
                             </span>
                         </div>
-
-                        <a href="#" class="mt-1 text-xs text-pink-500 hover:text-pink-900">
-                            Forgot Password?
-                        </a>
                     </div>
 
                     <!-- Button -->
                     @*get the log in button to call the logInService function in the main controller when clicked*@
-                    <button type="submit" ng-click="logInService()"
+                    <button type="button" ng-click="logInService()"
                             class="w-full rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-lg">
                         Log in
                     </button>
@@ -119,5 +161,5 @@
         </div>
 
     </body>
-
 }
+
