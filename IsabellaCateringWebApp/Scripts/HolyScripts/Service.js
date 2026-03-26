@@ -97,7 +97,7 @@
         return $http.get("/Main/getCalendarBooking", {
             params: { formattedDate: formattedDate }
         });
-    }
+    };
 
     this.getBookingDetailsService = function (bookingID) {
         return $http.get("/Main/getBookingDetails", {
@@ -120,6 +120,10 @@
         return $http.get("/Main/GetPayments");
     }
 
+    this.getBookingsWithoutPayments = function () {
+        return $http.get('/Main/GetBookingsWithoutPayments');
+    };
+
     this.AddPaymentCall = function (paymentData) {
         var response = $http({
             method: "post",
@@ -127,6 +131,22 @@
             data: paymentData
         });
         return response;
+    };
+
+    this.addPaymentService = this.AddPaymentCall;
+
+    this.updatePaymentService = function (paymentData) {
+        return $http({
+            method: 'POST',
+            url: '/Main/UpdatePayment',
+            data: paymentData
+        });
+    };
+
+    this.getClientEmailByBooking = function (bookingID) {
+        return $http.get('/Main/GetClientEmailByBooking', {
+            params: { bookingID: bookingID }
+        });
     };
 
     //========================================================PAYMENT REMINDER END=======================================================

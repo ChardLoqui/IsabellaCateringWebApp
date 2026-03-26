@@ -590,6 +590,8 @@ namespace IsabellaCateringWebApp.Controllers
         }
 
 
+
+        //start for payments
         public JsonResult GetPayments()
         {
             using (var db = new IsabellaCateringContext())
@@ -597,6 +599,7 @@ namespace IsabellaCateringWebApp.Controllers
                 var data = db.payments_tbl.Select(p => new
                 {
                     paymentID = p.paymentID,
+                    bookingID = p.bookingID,
                     amountDue = p.amountDue,
                     amountPaid = p.amountPaid,
                     paymentType = p.paymentType,
@@ -606,7 +609,6 @@ namespace IsabellaCateringWebApp.Controllers
                     dateUpdated = p.dateUpdated
                 }).ToList();
 
-                // Use a larger MaxJsonLength to prevent silent truncation
                 var jsonResult = Json(data, JsonRequestBehavior.AllowGet);
                 jsonResult.MaxJsonLength = int.MaxValue;
                 return jsonResult;
@@ -619,24 +621,67 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    var paymentInfo = new tblPaymentsModel()
+                    var existingPayment = db.payments_tbl.FirstOrDefault(p => p.paymentID == paymentData.paymentID);
+
+                    if (existingPayment != null)
                     {
-                        paymentID = paymentData.paymentID,
-                        amountDue = paymentData.amountDue,
-                        amountPaid = paymentData.amountPaid,
-                        paymentType = paymentData.paymentType,
-                        paymentStatus = paymentData.paymentStatus,
-                        dueDate = paymentData.dueDate,
-                        dateCreated = DateTime.Now,
-                        dateUpdated = DateTime.Now
-                    };
+                        existingPayment.amountDue = paymentData.amountDue;
+                        existingPayment.amountPaid = paymentData.amountPaid;
+                        existingPayment.paymentType = paymentData.paymentType;
+                        existingPayment.paymentStatus = paymentData.paymentStatus;
+                        existingPayment.dueDate = paymentData.dueDate;
+                        existingPayment.dateUpdated = DateTime.Now; 
+                    }
+                    else
+                    {
+                        var newPayment = new tblPaymentsModel()
+                        {
+                            bookingID = paymentData.bookingID,
+                            amountDue = paymentData.amountDue,
+                            amountPaid = paymentData.amountPaid,
+                            paymentType = paymentData.paymentType,
+                            paymentStatus = paymentData.paymentStatus,
+                            dueDate = paymentData.dueDate,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+                        db.payments_tbl.Add(newPayment);
+                    }
 
-                    db.payments_tbl.Add(paymentInfo);
                     db.SaveChanges();
-
+                    return Json(new { success = true, message = "Saved successfully!" });
                 }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
 
-                return Json(new { success = true, message = "Saved successfully!" });
+        [HttpPost]
+        public JsonResult UpdatePayment(tblPaymentsModel paymentData)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var existing = db.payments_tbl
+                                     .FirstOrDefault(p => p.paymentID == paymentData.paymentID);
+
+                    if (existing == null)
+                        return Json(new { success = false, message = "Payment not found." });
+
+                    existing.bookingID = paymentData.bookingID;
+                    existing.paymentType = paymentData.paymentType;
+                    existing.amountDue = paymentData.amountDue;
+                    existing.amountPaid = paymentData.amountPaid;
+                    existing.paymentStatus = paymentData.paymentStatus;
+                    existing.dueDate = paymentData.dueDate;
+                    existing.dateUpdated = DateTime.Now; 
+
+                    db.SaveChanges();
+                }
+                return Json(new { success = true, message = "Updated successfully!" });
             }
             catch (Exception ex)
             {
@@ -645,14 +690,100 @@ namespace IsabellaCateringWebApp.Controllers
                 {
                     realError = ex.InnerException.Message;
                     if (ex.InnerException.InnerException != null)
-                    {
                         realError = ex.InnerException.InnerException.Message;
-                    }
                 }
-
                 return Json(new { success = false, message = realError });
             }
         }
+
+        [HttpPost]
+        public JsonResult DeletePayment(int id)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var record = db.payments_tbl.Find(id);
+                    if (record != null)
+                    {
+                        db.payments_tbl.Remove(record);
+                        db.SaveChanges();
+                        return Json(new { success = true });
+                    }
+                    return Json(new { success = false });
+                }
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        public JsonResult GetBookingsWithoutPayments()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingIDsWithPayments = db.payments_tbl
+                                                   .Select(p => p.bookingID)
+                                                   .Distinct()
+                                                   .ToList();
+
+                    var bookings = db.bookings_tbl
+                                     .Where(b => !bookingIDsWithPayments.Contains(b.bookingID))
+                                     .Select(b => new
+                                     {
+                                         bookingID = b.bookingID
+                                     })
+                                     .ToList();
+
+                    return Json(bookings, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult GetClientEmailByBooking(int bookingID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl
+                                    .FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                        return Json(new { success = false, message = "Booking not found. BookingID: " + bookingID },
+                                    JsonRequestBehavior.AllowGet);
+
+                    var client = db.clients_tbl
+                                   .FirstOrDefault(c => c.clientID == booking.clientID);
+                    if (client == null)
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Client not found. BookingID: " + bookingID + " | ClientID from booking: " + booking.clientID
+                        }, JsonRequestBehavior.AllowGet);
+
+                    return Json(new
+                    {
+                        success = true,
+                        email = client.cEmail,
+                        firstName = client.cFName,
+                        lastName = client.cLName,
+                        bookingID = bookingID
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, message = innerMsg }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //end for payments
+
 
 
 
