@@ -19,10 +19,13 @@ namespace IsabellaCateringWebApp.Models.Context
         public IsabellaCateringContext() : base("Name=isabellacms_db") { }
 
         public virtual DbSet<tblUsersModel> users_tbl { get; set; }
+        public virtual DbSet<tblActivityLogModel> activitylog_tbl { get; set; }
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Configurations.Add(new tblUsersMap());
+            modelBuilder.Configurations.Add(new tblActivityLogMap());
         }
     }
 }

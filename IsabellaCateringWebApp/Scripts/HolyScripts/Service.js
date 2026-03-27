@@ -49,5 +49,9 @@
             data: { id: userID }
         });
     };
+    //for logs
+    this.getLogsDataService = function () {
+        return $http.get("/Main/GetLogs");
+    };
 
 });
