@@ -782,9 +782,25 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        public JsonResult GetLogs()
+        {
+            using (var db = new IsabellaCateringContext())
+            {
+                var data = (from log in db.activitylog_tbl
+                            join user in db.users_tbl on log.userID equals user.userID
+                            select new
+                            {
+                                logID = log.logID,
+                                action = log.processDesc + ": " + log.activityDesc,
+                                dateUpdated = log.dateCreated,
+                                userName = user.firstName + " " + user.lastName
+                            }).ToList();
         //end for payments
 
 
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
 
 
     }

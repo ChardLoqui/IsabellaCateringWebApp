@@ -208,6 +208,8 @@
                 $scope.firstName = ''; $scope.lastName = ''; $scope.email = '';
                 $scope.password = ''; $scope.confirmPassword = ''; $scope.permissionID = '';
                 $scope.addUserForm.$setPristine();
+                document.getElementById('firstNameAddCount').innerText = '0 / 30';
+                document.getElementById('lastNameAddCount').innerText = '0 / 30';
                 document.getElementById('emailAddCount').innerText = '0 / 50';
                 document.getElementById('passAddCount').innerText = '0 / 20';
                 $scope.getUsersData(); //refresh table 
@@ -326,6 +328,50 @@
     $scope.lastPage = function () {
         $scope.currentPage = $scope.numberOfPages();
     };
+
+    // func ng search and pagination 
+    $scope.logsData = [];
+    $scope.searchText = "";
+    $scope.appliedSearch = "";
+    $scope.currentPage = 1;
+    $scope.pageSize = 8; 
+
+    // search
+    $scope.searchLogs = function () {
+        $scope.appliedSearch = $scope.searchText;
+        $scope.currentPage = 1;
+    };
+
+    // pagination
+    $scope.numberOfPages = function () {
+        if (!$scope.logsData) return 1;
+        const filtered = $scope.$eval("logsData | filter:appliedSearch");
+        return Math.ceil(filtered.length / $scope.pageSize) || 1;
+    };
+
+    $scope.setPage = function (page) {
+        if (page >= 1 && page <= $scope.numberOfPages()) {
+            $scope.currentPage = page;
+        }
+    };
+    // double arrow para sa last page
+    $scope.lastPage = function () {
+        $scope.currentPage = $scope.numberOfPages();
+    };
+    //get logs data
+    $scope.getLogsData = function () {
+        IsabellaCateringWebAppService.getLogsDataService().then(function (returnedData) {
+            $scope.logsData = returnedData.data.map(log => {
+                if (log.dateUpdated) {
+                    const milli = parseInt(log.dateUpdated.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
+                    log.dateUpdated = new Date(milli);
+                }
+                return log;
+            });
+        });
+    };
+
+    $scope.getLogsData();
 
 
     //======================================================== ACCOUNT MANAGEMENT END =======================================================
