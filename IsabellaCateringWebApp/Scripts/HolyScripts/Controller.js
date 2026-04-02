@@ -1168,7 +1168,6 @@
     };
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const dueDate = new Date(payment.dueDate);
 
     $scope.submitEditPayment = function () {
         var err = validatePaymentForm($scope.editData, !!$scope.editData.dueDate);

@@ -1462,7 +1462,7 @@ namespace IsabellaCateringWebApp.Controllers
         {
             using (var db = new IsabellaCateringContext())
             {
-                var data = (from log in db.activitylog_tbl
+                var data = (from log in db.activitylogs_tbl
                             join user in db.users_tbl on log.userID equals user.userID
                             select new
                             {
@@ -1471,9 +1471,6 @@ namespace IsabellaCateringWebApp.Controllers
                                 dateUpdated = log.dateCreated,
                                 userName = user.firstName + " " + user.lastName
                             }).ToList();
-        //end for payments
-
-
                 return Json(data, JsonRequestBehavior.AllowGet);
             }
         }
