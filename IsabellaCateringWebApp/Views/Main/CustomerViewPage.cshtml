@@ -1,0 +1,138 @@
+﻿@{
+
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.Title = "Event Progress";
+}
+
+<main class="min-h-screen bg-gray-50 text-gray-800 antialiased"
+      ng-init="getSession(); getOrderInfo(); getPackage();">
+
+    <div class="grid grid-cols-1 gap-6 p-6">
+
+        <!-- ================= HEADER ================= -->
+        <section class="rounded-3xl bg-[#203446] p-8 text-white">
+
+            <h1 class="font-roboto text-3xl font-semibold lg:text-4xl">
+                Event Progress
+            </h1>
+
+            <!-- Progress Bar -->
+            <div class="mt-8">
+
+                <div class="flex items-center">
+                    <div ng-repeat="step in steps" class="relative flex w-full items-center">
+
+                        <div ng-if="!$first"
+                             class="h-2 flex-1"
+                             ng-class="step.completed ? 'bg-[#f25685]' : 'bg-gray-500'">
+                        </div>
+
+                        <div class="z-10 flex h-10 w-10 items-center justify-center
+                                    rounded-full text-sm font-semibold"
+                             ng-class="step.completed ? 'bg-[#f25685]' : 'bg-gray-500'">
+                            <span ng-if="step.completed">&#10003;</span>
+                            <span ng-if="!step.completed">{{ step.icon }}</span>
+                        </div>
+
+                        <div ng-if="!$last"
+                             class="h-2 flex-1"
+                             ng-class="step.completed ? 'bg-[#f25685]' : 'bg-gray-500'">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 flex justify-between text-sm text-white/70">
+                    <span ng-repeat="step in steps" class="flex-1 text-center">
+                        {{ step.label }}
+                    </span>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= CONTENT ================= -->
+        <section class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+            <!-- LEFT (MAIN INFO) -->
+            <div class="space-y-6 lg:col-span-2">
+
+                <!-- Package -->
+                <div class="rounded-2xl border bg-white p-6 shadow">
+                    <p class="text-xs font-semibold uppercase text-[#ff4ec8]">
+                        Package Overview
+                    </p>
+
+                    <h2 class="mt-1 text-2xl font-semibold">
+                        {{ package.title }}
+                    </h2>
+
+                    <ul class="mt-3 list-inside list-disc text-sm text-gray-600">
+                        <li ng-repeat="item in package.items">{{ item }}</li>
+                    </ul>
+                </div>
+
+                <!-- Event Details -->
+                <div class="rounded-2xl border bg-white p-6 shadow">
+                    <p class="mb-3 text-lg font-semibold">Event Details</p>
+
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div>
+                            <strong>Date:</strong> {{ order.bookingDate }}
+                        </div>
+                        <div>
+                            <strong>Venue:</strong> {{ order.venue }}
+                        </div>
+                        <div>
+                            <strong>Setup Time:</strong> {{ order.eventSetTime }}
+                        </div>
+                        <div>
+                            <strong>Event Time:</strong> {{ order.eventTime }}
+                        </div>
+                        <div>
+                            <strong>Ceremony:</strong> {{ order.ceremTime }}
+                        </div>
+                        <div>
+                            <strong>Meal Time:</strong> {{ order.eventMealTime }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Themes -->
+                <div class="rounded-2xl border bg-white p-6 shadow">
+                    <p class="mb-2 text-lg font-semibold">Themes & Decor</p>
+                    <p class="text-sm text-gray-600">
+                        {{ order.dsgnTheme }} — {{ order.dsgnMotif }}
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- RIGHT (ORDER SUMMARY) -->
+            <aside class="rounded-2xl border bg-white p-6 shadow">
+
+                <h3 class="text-center text-xl font-semibold">
+                    {{ order.eventName }}
+                </h3>
+
+                <p class="mt-1 text-center text-xs uppercase text-gray-400">
+                    {{ order.bookingID }}
+                </p>
+
+                <hr class="my-4">
+
+                <div class="space-y-2 text-sm text-gray-600">
+                    <p><strong>Created:</strong> {{ order.dateCreated }}</p>
+                    <p><strong>Updated:</strong> {{ order.dateUpdated }}</p>
+                    <p><strong>Client ID:</strong> {{ order.clientID }}</p>
+                </div>
+
+            </aside>
+
+        </section>
+        <button ng-click="getOrderInfo()">Load Booking</button>
+        <script>
+    console.log("getBooking URL:", '@Url.Action("getBooking", "Isabella")');
+        </script>
+
+    </div>
+</main>

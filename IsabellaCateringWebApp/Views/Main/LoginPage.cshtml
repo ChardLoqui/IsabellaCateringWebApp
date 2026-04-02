@@ -1,5 +1,5 @@
 ﻿@{
-    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    Layout = "~/Views/Shared/_LogInLayout.cshtml";
     ViewBag.Title = "Log In";
 
     <body ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
@@ -18,12 +18,14 @@
                                      class="w-full h-full object-cover"
                                      alt="Slide 1">
                             </div>
+
                             <!-- Item 2 -->
                             <div class="hidden duration-700 ease-in-out" data-carousel-item>
                                 <img src="/Content/images/img2.jpg"
                                      class="w-full h-full object-cover"
                                      alt="Slide 2">
                             </div>
+
                             <!-- Item 3 -->
                             <div class="hidden duration-700 ease-in-out" data-carousel-item>
                                 <img src="/Content/images/img3.jpg"
@@ -94,8 +96,8 @@
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
                             <!-- Toggle icon -->
-                            <span id="togglePassword"
-                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                            <span id="toggleLogInPassword" ng-click="toggleShowLogInPassword()"
+                                  class="material-icons absolute w-7 right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
                                 visibility_off
                             </span>
                         </div>
@@ -117,4 +119,5 @@
         </div>
 
     </body>
+
 }

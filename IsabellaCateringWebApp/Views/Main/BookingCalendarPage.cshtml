@@ -1,0 +1,176 @@
+﻿@{
+
+    Layout = "~/Views/Shared/_ManagementLayout.cshtml";
+    ViewBag.Title = "Calendar Dashboard";
+}
+<div class="container mx-auto h-screen p-10">
+    <div>
+        <h1 class="text-2xl font-semibold text-black mb-6">Booking Calendar</h1>
+    </div>
+
+    <div class="col-span-2 flex items-center justify-center" ng-init="renderCalendar()">
+        <div class="mx-auto w-[90%] h-[80%] text-[#000000]">
+            <div class="flex items-center pb-4">
+                <div id="prevMonth" ng-click="togglePrevMonth()"
+                     class="mx-2 flex h-[32px] w-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-full w-[20%] h-15 placeholder-white text-2xl">
+                    <span class="material-icons text-l">chevron_left</span>
+                </div>
+                <span id="currentMonth" class="w-[20%] text-center text-xl font-medium capitalize ">
+                    August 2023
+                </span>
+                <div id="nextMonth" ng-click="toggleNextMonth()"
+                     class="mx-2 flex h-[32px] w-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-full w-[20%] h-15 placeholder-white text-2xl">
+                    <span class="material-icons text-l">chevron_right</span>
+                </div>
+                <input id="searchCalendar"
+                       type="text"
+                       placeholder="Search Calendar"
+                       class="mx-[5%] w-96 px-5 rounded bg-gray-100 p-2 focus:outline-none border border-transparent focus:border-pink-500 transition-all" />
+                <div id="changeFormat" ng-click="changeFormat()"
+                     class="mx-2 flex h-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-[20%] h-15 placeholder-white text-l">
+                    Month<span class="mx-1 material-icons text-l">arrow_drop_down</span>
+                </div>
+                <div id="addBooking" ng-click="addBooking()"
+                     class="mx-2 flex h-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-[20%] h-15 placeholder-white text-l">
+                    <span class="mx-1 material-icons text-l">add</span>Add Booking
+                </div>
+            </div>
+            <div id="datepicker-container"
+                 class="z-30 w-auto flex-col rounded-xl bg-white p-4 shadow-four sm:p-[30px] dark:bg-dark-2 dark:shadow-box-dark border-gray-400 border-2">
+
+                <div class="grid grid-cols-7 justify-between pb-2 pt-4 text-sm font-medium capitalize text-body-color sm:text-lg dark:text-dark-6">
+                    <span class="flex h-[38px] w-[100%] items-center justify-center">
+                        Sunday
+                    </span>
+
+                    <span class="flex h-[38px] w-[100%] items-center justify-center">
+                        Monday
+                    </span>
+
+                    <span class="flex h-[38px] w-[100%] items-center justify-center">
+                        Tuesday
+                    </span>
+
+                    <span class="flex h-[38px] w-[100%] items-center justify-center">
+                        Wednesday
+                    </span>
+
+                    <span class="flex h-[38px] w-[100%] items-center justify-center">
+                        Thursday
+                    </span>
+
+                    <span class="flex h-[38px] w-[100%] items-center justify-center">
+                        Friday
+                    </span>
+
+                    <span class="flex h-[38px] w-[100%] items-center justify-center">
+                        Saturday
+                    </span>
+
+                </div>
+
+                <div id="days-container" class="border border-gray-200 grid grid-cols-7 grid-rows-[repeat(6,120px)] justify-between text-sm font-medium sm:text-lg">
+                    <!-- Default calendar layout - will be replaced by JavaScript when available -->
+                    <div></div>
+                    <div></div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        1
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        2
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        3
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        4
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        5
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        6
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        7
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        8
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        9
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        10
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        11
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        12
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        13
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        14
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        15
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        16
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        17
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        18
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        19
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        20
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        21
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        22
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        23
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        24
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        25
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        26
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        27
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        28
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        29
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        30
+                    </div>
+                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
+                        31
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
