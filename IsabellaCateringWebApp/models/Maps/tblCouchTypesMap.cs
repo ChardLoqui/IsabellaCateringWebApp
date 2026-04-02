@@ -11,7 +11,7 @@ namespace IsabellaCateringWebApp.Models.Maps
     {
         public tblCouchTypesMap()
         {
-            HasKey(i => i.couchtypID);
+            HasKey(i => i.couchTypID);
             ToTable("couchtypes_tbl");
         }
     }
