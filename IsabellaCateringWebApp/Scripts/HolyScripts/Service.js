@@ -72,6 +72,8 @@
 
     //========================================================PASSWORD RESET END=======================================================
 
+    
+
     this.getBooking = function (booking) {
         console.log("getBooking called", booking.bookingID);
 
@@ -83,6 +85,7 @@
         return response;
     };
 
+    //========================================================CREATE BOOKING START=======================================================
     this.bookEvent = function (eventData) {
         return $http({
             method: "POST",
@@ -90,6 +93,36 @@
             data: eventData
         });
     };
+
+    this.getPackageBookingOptionsService = function () {
+        return $http.get("/Main/getPackageBookingOptions");
+    }
+
+    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+        return $http.post("/Main/insertPackage", {
+            clientInfo: clientInfo,
+            bookingInfo: bookingInfo,
+            paymentInfo: paymentInfo,
+            packages: packages,
+            sidesGrpTypes: sidesGrpTypes,
+            specialsGrpTypes: specialsGrpTypes,
+            staffGrpTypes: staffGrpTypes,
+            equipGrpTypes: equipGrpTypes,
+            entertainmentGrpTypes: entertainmentGrpTypes,
+            photoGrpTypes: photoGrpTypes,
+            keepsakesGrpTypes: keepsakesGrpTypes,
+            debutGrpTypes: debutGrpTypes
+        });
+    }
+
+    this.loadPackagePreOptionService = function (packageID) {
+        return $http.get("/Main/loadPackagePreOption", {
+            params: { packageID: packageID }
+        });
+    }
+
+
+    //========================================================CREATE BOOKING END=======================================================
 
     //========================================================BOOKING CALENDAR START=======================================================
 

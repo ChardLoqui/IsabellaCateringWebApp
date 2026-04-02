@@ -11,7 +11,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public int createdBy { get; set; }
         public int clientID { get; set; }
         public int packageID { get; set; }
-
+        public int eventID { get; set; }
         public string dsgnTheme { get; set; }
         public string dsgnMotif { get; set; }
         public string prepVenue { get; set; }
@@ -27,6 +27,8 @@ namespace IsabellaCateringWebApp.Models.Models
 
         public DateTime dateCreated { get; set; }
         public DateTime dateUpdated { get; set; }
+
+        public string bookingNote { get; set; }
 
         public int progressOne { get; set; }
         public int progressTwo { get; set; }

@@ -3,14 +3,19 @@ using IsabellaCateringWebApp.Models.Models;
 using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Transactions;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Services.Description;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace IsabellaCateringWebApp.Controllers
 {
@@ -134,7 +139,8 @@ namespace IsabellaCateringWebApp.Controllers
                 var creds = new
                 {
                     userID = Session["currentLog"]?.ToString() ?? string.Empty,
-                    permID = Session["currentPerm"]?.ToString() ?? string.Empty
+                    permID = Session["currentPerm"]?.ToString() ?? string.Empty,
+                    selectedDate = Session["bookingSelectedDate"]?.ToString() ?? string.Empty
                 };
                 return Json(creds, JsonRequestBehavior.AllowGet);
             }
@@ -149,6 +155,7 @@ namespace IsabellaCateringWebApp.Controllers
         {
             var uID = Session["currentLog"]?.ToString();
             var pID = Session["currentPerm"]?.ToString() ?? "";
+            var dSel = Session["bookingSelectedDate"]?.ToString();
             string uName = "Loading..";
 
             if (!string.IsNullOrEmpty(uID))
@@ -161,7 +168,7 @@ namespace IsabellaCateringWebApp.Controllers
                 }
             }
 
-            return Json(new { userName = uName, permID = pID }, JsonRequestBehavior.AllowGet);
+            return Json(new { userName = uName, permID = pID, selectedDate=dSel}, JsonRequestBehavior.AllowGet);
         }
 
         //bago, to add user
@@ -490,6 +497,12 @@ namespace IsabellaCateringWebApp.Controllers
         {
             try
             {
+                if (formattedDate == null) {
+                    Session["bookingSelectedDate"] = formattedDate;
+                    return Json(new { success = false, selectedDate = Session["bookingSelectedDate"], message = "Please select a date first!" }, JsonRequestBehavior.AllowGet);
+                }
+                    
+
                 DateTime csharpDate = DateTime.Parse(formattedDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
                 using (var db = new IsabellaCateringContext())
                 {
@@ -589,6 +602,669 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        public JsonResult getPackageBookingOptions()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var backdroptypes = db.backdroptypes_tbl.Select(x => x).ToList();
+                    var centerPiecetypes = db.centerpiecetypes_tbl.Select(x => x).ToList();
+                    var couchtypes = db.couchtypes_tbl.Select(x => x).ToList();
+                    var debuttypes = db.debuttypes_tbl.Select(x => x).ToList();
+                    var entertainmenttypes = db.entertainmenttypes_tbl.Select(x => x).ToList();
+                    var entrancetypes = db.entrancetypes_tbl.Select(x => x).ToList();
+                    var equiptypes = db.equiptypes_tbl.Select(x => x).ToList();
+                    var keepsakestypes = db.keepsakestypes_tbl.Select(x => x).ToList();
+                    var maincoursetypes = db.maincoursetypes_tbl.Select(x => x).ToList();
+                    var phototypes = db.phototypes_tbl.Select(x => x).ToList();
+                    var seatingtypes = db.seatingtypes_tbl.Select(x => x).ToList();
+                    var sidestypes = db.sidestypes_tbl.Select(x => x).ToList();
+                    var specialstypes = db.specialstypes_tbl.Select(x => x).ToList();
+                    var stafftypes = db.stafftypes_tbl.Select(x => x).ToList();
+
+                    var eventtypes = db.events_tbl.Select(x => x).ToList();
+                    var packagetypes = db.packagetypes_tbl.Select(x => x).ToList();
+
+                    return Json(new
+                    {
+                        backdropTypes = backdroptypes,
+                        centerPieceTypes = centerPiecetypes,
+                        couchTypes = couchtypes,
+                        debutTypes = debuttypes,
+                        entertainmentTypes = entertainmenttypes,
+                        entranceTypes = entrancetypes,
+                        equipTypes = equiptypes,
+                        keepsakesTypes = keepsakestypes,
+                        maincourseTypes = maincoursetypes,
+                        photoTypes = phototypes,
+                        seatingTypes = seatingtypes,
+                        sidesTypes = sidestypes,
+                        specialsTypes = specialstypes,
+                        staffTypes = stafftypes,
+                        eventTypes = eventtypes,
+                        packageTypes = packagetypes,
+                        success = true,
+                        message = "Options Found!"
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult insertPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    int grpSidesID;
+                    int grpSpecialsID;
+                    int grpStaffID;
+                    int grpEquipID;
+                    int grpEntertainmentID;
+                    int grpPhotoID;
+                    int grpKeepsakesID;
+                    int grpDebutID;
+                    int currPackageID;
+
+                    var existingSides = db.sidesgrptypes_tbl.FirstOrDefault(x =>
+                        x.sidesGrpTyp1 == sidesGrpTypes.sidesGrpTyp1 &&
+                        x.sidesGrpTyp2 == sidesGrpTypes.sidesGrpTyp2 &&
+                        x.sidesGrpTyp3 == sidesGrpTypes.sidesGrpTyp3 &&
+                        x.sidesGrpTyp4 == sidesGrpTypes.sidesGrpTyp4
+                    );
+                    if (existingSides != null)
+                    {
+                        grpSidesID = existingSides.sidesGrpTypID;
+                    }
+                    else
+                    {
+                        var newSides = new tblSidesGrpTypesModel()
+                        {
+                            sidesGrpTyp1 = sidesGrpTypes.sidesGrpTyp1,
+                            sidesGrpTyp2 = sidesGrpTypes.sidesGrpTyp2,
+                            sidesGrpTyp3 = sidesGrpTypes.sidesGrpTyp3,
+                            sidesGrpTyp4 = sidesGrpTypes.sidesGrpTyp4,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.sidesgrptypes_tbl.Add(newSides);
+                        db.SaveChanges();
+
+                        grpSidesID = newSides.sidesGrpTypID;
+                    }
+
+                    var existingSpecials = db.specialsgrptypes_tbl.FirstOrDefault(x =>
+                        x.specialsGrpTyp1 == specialsGrpTypes.specialsGrpTyp1 &&
+                        x.specialsGrpTyp2 == specialsGrpTypes.specialsGrpTyp2 &&
+                        x.specialsGrpTyp3 == specialsGrpTypes.specialsGrpTyp3 &&
+                        x.specialsGrpTyp4 == specialsGrpTypes.specialsGrpTyp4 &&
+                        x.specialsGrpTyp5 == specialsGrpTypes.specialsGrpTyp5 &&
+                        x.specialsGrpTyp6 == specialsGrpTypes.specialsGrpTyp6 &&
+                        x.specialsGrpTyp7 == specialsGrpTypes.specialsGrpTyp7 &&
+                        x.specialsGrpTyp8 == specialsGrpTypes.specialsGrpTyp8 &&
+                        x.specialsGrpTyp9 == specialsGrpTypes.specialsGrpTyp9
+                    );
+                    if (existingSpecials != null)
+                    {
+                        grpSpecialsID = existingSpecials.specialsGrpTypID;
+                    }
+                    else
+                    {
+                        var newSpecials = new tblSpecialsGrpTypesModel()
+                        {
+                            specialsGrpTyp1 = specialsGrpTypes.specialsGrpTyp1,
+                            specialsGrpTyp2 = specialsGrpTypes.specialsGrpTyp2,
+                            specialsGrpTyp3 = specialsGrpTypes.specialsGrpTyp3,
+                            specialsGrpTyp4 = specialsGrpTypes.specialsGrpTyp4,
+                            specialsGrpTyp5 = specialsGrpTypes.specialsGrpTyp5,
+                            specialsGrpTyp6 = specialsGrpTypes.specialsGrpTyp6,
+                            specialsGrpTyp7 = specialsGrpTypes.specialsGrpTyp7,
+                            specialsGrpTyp8 = specialsGrpTypes.specialsGrpTyp8,
+                            specialsGrpTyp9 = specialsGrpTypes.specialsGrpTyp9,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.specialsgrptypes_tbl.Add(newSpecials);
+                        db.SaveChanges();
+
+                        grpSpecialsID = newSpecials.specialsGrpTypID;
+                    }
+
+                    var existingStaff = db.staffgrptypes_tbl.FirstOrDefault(x =>
+                        x.staffGrpTyp1 == staffGrpTypes.staffGrpTyp1 &&
+                        x.staffGrpTyp2 == staffGrpTypes.staffGrpTyp2 &&
+                        x.staffGrpTyp3 == staffGrpTypes.staffGrpTyp3
+                    );
+                    if (existingStaff != null)
+                    {
+                        grpStaffID = existingStaff.staffGrpTypID;
+                    }
+                    else
+                    {
+                        var newStaff = new tblStaffGrpTypesModel()
+                        {
+                            staffGrpTyp1 = staffGrpTypes.staffGrpTyp1,
+                            staffGrpTyp2 = staffGrpTypes.staffGrpTyp2,
+                            staffGrpTyp3 = staffGrpTypes.staffGrpTyp3,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.staffgrptypes_tbl.Add(newStaff);
+                        db.SaveChanges();
+
+                        grpStaffID = newStaff.staffGrpTypID;
+                    }
+
+                    var existingEquipment = db.equipgrptypes_tbl.FirstOrDefault(x =>
+                        x.equipGrpTyp1 == equipGrpTypes.equipGrpTyp1 &&
+                        x.equipGrpTyp2 == equipGrpTypes.equipGrpTyp2 &&
+                        x.equipGrpTyp3 == equipGrpTypes.equipGrpTyp3 &&
+                        x.equipGrpTyp4 == equipGrpTypes.equipGrpTyp4 &&
+                        x.equipGrpTyp5 == equipGrpTypes.equipGrpTyp5 &&
+                        x.equipGrpTyp6 == equipGrpTypes.equipGrpTyp6 &&
+                        x.equipGrpTyp7 == equipGrpTypes.equipGrpTyp7
+                    );
+                    if (existingEquipment != null)
+                    {
+                        grpEquipID = existingEquipment.equipGrpTypID;
+                    }
+                    else
+                    {
+                        var newEquip = new tblEquipGrpTypesModel()
+                        {
+                            equipGrpTyp1 = equipGrpTypes.equipGrpTyp1,
+                            equipGrpTyp2 = equipGrpTypes.equipGrpTyp2,
+                            equipGrpTyp3 = equipGrpTypes.equipGrpTyp3,
+                            equipGrpTyp4 = equipGrpTypes.equipGrpTyp4,
+                            equipGrpTyp5 = equipGrpTypes.equipGrpTyp5,
+                            equipGrpTyp6 = equipGrpTypes.equipGrpTyp6,
+                            equipGrpTyp7 = equipGrpTypes.equipGrpTyp7,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.equipgrptypes_tbl.Add(newEquip);
+                        db.SaveChanges();
+
+                        grpEquipID = newEquip.equipGrpTypID;
+                    }
+
+                    var existingEntertainment = db.entertainmentgrptypes_tbl.FirstOrDefault(x =>
+                        x.entertainmentGrpTyp1 == entertainmentGrpTypes.entertainmentGrpTyp1 &&
+                        x.entertainmentGrpTyp2 == entertainmentGrpTypes.entertainmentGrpTyp2 &&
+                        x.entertainmentGrpTyp3 == entertainmentGrpTypes.entertainmentGrpTyp3 &&
+                        x.entertainmentGrpTyp4 == entertainmentGrpTypes.entertainmentGrpTyp4 &&
+                        x.entertainmentGrpTyp5 == entertainmentGrpTypes.entertainmentGrpTyp5 &&
+                        x.entertainmentGrpTyp6 == entertainmentGrpTypes.entertainmentGrpTyp6 &&
+                        x.entertainmentGrpTyp7 == entertainmentGrpTypes.entertainmentGrpTyp7
+                    );
+                    if (existingEntertainment != null)
+                    {
+                        grpEntertainmentID = existingEntertainment.entertainmentGrpTypID;
+                    }
+                    else
+                    {
+                        var newEntertainment = new tblEntertainmentGrpTypesModel()
+                        {
+                            entertainmentGrpTyp1 = entertainmentGrpTypes.entertainmentGrpTyp1,
+                            entertainmentGrpTyp2 = entertainmentGrpTypes.entertainmentGrpTyp2,
+                            entertainmentGrpTyp3 = entertainmentGrpTypes.entertainmentGrpTyp3,
+                            entertainmentGrpTyp4 = entertainmentGrpTypes.entertainmentGrpTyp4,
+                            entertainmentGrpTyp5 = entertainmentGrpTypes.entertainmentGrpTyp5,
+                            entertainmentGrpTyp6 = entertainmentGrpTypes.entertainmentGrpTyp6,
+                            entertainmentGrpTyp7 = entertainmentGrpTypes.entertainmentGrpTyp7,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.entertainmentgrptypes_tbl.Add(newEntertainment);
+                        db.SaveChanges();
+
+                        grpEntertainmentID = newEntertainment.entertainmentGrpTypID;
+                    }
+
+                    var existingPhoto = db.photogrptypes_tbl.FirstOrDefault(x =>
+                        x.photoGrpTyp1 == photoGrpTypes.photoGrpTyp1 &&
+                        x.photoGrpTyp2 == photoGrpTypes.photoGrpTyp2 &&
+                        x.photoGrpTyp3 == photoGrpTypes.photoGrpTyp3 &&
+                        x.photoGrpTyp4 == photoGrpTypes.photoGrpTyp4 &&
+                        x.photoGrpTyp5 == photoGrpTypes.photoGrpTyp5 &&
+                        x.photoGrpTyp6 == photoGrpTypes.photoGrpTyp6 &&
+                        x.photoGrpTyp7 == photoGrpTypes.photoGrpTyp7
+                    );
+                    if (existingPhoto != null)
+                    {
+                        grpPhotoID = existingPhoto.photoGrpTypID;
+                    }
+                    else
+                    {
+                        var newPhoto = new tblPhotoGrpTypesModel()
+                        {
+                            photoGrpTyp1 = photoGrpTypes.photoGrpTyp1,
+                            photoGrpTyp2 = photoGrpTypes.photoGrpTyp2,
+                            photoGrpTyp3 = photoGrpTypes.photoGrpTyp3,
+                            photoGrpTyp4 = photoGrpTypes.photoGrpTyp4,
+                            photoGrpTyp5 = photoGrpTypes.photoGrpTyp5,
+                            photoGrpTyp6 = photoGrpTypes.photoGrpTyp6,
+                            photoGrpTyp7 = photoGrpTypes.photoGrpTyp7,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.photogrptypes_tbl.Add(newPhoto);
+                        db.SaveChanges();
+
+                        grpPhotoID = newPhoto.photoGrpTypID;
+                    }
+
+                    var existingKeepsakes = db.keepsakesgrptypes_tbl.FirstOrDefault(x =>
+                        x.keepsakesGrpTyp1 == keepsakesGrpTypes.keepsakesGrpTyp1 &&
+                        x.keepsakesGrpTyp2 == keepsakesGrpTypes.keepsakesGrpTyp2 &&
+                        x.keepsakesGrpTyp3 == keepsakesGrpTypes.keepsakesGrpTyp3 &&
+                        x.keepsakesGrpTyp4 == keepsakesGrpTypes.keepsakesGrpTyp4 &&
+                        x.keepsakesGrpTyp5 == keepsakesGrpTypes.keepsakesGrpTyp5
+                    );
+                    if (existingKeepsakes != null)
+                    {
+                        grpKeepsakesID = existingKeepsakes.keepsakesGrpTypID;
+                    }
+                    else
+                    {
+                        var newKeepsakes = new tblKeepsakesGrpTypesModel()
+                        {
+                            keepsakesGrpTyp1 = keepsakesGrpTypes.keepsakesGrpTyp1,
+                            keepsakesGrpTyp2 = keepsakesGrpTypes.keepsakesGrpTyp2,
+                            keepsakesGrpTyp3 = keepsakesGrpTypes.keepsakesGrpTyp3,
+                            keepsakesGrpTyp4 = keepsakesGrpTypes.keepsakesGrpTyp4,
+                            keepsakesGrpTyp5 = keepsakesGrpTypes.keepsakesGrpTyp5,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.keepsakesgrptypes_tbl.Add(newKeepsakes);
+                        db.SaveChanges();
+
+                        grpKeepsakesID = newKeepsakes.keepsakesGrpTypID;
+                    }
+
+                    var existingDebut = db.debutgrptypes_tbl.FirstOrDefault(x =>
+                        x.debutGrpTyp1 == debutGrpTypes.debutGrpTyp1 &&
+                        x.debutGrpTyp2 == debutGrpTypes.debutGrpTyp2 &&
+                        x.debutGrpTyp3 == debutGrpTypes.debutGrpTyp3
+                    );
+                    if (existingDebut != null)
+                    {
+                        grpDebutID = existingDebut.debutGrpTypID;
+                    }
+                    else
+                    {
+                        var newDebut = new tblDebutGrpTypesModel()
+                        {
+                            debutGrpTyp1 = debutGrpTypes.debutGrpTyp1,
+                            debutGrpTyp2 = debutGrpTypes.debutGrpTyp2,
+                            debutGrpTyp3 = debutGrpTypes.debutGrpTyp3,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.debutgrptypes_tbl.Add(newDebut);
+                        db.SaveChanges();
+
+                        grpDebutID = newDebut.debutGrpTypID;
+                    }
+
+                    var existingPackage = db.packages_tbl.FirstOrDefault(x =>
+                        x.mainCourseTypID == packages.mainCourseTypID &&
+                        x.sidesGrpTypID == grpSidesID &&
+                        x.centerPieceTypID == packages.centerPieceTypID &&
+                        x.seatingTypID == packages.seatingTypID &&
+                        x.specialsGrpTypID == grpSpecialsID &&
+                        x.staffGrpTypID == grpStaffID &&
+                        x.backdropTypID == packages.backdropTypID &&
+                        x.entranceTypID == packages.entranceTypID &&
+                        x.couchTypID == packages.couchTypID &&
+                        x.equipGrpTypID == grpEquipID &&
+                        x.entertainmentGrpTypID == grpEntertainmentID &&
+                        x.photoGrpTypID == grpPhotoID &&
+                        x.keepsakesGrptypID == grpKeepsakesID &&
+                        x.debutGrpTypID == grpDebutID &&
+                        x.incStaples == packages.incStaples &&
+                        x.incBftSet == packages.incBftSet &&
+                        x.incStyling == packages.incStyling &&
+                        x.incTableSet == packages.incTableSet &&
+                        x.incDnrWare == packages.incDnrWare
+                    );
+                    if (existingPackage != null)
+                    {
+                        currPackageID = existingPackage.packageID;
+                    }
+                    else
+                    {
+                        var newPackage = new tblPackagesModel()
+                        {
+                            packageTypID = 0,
+                            pricePaxID = 0,
+                            mainCourseTypID = packages.mainCourseTypID,
+                            sidesGrpTypID = grpSidesID,
+                            centerPieceTypID = packages.centerPieceTypID,
+                            seatingTypID = packages.seatingTypID,
+                            specialsGrpTypID = grpSpecialsID,
+                            staffGrpTypID = grpStaffID,
+                            backdropTypID = packages.backdropTypID,
+                            entranceTypID = packages.entranceTypID,
+                            couchTypID = packages.couchTypID,
+                            equipGrpTypID = grpEquipID,
+                            entertainmentGrpTypID = grpEntertainmentID,
+                            photoGrpTypID = grpPhotoID,
+                            keepsakesGrptypID = grpKeepsakesID,
+                            debutGrpTypID = grpDebutID,
+                            incStaples = packages.incStaples,
+                            incBftSet = packages.incBftSet,
+                            incStyling = packages.incStyling,
+                            incTableSet = packages.incTableSet,
+                            incDnrWare = packages.incDnrWare,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+
+                        db.packages_tbl.Add(newPackage);
+                        db.SaveChanges();
+
+                        currPackageID = newPackage.packageID;
+                    }
+
+                    string datePart = DateTime.Now.ToString("yyMMdd");
+                    string randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                    string receiptCode = $"BK-{datePart}-{randomPart}";
+
+                    var existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
+                    while (existingReceipt != null)
+                    {
+                        randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                        receiptCode = $"BK-{datePart}-{randomPart}";
+                        existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
+                    }
+
+                    var newClient = new tblClientsModel()
+                    {
+                        permissionID = 3,
+                        receiptID = 0,
+                        eventName = clientInfo.eventName,
+                        cFName = clientInfo.cFName,
+                        cLName = clientInfo.cLName,
+                        cEmail = clientInfo.cEmail,
+                        cContact = clientInfo.cContact,
+                        cCeleb1FName = clientInfo.cCeleb1FName,
+                        cCeleb1LName = clientInfo.cCeleb1LName,
+                        cCeleb2FName = clientInfo.cCeleb2FName,
+                        cCeleb2LName = clientInfo.cCeleb2LName,
+                        entryCode = "0",
+                        password = "0",
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.clients_tbl.Add(newClient);
+                    db.SaveChanges();
+
+                    int id = Convert.ToInt32(Session["currentLog"] ?? 0);
+
+                    var newBooking = new tblBookingsModel()
+                    {
+                        createdBy = id,
+                        clientID = newClient.clientID,
+                        packageID = currPackageID,
+                        eventID = bookingInfo.eventID,
+                        dsgnTheme = bookingInfo.dsgnTheme,
+                        dsgnMotif = bookingInfo.dsgnMotif,
+                        prepVenue = bookingInfo.prepVenue,
+                        bookingDate = bookingInfo.bookingDate,
+                        ceremTime = bookingInfo.ceremTime,
+                        eventTime = bookingInfo.eventTime,
+                        venue = bookingInfo.venue,
+                        eventSetTime = bookingInfo.eventSetTime,
+                        eventMealTime = bookingInfo.eventMealTime,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now,
+                        bookingNote = bookingInfo.bookingNote,
+                        progressOne = 0,
+                        progressTwo = 0,
+                        progressThree = 0
+                    };
+                    db.bookings_tbl.Add(newBooking);
+                    db.SaveChanges();
+
+                    var newReceipt = new tblBookingReceiptsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        receiptNum = receiptCode,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.bookingreceipts_tbl.Add(newReceipt);
+                    db.SaveChanges();
+
+                    newClient.receiptID = newReceipt.receiptID;
+                    newClient.entryCode = receiptCode;
+                    db.SaveChanges();
+
+                    var newPayment = new tblPaymentsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        amountDue = paymentInfo.amountDue,
+                        amountPaid = 0,
+                        paymentType = "-",
+                        paymentStatus = "incomplete",
+                        dueDate = bookingInfo.bookingDate,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.payments_tbl.Add(newPayment);
+                    db.SaveChanges();
+                }
+                return Json(new { success = true, message = "Booking Completed Successfully!" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult loadPackagePreOption(int packageID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var prePackage = db.packages_tbl
+                                    .Where(p => p.packageID == packageID)
+                                    .FirstOrDefault();
+                    if (prePackage != null)
+                    {
+                        var preMainCourse = db.maincoursetypes_tbl.Where(p => p.mainCourseTypID == prePackage.mainCourseTypID).FirstOrDefault();
+                        var preSides = db.sidesgrptypes_tbl.Where(p => p.sidesGrpTypID == prePackage.sidesGrpTypID).FirstOrDefault();
+                        var preCenterPiece = db.centerpiecetypes_tbl.Where(p => p.centerPieceTypID == prePackage.centerPieceTypID).FirstOrDefault();
+                        var preSeating = db.seatingtypes_tbl.Where(p => p.seatingTypID == prePackage.seatingTypID).FirstOrDefault();
+                        var preSpecials = db.specialsgrptypes_tbl.Where(p => p.specialsGrpTypID == prePackage.specialsGrpTypID).FirstOrDefault();
+                        var preStaff = db.staffgrptypes_tbl.Where(p => p.staffGrpTypID == prePackage.staffGrpTypID).FirstOrDefault();
+                        var preBackdrop = db.backdroptypes_tbl.Where(p => p.backdropTypID == prePackage.backdropTypID).FirstOrDefault();
+                        var preEntrance = db.entrancetypes_tbl.Where(p => p.entranceTypID == prePackage.entranceTypID).FirstOrDefault();
+                        var preCouch = db.couchtypes_tbl.Where(p => p.couchTypID == prePackage.couchTypID).FirstOrDefault();
+                        var preEquip = db.equipgrptypes_tbl.Where(p => p.equipGrpTypID == prePackage.equipGrpTypID).FirstOrDefault();
+                        var preEntertainment = db.entertainmentgrptypes_tbl.Where(p => p.entertainmentGrpTypID == prePackage.entertainmentGrpTypID).FirstOrDefault();
+                        var prePhoto = db.photogrptypes_tbl.Where(p => p.photoGrpTypID == prePackage.photoGrpTypID).FirstOrDefault();
+                        var preKeepsakes = db.keepsakesgrptypes_tbl.Where(p => p.keepsakesGrpTypID == prePackage.keepsakesGrptypID).FirstOrDefault();
+                        var preDebut = db.debutgrptypes_tbl.Where(p => p.debutGrpTypID == prePackage.debutGrpTypID).FirstOrDefault();
+                        
+                        if (preMainCourse != null &&
+                            preSides != null &&
+                            preCenterPiece != null &&
+                            preSeating != null &&
+                            preSpecials != null &&
+                            preStaff != null &&
+                            preBackdrop != null &&
+                            preEntrance != null &&
+                            preCouch != null &&
+                            preEquip != null &&
+                            preEntertainment != null &&
+                            prePhoto != null &&
+                            preKeepsakes != null &&
+                            preDebut != null)
+                        {
+                            var preSides1 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp1).FirstOrDefault();
+                            var preSides2 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp2).FirstOrDefault();
+                            var preSides3 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp3).FirstOrDefault();
+                            var preSides4 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp4).FirstOrDefault();
+
+                            var preSpecials1 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp1).FirstOrDefault();
+                            var preSpecials2 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp2).FirstOrDefault();
+                            var preSpecials3 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp3).FirstOrDefault();
+                            var preSpecials4 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp4).FirstOrDefault();
+                            var preSpecials5 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp5).FirstOrDefault();
+                            var preSpecials6 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp6).FirstOrDefault();
+                            var preSpecials7 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp7).FirstOrDefault();
+                            var preSpecials8 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp8).FirstOrDefault();
+                            var preSpecials9 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp9).FirstOrDefault();
+
+                            var preStaff1 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp1).FirstOrDefault();
+                            var preStaff2 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp2).FirstOrDefault();
+                            var preStaff3 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp3).FirstOrDefault();
+
+                            var preEquip1 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp1).FirstOrDefault();
+                            var preEquip2 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp2).FirstOrDefault();
+                            var preEquip3 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp3).FirstOrDefault();
+                            var preEquip4 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp4).FirstOrDefault();
+                            var preEquip5 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp5).FirstOrDefault();
+                            var preEquip6 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp6).FirstOrDefault();
+                            var preEquip7 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp7).FirstOrDefault();
+
+                            var preEntertainment1 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp1).FirstOrDefault();
+                            var preEntertainment2 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp2).FirstOrDefault();
+                            var preEntertainment3 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp3).FirstOrDefault();
+                            var preEntertainment4 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp4).FirstOrDefault();
+                            var preEntertainment5 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp5).FirstOrDefault();
+                            var preEntertainment6 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp6).FirstOrDefault();
+                            var preEntertainment7 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp7).FirstOrDefault();
+
+                            var prePhoto1 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp1).FirstOrDefault();
+                            var prePhoto2 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp2).FirstOrDefault();
+                            var prePhoto3 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp3).FirstOrDefault();
+                            var prePhoto4 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp4).FirstOrDefault();
+                            var prePhoto5 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp5).FirstOrDefault();
+                            var prePhoto6 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp6).FirstOrDefault();
+                            var prePhoto7 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp7).FirstOrDefault();
+
+                            var preKeepsakes1 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp1).FirstOrDefault();
+                            var preKeepsakes2 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp2).FirstOrDefault();
+                            var preKeepsakes3 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp3).FirstOrDefault();
+                            var preKeepsakes4 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp4).FirstOrDefault();
+                            var preKeepsakes5 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp5).FirstOrDefault();
+
+                            var preDebut1 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp1).FirstOrDefault();
+                            var preDebut2 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp2).FirstOrDefault();
+                            var preDebut3 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp3).FirstOrDefault();
+
+                            var pricePax = db.pricepaxs_tbl.Where(p => p.pricePaxID == prePackage.pricePaxID).FirstOrDefault();
+
+                            return Json(new
+                            {
+                                pricePax = pricePax,
+                                prePackage = prePackage,
+
+                                preMainCourse = preMainCourse,
+
+                                preSides1 = preSides1,
+                                preSides2 = preSides2,
+                                preSides3 = preSides3,
+                                preSides4 = preSides4,
+
+                                preCenterPiece = preCenterPiece,
+
+                                preSeating = preSeating,
+
+                                preSpecials1 = preSpecials1,
+                                preSpecials2 = preSpecials2,
+                                preSpecials3 = preSpecials3,
+                                preSpecials4 = preSpecials4,
+                                preSpecials5 = preSpecials5,
+                                preSpecials6 = preSpecials6,
+                                preSpecials7 = preSpecials7,
+                                preSpecials8 = preSpecials8,
+                                preSpecials9 = preSpecials9,
+
+                                preStaff1 = preStaff1,
+                                preStaff2 = preStaff2,
+                                preStaff3 = preStaff3,
+
+                                preBackdrop = preBackdrop,
+
+                                preEntrance = preEntrance,
+
+                                preCouch = preCouch,
+
+                                preEquip1 = preEquip1,
+                                preEquip2 = preEquip2,
+                                preEquip3 = preEquip3,
+                                preEquip4 = preEquip4,
+                                preEquip5 = preEquip5,
+                                preEquip6 = preEquip6,
+                                preEquip7 = preEquip7,
+
+                                preEntertainment1 = preEntertainment1,
+                                preEntertainment2 = preEntertainment2,
+                                preEntertainment3 = preEntertainment3,
+                                preEntertainment4 = preEntertainment4,
+                                preEntertainment5 = preEntertainment5,
+                                preEntertainment6 = preEntertainment6,
+                                preEntertainment7 = preEntertainment7,
+
+                                prePhoto1 = prePhoto1,
+                                prePhoto2 = prePhoto2,
+                                prePhoto3 = prePhoto3,
+                                prePhoto4 = prePhoto4,
+                                prePhoto5 = prePhoto5,
+                                prePhoto6 = prePhoto6,
+                                prePhoto7 = prePhoto7,
+
+                                preKeepsakes1 = preKeepsakes1,
+                                preKeepsakes2 = preKeepsakes2,
+                                preKeepsakes3 = preKeepsakes3,
+                                preKeepsakes4 = preKeepsakes4,
+                                preKeepsakes5 = preKeepsakes5,
+
+                                preDebut1 = preDebut1,
+                                preDebut2 = preDebut2,
+                                preDebut3 = preDebut3,
+
+                                success = true,
+                                message = "Package Fetched Successfully!"
+                            }, JsonRequestBehavior.AllowGet);
+                        }
+                        else
+                        {
+                            return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+                    else
+                    {
+                        return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
+                    }
+                }         
+            }
+            catch (Exception ex)
+            {
+                return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
 
         public JsonResult GetPayments()
         {

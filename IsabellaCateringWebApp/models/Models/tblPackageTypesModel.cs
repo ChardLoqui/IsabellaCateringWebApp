@@ -10,6 +10,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public int packageTypID { get; set; }
         public int pricePaxID { get; set; }
         public string packageTypDesc { get; set; }
+        public string packageSet { get; set; }
         public DateTime dateCreated { get; set; }
         public DateTime dateUpdated { get; set; }
     }

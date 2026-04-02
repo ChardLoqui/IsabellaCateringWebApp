@@ -9,7 +9,6 @@ namespace IsabellaCateringWebApp.Models.Models
     {
         public int packageID { get; set; }
         public int packageTypID { get; set; }
-        public int eventID { get; set; }
         public int pricePaxID { get; set; }
         public int? mainCourseTypID { get; set; }
         public int? sidesGrpTypID { get; set; }
@@ -29,6 +28,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public string incStyling { get; set; }
         public string incTableSet { get; set; }
         public string incDnrWare { get; set; }
+        public string incBftSet { get; set; }
         public DateTime dateCreated { get; set; }
         public DateTime dateUpdated { get; set; }
     }

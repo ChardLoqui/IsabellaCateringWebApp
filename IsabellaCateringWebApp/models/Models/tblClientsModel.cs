@@ -10,6 +10,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public int clientID { get; set; }
         public int permissionID { get; set; }
         public int receiptID { get; set; }
+        public string eventName {get; set;}
         public string cFName { get; set; }
         public string cLName { get; set; }
         public string cEmail { get; set; }
