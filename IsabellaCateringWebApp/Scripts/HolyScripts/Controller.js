@@ -1,13 +1,13 @@
 ﻿app.controller("IsabellaCateringWebAppController", function ($scope, $http, IsabellaCateringWebAppService) {
 
+    $scope.displayNavOptions = null;
+    $scope.navStateResolved = false;
+
     $scope.redirectToHomePage = function () {
         window.location.href = "/Main/HomePage";
     }
     $scope.redirectToChangePassPage = function () {
-        window.open("/Main/ChangePassPage", "_blank");
-    };
-    $scope.redirectToForgetPassPage = function () {
-        window.open("/Main/ForgetPassPage", "_blank");
+        window.location.href = "/Main/ChangePassPage";
     };
     $scope.redirectToAddBookingPage = function () {
         window.location.href = "/Main/AddBookingPage";
@@ -17,6 +17,9 @@
     }
     $scope.redirectToLoginPage = function () {
         window.location.href = "/Main/LoginPage";
+    }
+    $scope.redirectToForgetPassPage = function () {
+        window.location.href = "/Main/ForgetPassPage";
     }
     $scope.redirectToCustomerViewPage = function () {
         window.location.href = "/Main/CustomerViewPage";
@@ -28,6 +31,7 @@
     }
 
     $scope.authenticateLoginCredentials = function () {
+        $scope.navStateResolved = false;
         IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
             if (returnedData.data.userID == '' && returnedData.data.permID == '') {
 
@@ -39,8 +43,16 @@
                 });
                 $scope.redirectToLoginPage();
             } else {
-                if (returnedData.data.permID == "3")
-                    $scope.redirectToCustomerViewPage();
+                if (returnedData.data.permID < 3) {
+                    $scope.displayNavOptions = true;
+                    $scope.navStateResolved = true;
+                } else {
+                    $scope.displayNavOptions = false;
+                    $scope.navStateResolved = true;
+                    if (!isCurrentPage("CustomerViewPage")) {
+                        $scope.redirectToCustomerViewPage();
+                    }
+                }
             }
         });
     }
@@ -77,19 +89,104 @@
         });
     }
     //======================================================== LOGIN START =======================================================
-    const emailLogCreds = document.getElementById('logEmail');
-    const passwordLogCreds = document.getElementById('logPWord');
+    const authAlert = Swal.mixin({
+        buttonsStyling: false,
+        customClass: {
+            popup: 'login-alert-popup',
+            title: 'login-alert-title',
+            htmlContainer: 'login-alert-text',
+            confirmButton: 'login-alert-confirm',
+            cancelButton: 'login-alert-cancel'
+        }
+    });
+
+    function fireAuthAlert(options) {
+        const iconColors = {
+            success: '#db2777',
+            error: '#be123c',
+            warning: '#d97706',
+            info: '#db2777'
+        };
+
+        return authAlert.fire(Object.assign({
+            confirmButtonText: 'Continue',
+            iconColor: iconColors[options.icon] || '#db2777'
+        }, options));
+    }
+
+    function setCounterText(id, text) {
+        const counter = document.getElementById(id);
+        if (counter) {
+            counter.innerText = text;
+        }
+    }
+
+    function resetAngularForm(form) {
+        if (!form) {
+            return;
+        }
+
+        form.$setPristine();
+        form.$setUntouched();
+        form.$submitted = false;
+    }
+
+    function resetAuthFields(form, fieldMap, counterMap) {
+        Object.keys(fieldMap || {}).forEach(function (key) {
+            $scope[key] = fieldMap[key];
+        });
+
+        Object.keys(counterMap || {}).forEach(function (counterId) {
+            setCounterText(counterId, counterMap[counterId]);
+        });
+
+        resetAngularForm(form);
+    }
+
+    $scope.emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    $scope.guestCodePattern = /^\S{1,50}$/;
+    $scope.emailPlaceholder = "Use Email";
+    $scope.isGuest = false;
+
+    $scope.shouldShowFieldError = function (form, fieldName, errorKey) {
+        if (!form || !form[fieldName]) {
+            return false;
+        }
+
+        const field = form[fieldName];
+        const shouldShow = form.$submitted || field.$touched;
+
+        if (!shouldShow) {
+            return false;
+        }
+
+        if (!errorKey) {
+            return field.$invalid;
+        }
+
+        return !!field.$error[errorKey];
+    };
+
+    $scope.isPasswordMismatch = function (form) {
+        if (!form || !form.confirmPasswordField) {
+            return false;
+        }
+
+        const field = form.confirmPasswordField;
+        const shouldShow = form.$submitted || field.$touched;
+
+        return !!(shouldShow &&
+            $scope.newPassword &&
+            $scope.cNewPassword &&
+            $scope.newPassword !== $scope.cNewPassword);
+    };
 
     $scope.logInService = function () {
-        //alert(emailLogCreds.value);
-        //alert(passwordLogCreds.value);
-
         if ($scope.loginForm.$invalid) {
-            Swal.fire({
+            fireAuthAlert({
                 title: "Login Info",
                 text: "Please fill in all required fields correctly.",
-                icon: "info",
-                confirmButtonColor: "#EC4899"
+                icon: "info"
             });
             return;
         }
@@ -103,14 +200,14 @@
             entryCode: $scope.lEmail,
             password: $scope.lPassword
         }
-            
+
         IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo, clientInfo, $scope.isGuest).then(function (returnedData) {
             if (returnedData.data.success) {
                 if (returnedData.data.isGuest)
                     $scope.redirectToCustomerViewPage();
                 else
                     $scope.redirectToBookingCalendarPage();
-            }     
+            }
             else if (!returnedData.data.success && returnedData.data.message === "Please change your password first!") {
                 Swal.fire({
                     title: "New Account Detected",
@@ -122,64 +219,49 @@
 
             }
             else if (!returnedData.data.success && returnedData.data.message === "Invalid Credentials") {
-                // pag incorrct yung credentials
+                fireAuthAlert({
+                    title: "Access Denied",
+                    text: $scope.isGuest ? "Invalid entry code or password." : "Invalid email or password.",
+                    icon: "error"
+                });
 
-                if ($scope.isGuest) {
-                    Swal.fire({
-                        title: "Access Denied",
-                        text: "Invalid entry code or password.",
-                        icon: "error",
-                        confirmButtonColor: "#EC4899"
-                    });
-                } else {
-                    Swal.fire({
-                        title: "Access Denied",
-                        text: "Invalid email or password.",
-                        icon: "error",
-                        confirmButtonColor: "#EC4899"
-                    });
-                }
-                
-
-                // Clear input
-                $scope.lEmail = '';
-                $scope.lPassword = '';
-
-                // Reset character count
-                document.getElementById('emailCount').innerText = '0 / 50';
-                document.getElementById('passCount').innerText = '0 / 20';
+                resetAuthFields($scope.loginForm, {
+                    lEmail: '',
+                    lPassword: ''
+                }, {
+                    emailCount: '0 / 50',
+                    passCount: '0 / 20'
+                });
             } else if (!returnedData.data.success && returnedData.data.message === "Account Locked") {
-                // pag incorrct yung credentials
-                Swal.fire({
+                fireAuthAlert({
                     title: "Access Denied",
                     text: "Account locked for 15 minutes due to too many failed attempts.",
                     icon: "error",
                     confirmButtonColor: "#EC4899"
                 });
 
-                // Clear input
-                $scope.lEmail = '';
-                $scope.lPassword = '';
-
-                // Reset character count
-                document.getElementById('emailCount').innerText = '0 / 50';
-                document.getElementById('passCount').innerText = '0 / 20';
+                resetAuthFields($scope.loginForm, {
+                    lEmail: '',
+                    lPassword: ''
+                }, {
+                    emailCount: '0 / 50',
+                    passCount: '0 / 20'
+                });
             } else {
-                // pag incorrct yung credentials
-                Swal.fire({
+                fireAuthAlert({
                     title: "Access Denied",
                     text: returnedData.data.message,
                     icon: "error",
                     confirmButtonColor: "#EC4899"
                 });
 
-                // Clear input
-                $scope.lEmail = '';
-                $scope.lPassword = '';
-
-                // Reset character count
-                document.getElementById('emailCount').innerText = '0 / 50';
-                document.getElementById('passCount').innerText = '0 / 20';
+                resetAuthFields($scope.loginForm, {
+                    lEmail: '',
+                    lPassword: ''
+                }, {
+                    emailCount: '0 / 50',
+                    passCount: '0 / 20'
+                });
             }
         });
     }
@@ -189,6 +271,10 @@
             $scope.emailPlaceholder = "Use Entry Code";
         else
             $scope.emailPlaceholder = "Use Email";
+
+        if ($scope.loginForm && $scope.loginForm.loginIdentifier) {
+            $scope.loginForm.loginIdentifier.$validate();
+        }
     }
 
     //for testing purposes only
@@ -358,6 +444,7 @@
         });
     };
     if (isCurrentPage("AccountsPage")) {
+        $scope.authenticateLoginCredentials();
         $scope.getUsersData();
     }
 
@@ -513,7 +600,12 @@
         });
     };
     if (isCurrentPage("LogsPage")) {
+        $scope.authenticateLoginCredentials();
         $scope.getLogsData();
+    }
+
+    if (isCurrentPage("CustomerViewPage")) {
+        $scope.authenticateLoginCredentials();
     }
 
 
@@ -522,75 +614,35 @@
     //======================================================== PASSWORD RESET START =======================================================
 
     $scope.sendForgetRequest = function () {
-
-        // check kung empty
-        if (!$scope.fEmail) {
-            Swal.fire({
-                title: "Empty Input",
-                text: "Please enter your email address or customer entry code.",
-                icon: "warning",
-                confirmButtonColor: "#EC4899"
-            });
+        if ($scope.forgetPasswordForm.$invalid) {
             return;
         }
 
-        if ($scope.fEmail && $scope.fEmail.includes('@')) {
-            IsabellaCateringWebAppService.verifyEmailCreds($scope.fEmail).then(function (returnedData) {
-                if (returnedData.data != '') {
-                    //success
-                    Swal.fire({
-                        title: "Email Sent!",
-                        text: "Please check your e-mail for the Reset Password Link.",
-                        icon: "success",
-                        confirmButtonColor: "#EC4899"
-                    }).then(() => {
-                        // redirect
-                        window.location.href = "/Main/LoginPage";
-                    });
-                }
-                else {
-                    // wrong email/not found
-                    Swal.fire({
-                        title: "User Not Found",
-                        text: "The email you entered is not registered in our system.",
-                        icon: "error",
-                        confirmButtonColor: "#EC4899"
-                    });
+        IsabellaCateringWebAppService.verifyEmailCreds($scope.fEmail).then(function (returnedData) {
+            if (returnedData.data != '') {
+                fireAuthAlert({
+                    title: "Email Sent!",
+                    text: "Please check your e-mail for the Reset Password Link.",
+                    icon: "success",
+                    confirmButtonText: "Back to login"
+                }).then(() => {
+                    window.location.href = "/Main/LoginPage";
+                });
+            }
+            else {
+                fireAuthAlert({
+                    title: "User Not Found",
+                    text: "The email you entered is not registered in our system.",
+                    icon: "error"
+                });
 
-                    // clear
-                    $scope.fEmail = '';
-                }
-            });
-
-        } else {
-            IsabellaCateringWebAppService.verifyClientCreds(null, $scope.fEmail).then(function (returnedData) {
-                if (returnedData.data != '') {
-                    //success
-                    Swal.fire({
-                        title: "Email Sent!",
-                        text: "Please check your e-mail for the Reset Password Link.",
-                        icon: "success",
-                        confirmButtonColor: "#EC4899"
-                    }).then(() => {
-                        // redirect
-                        window.location.href = "/Main/LoginPage";
-                    });
-                }
-                else {
-                    // wrong email/not found
-                    Swal.fire({
-                        title: "User Not Found",
-                        text: "The entry code you entered is not registered in our system.",
-                        icon: "error",
-                        confirmButtonColor: "#EC4899"
-                    });
-
-                    // clear
-                    $scope.fEmail = '';
-                }
-            });
-        }
-        
+                resetAuthFields($scope.forgetPasswordForm, {
+                    fEmail: ''
+                }, {
+                    forgetEmailCount: '0 / 50'
+                });
+            }
+        });
     };
 
 
@@ -605,31 +657,22 @@
 
     //4gotpass
     $scope.changeForgotPassword = function () {
-        if (!$scope.newPassword) {
-            //check if empty
-            Swal.fire({
-                title: "Required",
-                text: "Please enter a new password.",
-                icon: "warning",
-                confirmButtonColor: "#EC4899"
-            });
+        if ($scope.changePasswordForm.$invalid || $scope.isPasswordMismatch($scope.changePasswordForm)) {
             return;
         }
 
         IsabellaCateringWebAppService.changeForgotPasswordService(token, $scope.newPassword).then(function (returnedData) {
             if (returnedData.data == "True") {
-                //success
-                Swal.fire({
+                fireAuthAlert({
                     title: "Success!",
                     text: "Password Changed. Please log in again with your new password.",
                     icon: "success",
-                    confirmButtonColor: "#EC4899"
+                    confirmButtonText: "Back to login"
                 }).then(() => {
                     window.location.href = "/Main/LoginPage";
                 });
             } else {
-                //not saved
-                Swal.fire({
+                fireAuthAlert({
                     title: "Error",
                     text: "Password not Changed. Please request a new link and try again later.",
                     icon: "error",
@@ -668,53 +711,82 @@
     //======================================================== CUSTOMER VIEW START =======================================================
 
     $scope.getOrderInfo = function () {
+        IsabellaCateringWebAppService.getCurrentSessionService()
+            .then(function (returnedData) {
+                var bookingID = parseInt(returnedData.data.bookingID, 10);
+                if (!bookingID) {
+                    throw new Error('No booking ID found in the current session.');
+                }
 
-        IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
-            if (returnedData.data.bookingID) {
-                $scope.customerViewBookingID = parseInt(returnedData.data.bookingID);
-            }
-        });
+                return IsabellaCateringWebAppService.getBooking({ bookingID: bookingID })
+                    .then(function (res) {
+                        $scope.order = {
+                            bookingID: res.data.bookingID,
+                            clientID: res.data.clientID,
+                            packageID: res.data.packageID,
+                            bookingDate: convertDate(res.data.bookingDate),
+                            prepVenue: res.data.prepVenue,
+                            venue: res.data.venue,
+                            eventSetTime: convertTime(res.data.eventSetTime),
+                            eventTime: convertTime(res.data.eventTime),
+                            ceremTime: convertTime(res.data.ceremTime),
+                            eventMealTime: convertTime(res.data.eventMealTime),
+                            dsgnTheme: res.data.dsgnTheme,
+                            dsgnMotif: res.data.dsgnMotif,
+                            dateCreated: convertDate(res.data.dateCreated),
+                            dateUpdated: convertDate(res.data.dateUpdated),
+                            progressOne: res.data.progressOne,
+                            progressTwo: res.data.progressTwo,
+                            progressThree: res.data.progressThree
+                        };
 
-        var booking = {
-            bookingID: $scope.customerViewBookingID
-        }
+                        $scope.steps = [
+                            { label: 'Planning', icon: '1', completed: $scope.order.progressOne == 1 },
+                            { label: 'Preparation', icon: '2', completed: $scope.order.progressTwo == 1 },
+                            { label: 'Event Day', icon: '3', completed: $scope.order.progressThree == 1 }
+                        ];
 
-        IsabellaCateringWebAppService.getBooking(booking)
-            .then(function (res) {
+                        return IsabellaCateringWebAppService.getBookingDetailsService(bookingID);
+                    });
+            })
+            .then(function (detailsRes) {
+                if (!detailsRes || !detailsRes.data || !detailsRes.data.success) {
+                    $scope.client = null;
+                    $scope.package = null;
+                    return;
+                }
 
-                /* ===== DIRECT PASS-THROUGH ===== */
-                $scope.order = {
-                    bookingID: res.data.bookingID,
-                    clientID: res.data.clientID,
-                    packageID: res.data.packageID,
+                var client = detailsRes.data.clients || {};
+                var packageInfo = detailsRes.data.packages || {};
+                var packageItems = [
+                    packageInfo.incStaples,
+                    packageInfo.incStyling,
+                    packageInfo.incTableSet,
+                    packageInfo.incDnrWare,
+                    packageInfo.incBftSet
+                ].filter(function (item) {
+                    return item && item.toString().trim() !== '';
+                });
 
-                    bookingDate: convertDate(res.data.bookingDate),
-                    prepVenue: res.data.prepVenue,
-                    venue: res.data.venue,
-                    eventSetTime: convertTime(res.data.eventSetTime),
-                    eventTime: convertTime(res.data.eventTime),
-                    ceremTime: convertTime(res.data.ceremTime),
-                    eventMealTime: convertTime(res.data.eventMealTime),
-                    dsgnTheme: res.data.dsgnTheme,
-                    dsgnMotif: res.data.dsgnMotif,
-
-                    dateCreated: convertDate(res.data.dateCreated),
-                    dateUpdated: convertDate(res.data.dateUpdated),
-
-                    progressOne: res.data.progressOne,
-                    progressTwo: res.data.progressTwo,
-                    progressThree: res.data.progressThree
+                $scope.client = {
+                    eventName: client.eventName || 'Not set',
+                    fullName: [client.cFName, client.cLName].filter(Boolean).join(' ') || 'Not set',
+                    email: client.cEmail || 'Not set',
+                    contact: client.cContact || 'Not set',
+                    celebrantOne: [client.cCeleb1FName, client.cCeleb1LName].filter(Boolean).join(' ') || 'Not set',
+                    celebrantTwo: [client.cCeleb2FName, client.cCeleb2LName].filter(Boolean).join(' ') || 'Not set'
                 };
 
-                /* ===== PROGRESS BAR ===== */
-                $scope.steps = [
-                    { label: 'Planning', icon: '1', completed: $scope.order.progressOne == 1 },
-                    { label: 'Preparation', icon: '2', completed: $scope.order.progressTwo == 1 },
-                    { label: 'Event Day', icon: '3', completed: $scope.order.progressThree == 1 }
-                ];
+                $scope.package = {
+                    title: packageInfo.packageID ? ('Package ' + packageInfo.packageID) : '',
+                    items: packageItems
+                };
             })
             .catch(function (err) {
                 console.error('Error loading booking', err);
+                $scope.order = null;
+                $scope.client = null;
+                $scope.package = null;
             });
     };
 
@@ -847,7 +919,7 @@
 
             const dayString = `${year}-${month + 1}-${i}`;
             const selectedDayClass = isSelectedDay ? "selected-day" : "";
-            daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full h-[60%] overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-white rounded-lg border shadow-inner" data-date="${dayString}"></div></div>`;
+            daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full bg-white rounded-lg border shadow-inner" data-date="${dayString}"></div></div>`;
         }
 
         for (let i = 1; i <= (42 - daysInMonth - firstDayOfMonth); i++) {
@@ -894,7 +966,7 @@
 
                 bookings.forEach(function (item) {
                     const eventCard = document.createElement("div");
-                    eventCard.className = "mb-1 mx-1 flex cursor-pointer items-center justify-left bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 h-15 placeholder-white text-xs";
+                    eventCard.className = "mb-1 mx-1 flex cursor-pointer items-center justify-left bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 placeholder-white text-xs";
                     eventCard.innerText = `${item.eventName || 'Untitled Event'}, ${convertTime(item.eventTime)}`;
                     eventCard.dataset.date = day.dataset.date;
 

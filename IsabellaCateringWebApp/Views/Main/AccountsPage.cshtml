@@ -63,7 +63,7 @@
                             <div>
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="text-xs font-bold text-gray-800">Account First Name</label>
-                                    <small id="firstNameAddCount" style="color: gray; font-size: 11px;">0 / 30</small>
+                                    <small id="firstNameAddCount" class="input-count">0 / 30</small>
                                 </div>
                                 <input type="text" ng-model="firstName" required maxlength="30"
                                        oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, ''); document.getElementById('firstNameAddCount').innerText = this.value.length + ' / 30';"
@@ -72,7 +72,7 @@
                             <div>
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="text-xs font-bold text-gray-800">Account Last Name</label>
-                                    <small id="lastNameAddCount" style="color: gray; font-size: 11px;">0 / 30</small>
+                                    <small id="lastNameAddCount" class="input-count">0 / 30</small>
                                 </div>
                                 <input type="text" ng-model="lastName" required maxlength="30"
                                        oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, ''); document.getElementById('lastNameAddCount').innerText = this.value.length + ' / 30';"
@@ -82,7 +82,7 @@
                             <div>
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="text-xs font-bold text-gray-800">Account E-mail</label>
-                                    <small id="emailAddCount" style="color: gray; font-size: 11px;">0 / 50</small>
+                                    <small id="emailAddCount" class="input-count">0 / 50</small>
                                 </div>
                                 <input type="email" name="emailInput" ng-model="email" required maxlength="50"
                                        oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('emailAddCount').innerText = this.value.length + ' / 50';"
@@ -103,7 +103,7 @@
                             <div>
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="text-xs font-bold text-gray-800">Password</label>
-                                    <small id="passAddCount" style="color: gray; font-size: 11px;">0 / 20</small>
+                                    <small id="passAddCount" class="input-count">0 / 20</small>
                                 </div>
                                 <div class="relative">
                                     <input id="addPWord" type="password" ng-model="password" required maxlength="20"

@@ -3,23 +3,29 @@
     ViewBag.Title = "Create Booking";
 }
 
-<div class="bg-gray-50" ng-init="authenticateLoginCredentials()" ng-click="handleDocumentClick($event)">
-    <div class="flex min-h-screen w-full items-center justify-center p-4">
+<section class="create-booking-page min-h-screen px-3 py-5 lg:px-6" ng-init="authenticateLoginCredentials()">
+    <div class="mx-auto w-full max-w-[1440px]">
+        <header class="mb-6 flex flex-col gap-3 border-b border-rose-100 pb-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-semibold text-zinc-950 sm:text-4xl">Book Your Event</h1>
+                <p class="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
+                    Enter client details, event schedule, package inclusions, and final pricing in the same management layout used across the booking pages.
+                </p>
+            </div>
+
+            <p class="text-sm font-medium text-rose-700">
+                Complete the form, review the summary, then confirm the booking.
+            </p>
+        </header>
 
         <form name="eventForm" ng-submit="bookEvent()" novalidate>
-
-            <div class="flex w-full max-w-5xl flex-col rounded-2xl border bg-white shadow-xl">
-
-
-
-                <div class="grid w-full grid-cols-1 gap-6 px-6 py-8 sm:px-8 md:grid-cols-3 md:px-12" ng-init="loadPackageOptions()">
+            <section class="panel-surface overflow-visible rounded-lg">
+                <div class="create-booking-form-grid grid w-full grid-cols-1 gap-6 px-4 py-5 sm:px-5 md:grid-cols-3 lg:px-6 lg:py-6" ng-init="loadPackageOptions()">
 
 
-                    <h1 class="font-heading col-span-3 my-2 text-2xl sm:text-3xl md:text-4xl md:col-span-3">
-                        <span class="underline decoration-pink-500 decoration-4 underline-offset-4">
-                            Book
-                        </span> Your Event
-                    </h1>
+                    <div class="create-booking-section col-span-3">
+                        <h2 class="text-xl font-semibold text-zinc-950 sm:text-2xl">Event Details</h2>
+                    </div>
 
 
                     <div class="col-span-2 flex flex-col md:col-span-1">
@@ -883,7 +889,7 @@
                         <label class="font-label mb-1 text-l font-bold text-pink-500 md:text-base">
                             Package Summary
                         </label>
-                        <div class="relative">
+                        <div class="create-booking-summary relative">
                             <label class="font-label mb-1 text-sm font-bold text-gray-400 md:text-base">
                                 Client Information
                             </label>
@@ -1010,14 +1016,14 @@
                     </div>
 
                     <!-- Button -->
-                    <div class="col-span-full pt-4">
-                        <button type="button" ng-click="createBooking()" class="w-full mx-2 flex cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl placeholder-white text-l">
+                    <div class="col-span-full flex justify-end pt-2">
+                        <button type="button" ng-click="createBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
                             Book Event
                         </button>
                     </div>
 
                 </div>
-              </div>
+            </section>
         </form>
     </div>
-</div>
+</section>

@@ -12,7 +12,11 @@
 
     <!-- google fonts n icons link -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/Site.css")" />
 
     <!-- flowbite -->
     <script src="https://unpkg.com/flowbite@1.7.0/dist/flowbite.js"></script>
@@ -21,7 +25,7 @@
 
 </head>
 
-<body class="bg-white" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
+<body class="bg-white main-layout" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
 
     <aside class="sidebar fixed top-0 left-0 z-50 flex h-screen flex-col overflow-hidden">
         @*Logo*@
@@ -35,8 +39,8 @@
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
                @(currentAction == "CustomerViewPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                        href="@Url.Action("CustomerViewPage", "Main")">
-                        <span class="material-icons min-w-[24px]">calendar_month</span>
-                        <span class="nav-text ml-4">Event Progressyy</span>
+                        <span class="material-symbols-outlined nav-icon min-w-[24px]">timeline</span>
+                        <span class="nav-text">Event Progress</span>
                     </a>
                 </li>
             </ul>
@@ -48,10 +52,10 @@
                      src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" />
 
                 <div class="profile-info ml-3">
-                    <p class="text-sm font-semibold text-black">
+                    <p class="profile-name text-sm font-semibold text-black">
                         {{ sessionInfo.name }}
                     </p>
-                    <p class="text-xs text-pink-500">
+                    <p class="profile-role text-xs text-pink-500">
                         {{ sessionInfo.role }}
                     </p>
                 </div>
@@ -59,8 +63,8 @@
         </div>
         @*Logout*@
         <a class="logout-btn flex items-center rounded-lg px-6 py-5 text-black transition-all duration-200" href="@Url.Action("LoginPage", "Main")">
-            <span class="material-icons transition-colors duration-200 min-w-[24px]">logout</span>
-            <span class="nav-text ml-4 font-medium">Log Out</span>
+            <span class="material-symbols-outlined logout-icon transition-colors duration-200 min-w-[24px]">logout</span>
+            <span class="nav-text font-medium">Log Out</span>
         </a>
     </aside>
 
