@@ -59,8 +59,17 @@
         var getData = IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo);
 
         getData.then(function (returnedData) {
-            if (returnedData.data.success)
-                $scope.redirectToBookingCalendarPage();
+            //test login - hazeline
+            if (returnedData.data.success) {
+                var userPerm = returnedData.data.data.permissionID;
+
+                if (userPerm === 1) {
+                    window.location.href = '/Main/BookingCalendarPage'; 
+                } else {
+                    $scope.redirectToHomePage();
+                }
+            }
+
 
             else if (!returnedData.data.success && returnedData.data.message === "Invalid Credentials") {
                 // pag incorrct yung credentials
@@ -172,14 +181,16 @@
 
     $scope.loadUserSession = function () {
         IsabellaCateringWebAppService.getCurrentSessionServiceNav().then(function (returnedData) {
-            // Validate that we have data
-            if (returnedData.data && returnedData.data.userName) {
+            if (returnedData.data) {
+                $scope.currentUserID = returnedData.data.userID;
+
                 $scope.sessionInfo.name = returnedData.data.userName;
                 $scope.sessionInfo.permission = returnedData.data.permID;
 
                 const roles = { "1": "Admin", "2": "Staff", "3": "User" };
                 $scope.sessionInfo.role = roles[returnedData.data.permID] || "";
 
+                console.log("Logged in as User ID:", $scope.currentUserID);
             }
         }).catch(function (error) {
             console.error("Session fetch failed:", error);
@@ -1410,17 +1421,17 @@
 
     //payment reminder in PAYMENTS table
     $scope.sendPaymentReminder = function (group) {
-        if (!group) return;
+        if (!group) {
+            console.warn("sendPaymentReminder called with no group data.");
+            return;
+        }
         IsabellaCateringWebAppService.getClientEmailByBooking(group.bookingID)
             .then(function (res) {
                 if (!res.data.success) {
-                    Swal.fire({
-                        title: 'Error',
-                        text: res.data.message,
-                        icon: 'error'
-                    });
+                    Swal.fire({ title: 'Error', text: res.data.message, icon: 'error' });
                     return;
                 }
+
                 var email = res.data.email;
                 var firstName = res.data.firstName;
                 var lastName = res.data.lastName;
@@ -1443,14 +1454,8 @@
                         + ' | Due: ' + date;
                 }).join('\n');
 
-                var types = pendingPayments.map(function (p) {
-                    return p.paymentType;
-                }).join(', ');
-
-                var subject = encodeURIComponent(
-                    'Payment Reminder — ' + types + ' | Booking #' + group.bookingID
-                );
-
+                var types = pendingPayments.map(function (p) { return p.paymentType; }).join(', ');
+                var subject = encodeURIComponent('Payment Reminder — ' + types + ' | Booking #' + group.bookingID);
                 var body = encodeURIComponent(
                     'Dear ' + firstName + ' ' + lastName + ',\n\n' +
                     'We are Isabella Catering and Events. We hope this message finds you well.\n\n' +
@@ -1469,14 +1474,44 @@
                     + '&to=' + encodeURIComponent(email)
                     + '&su=' + subject
                     + '&body=' + body;
+
                 window.open(gmailUrl, '_blank');
-            })
-            .catch(function () {
-                Swal.fire({
-                    title: 'Server Error',
-                    text: 'Could not retrieve client information.',
-                    icon: 'error'
+
+                var hasReturned = false;
+                window.onfocus = function () {
+                    if (!hasReturned) {
+                        hasReturned = true;
+
+                        Swal.fire({
+                            title: 'Action Logged',
+                            text: 'The reminder attempt for Booking #' + group.bookingID + ' has been recorded.',
+                            icon: 'success',
+                            confirmButtonColor: '#ec4899'
+                        });
+
+                        window.onfocus = null;
+                    }
+                };
+
+                var sentAt = new Date().toISOString();
+                var noteText = 'Payment reminder sent via Gmail | Booking #' + group.bookingID +
+                    ' (' + pendingPayments.length + ' payments)';
+
+                pendingPayments.forEach(function (p) {
+                    IsabellaCateringWebAppService.logPaymentReminder({
+                        paymentID: p.paymentID,
+                        sentBy: $scope.currentUserID,
+                        sentAt: sentAt,
+                        note: noteText,
+                        dateCreated: sentAt,
+                        dateUpdated: sentAt
+                    }).catch(function () {
+                        console.warn('Could not log reminder for paymentID ' + p.paymentID);
+                    });
                 });
+            })
+            .catch(function (error) {
+                Swal.fire({ title: 'Server Error', text: 'Check console for details.', icon: 'error' });
             });
     };
 
@@ -1493,14 +1528,9 @@
                 var name = response.data.firstName + ' ' + response.data.lastName;
                 var balance = Math.max(0,
                     Number(payment.amountDue) - Number(payment.amountPaid)
-                ).toLocaleString('en-PH', {
-                    minimumFractionDigits: 2
-                });
+                ).toLocaleString('en-PH', { minimumFractionDigits: 2 });
 
-                var subject = encodeURIComponent(
-                    'Payment Reminder - Booking #' + payment.bookingID
-                );
-
+                var subject = encodeURIComponent('Payment Reminder - Booking #' + payment.bookingID);
                 var body = encodeURIComponent(
                     'Dear ' + name + ',\n\n' +
                     'This is a friendly reminder regarding your upcoming payment:\n\n' +
@@ -1523,6 +1553,37 @@
                     '&body=' + body,
                     '_blank'
                 );
+
+                var returnedToTab = false;
+                window.onfocus = function () {
+                    if (!returnedToTab) {
+                        returnedToTab = true;
+
+                        Swal.fire({
+                            title: 'Process Complete',
+                            text: 'Reminder for Booking #' + payment.bookingID + ' processed.',
+                            icon: 'success',
+                            confirmButtonColor: '#ec4899'
+                        });
+
+                        window.onfocus = null;
+                    }
+                };
+
+                var sentAt = new Date().toISOString();
+                var noteText = 'Due payment reminder sent via Gmail — '
+                    + payment.paymentType + ' | Booking #' + payment.bookingID;
+
+                IsabellaCateringWebAppService.logPaymentReminder({
+                    paymentID: payment.paymentID,
+                    sentBy: $scope.currentUserID,
+                    sentAt: sentAt,
+                    note: noteText,
+                    dateCreated: sentAt,
+                    dateUpdated: sentAt
+                }).catch(function () {
+                    console.warn('Could not log reminder for paymentID ' + payment.paymentID);
+                });
             });
     };
 
