@@ -24,6 +24,9 @@
     $scope.redirectToCustomerViewPage = function () {
         window.location.href = "/Main/CustomerViewPage";
     }
+    $scope.redirectToAdminViewPage = function () {
+        window.location.href = "/Main/AdminViewPage";
+    }
 
     const currentPath = (window.location.pathname || '').toLowerCase();
     function isCurrentPage(pageName) {
@@ -56,21 +59,6 @@
             }
         });
     }
-
-    $scope.authenticateCustomerLoginCredentials = function () {
-        IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
-            if (returnedData.data.userID == '' && returnedData.data.permID == '') {
-
-                Swal.fire({
-                    title: "Access Denied",
-                    text: "Please log in first!",
-                    icon: "error",
-                    confirmButtonColor: "#EC4899"
-                });
-                $scope.redirectToLoginPage();
-            }
-        });
-    }
     $scope.authenticateLoginLoginCredentials = function () {
         IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
             if (returnedData.data.userID != '' && returnedData.data.permID != '') {
@@ -84,7 +72,7 @@
                 if (returnedData.data.permID == "3")
                     $scope.redirectToCustomerViewPage();
                 else
-                    $scope.redirectToAddBookingPage();
+                    $scope.redirectToBookingCalendarPage();
             }
         });
     }
@@ -713,6 +701,29 @@
     $scope.getOrderInfo = function () {
         IsabellaCateringWebAppService.getCurrentSessionService()
             .then(function (returnedData) {
+                if (returnedData.data.userID == '' && returnedData.data.permID == '') {
+
+                    Swal.fire({
+                        title: "Access Denied",
+                        text: "Please log in first!",
+                        icon: "error",
+                        confirmButtonColor: "#EC4899"
+                    });
+                    $scope.redirectToLoginPage();
+                    return;
+                }
+
+                if (returnedData.data.bookingID == '') {
+                    Swal.fire({
+                        title: "Access Denied",
+                        text: "Select a booking First!",
+                        icon: "error",
+                        confirmButtonColor: "#EC4899"
+                    });
+                    $scope.redirectToBookingCalendarPage();
+                    return;
+                }
+
                 var bookingID = parseInt(returnedData.data.bookingID, 10);
                 if (!bookingID) {
                     throw new Error('No booking ID found in the current session.');
@@ -756,17 +767,128 @@
                     return;
                 }
 
+                for (var x = 0; x < 4; x++) {
+                    var propertyName = "preSides" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedSidesTypesID[x] = sideData?.sidesTypID ?? null;
+                    $scope.selectedSidesTypes[x] = sideData?.sidesTypDesc ?? null;
+
+                    var filtered = $scope.selectedSidesTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.sidesType = filtered.join(', ');
+                }
+
+                for (var x = 0; x < 9; x++) {
+                    var propertyName = "preSpecials" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedSpecialsTypesID[x] = sideData?.specialsTypID ?? null;
+                    $scope.selectedSpecialsTypes[x] = sideData?.specialsTypDesc ?? null;
+
+                    var filtered = $scope.selectedSpecialsTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.specialsType = filtered.join(', ');
+                }
+
+                for (var x = 0; x < 3; x++) {
+                    var propertyName = "preStaff" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedStaffTypesID[x] = sideData?.staffTypID ?? null;
+                    $scope.selectedStaffTypes[x] = sideData?.staffTypDesc ?? null;
+
+                    var filtered = $scope.selectedStaffTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.staffType = filtered.join(', ');
+                }
+
+                for (var x = 0; x < 7; x++) {
+                    var propertyName = "preEquip" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedEquipTypesID[x] = sideData?.equipTypID ?? null;
+                    $scope.selectedEquipTypes[x] = sideData?.equipTypDesc ?? null;
+
+                    var filtered = $scope.selectedEquipTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.equipType = filtered.join(', ');
+                }
+
+                for (var x = 0; x < 7; x++) {
+                    var propertyName = "preEntertainment" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedEntertainmentTypesID[x] = sideData?.entertainmentTypID ?? null;
+                    $scope.selectedEntertainmentTypes[x] = sideData?.entertainmentTypDesc ?? null;
+
+                    var filtered = $scope.selectedEntertainmentTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.entertainmentType = filtered.join(', ');
+                }
+
+                for (var x = 0; x < 6; x++) {
+                    var propertyName = "prePhoto" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedPhotoTypesID[x] = sideData?.photoTypID ?? null;
+                    $scope.selectedPhotoTypes[x] = sideData?.photoTypDesc ?? null;
+
+                    var filtered = $scope.selectedPhotoTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.photoType = filtered.join(', ');
+                }
+
+                for (var x = 0; x < 5; x++) {
+                    var propertyName = "preKeepsakes" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedKeepsakesTypesID[x] = sideData?.keepsakesTypID ?? null;
+                    $scope.selectedKeepsakesTypes[x] = sideData?.keepsakesTypDesc ?? null;
+
+                    var filtered = $scope.selectedKeepsakesTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.keepsakesType = filtered.join(', ');
+                }
+
+                for (var x = 0; x < 3; x++) {
+                    var propertyName = "preDebut" + (x + 1);
+                    var sideData = detailsRes.data[propertyName];
+                    $scope.selectedDebutTypesID[x] = sideData?.debutTypID ?? null;
+                    $scope.selectedDebutTypes[x] = sideData?.debutTypDesc ?? null;
+
+                    var filtered = $scope.selectedDebutTypes.filter(function (val) {
+                        return val !== null && val !== undefined && val !== '';
+                    });
+                    $scope.debutType = filtered.join(', ');
+                }
+
                 var client = detailsRes.data.clients || {};
                 var packageInfo = detailsRes.data.packages || {};
                 var packageItems = [
-                    packageInfo.incStaples,
-                    packageInfo.incStyling,
-                    packageInfo.incTableSet,
-                    packageInfo.incDnrWare,
-                    packageInfo.incBftSet
+                    `Main Courses: ${detailsRes.data.preMainCourse.mainCourseTypDesc}`,
+                    `Sides & Dessert: ${$scope.sidesType}`,
+                    `Staples & Drinks: ${packageInfo.incStaples}`,
+                    `Buffet Setup: ${packageInfo.incBftSet}`,
+                    `Styling: ${packageInfo.incStyling}`,
+                    `Table Setup: ${packageInfo.incTableSet}`,
+                    `Table Centerpiece: ${detailsRes.data.preCenterPiece.centerPieceTypDesc}`,
+                    `Seating: ${detailsRes.data.preSeating.seatingTypDesc}`,
+                    `Special Tables: ${$scope.specialsType}`,
+                    `Staff: ${$scope.staffType}`,
+                    `Dinerware: ${packageInfo.incDnrWare}`,
+                    `Backdrop: ${detailsRes.data.preBackdrop.backdropTypDesc}`,
+                    `Entrance Arch: ${detailsRes.data.preEntrance.entranceTypDesc}`,
+                    `Celebrant's Couch: ${detailsRes.data.preCouch.couchTypDesc}`,
+                    `Equipments & Decor: ${$scope.equipType}`,
+                    `Entertainment: ${$scope.entertainmentType}`,
+                    `Photo Operations: ${$scope.photoType}`,
+                    `Keppsakes: ${$scope.keepsakesType}`,
+                    `Debut Additionals: ${$scope.debutType}`
                 ].filter(function (item) {
                     return item && item.toString().trim() !== '';
                 });
+                $scope.packageTypeInfo = detailsRes.data.packageType.packageTypDesc
 
                 $scope.client = {
                     eventName: client.eventName || 'Not set',
@@ -781,6 +903,8 @@
                     title: packageInfo.packageID ? ('Package ' + packageInfo.packageID) : '',
                     items: packageItems
                 };
+
+                
             })
             .catch(function (err) {
                 console.error('Error loading booking', err);
@@ -796,35 +920,6 @@
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     $scope.mindate = tomorrow.toISOString().split('T')[0];
-
-    $scope.bookEvent = function () {
-
-        if ($scope.eventForm.$invalid) {
-            alert("Please complete required fields.");
-            return;
-        }
-
-        var eventData = {
-            eventName: $scope.eventName,
-            packageId: $scope.packageId,
-            venue: $scope.venue,
-            dsgnMotif: $scope.motif,
-            dsgnTheme: $scope.theme,
-            dateOfEvent: $scope.dateOfEvent,
-            ceremTime: $scope.eventCeremTime,
-            eventTime: $scope.eventEventTime,
-            eventMealTime: $scope.eventMealTime,
-            eventSetTime: $scope.eventSetTime
-        };
-
-        IsabellaCateringWebAppService.bookEvent(eventData)
-            .then(function (response) {
-                alert(response.data.message);
-            })
-            .catch(function (error) {
-                alert("Booking Failed");
-            });
-    };
 
     //======================================================== CUSTOMER VIEW END =======================================================
 
@@ -853,7 +948,11 @@
 
         const date = new Date(milliseconds);
 
-        return date.toLocaleString();
+        return date.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
     }
 
     //=================================================== DATE & TIME CONVERSION END ===================================================
@@ -971,7 +1070,18 @@
                     eventCard.dataset.date = day.dataset.date;
 
                     eventCard.addEventListener("click", function () {
-                        alert(`Trial ${this.dataset.date} clicked!`);
+                        IsabellaCateringWebAppService.setBookingViewService(item.bookingID).then(function (returnedData) {
+                            if (returnedData.data.success) {
+                                $scope.redirectToAdminViewPage();
+                            } else {
+                                Swal.fire({
+                                    title: "Error",
+                                    text: "Could not load calendar bookings.",
+                                    icon: "error",
+                                    confirmButtonColor: "#EC4899"
+                                });
+                            }
+                        });
                     });
 
                     day.appendChild(eventCard);
@@ -985,7 +1095,8 @@
             Swal.fire({
                 title: "Error",
                 text: "Could not load calendar bookings.",
-                icon: "error"
+                icon: "error",
+                confirmButtonColor: "#EC4899"
             });
         });
 
@@ -2381,20 +2492,31 @@
             debutGrpTyp3: $scope.selectedDebutTypesID[2] ?? null
         };
 
-        if (clientInfo.eventName != null && 
+        if (clientInfo.eventName != null &&
+            clientInfo.eventName != '' && 
             clientInfo.cFName != null &&
+            clientInfo.cFName != '' &&
             clientInfo.cLName != null &&
+            clientInfo.cLName != '' &&
             clientInfo.cEmail != null &&
+            clientInfo.cEmail != '' &&
             clientInfo.cContact != null &&
+            clientInfo.cContact != '' &&
             clientInfo.cCeleb1FName != null &&
+            clientInfo.cCeleb1FName != '' &&
             clientInfo.cCeleb1LName != null &&
+            clientInfo.cCeleb1LName != '' &&
             bookingInfo.eventID != null &&
             bookingInfo.dsgnTheme != null &&
+            bookingInfo.dsgnTheme != null &&
             bookingInfo.dsgnMotif != null &&
+            bookingInfo.dsgnMotif != null &&
+            bookingInfo.prepVenue != null &&
             bookingInfo.prepVenue != null &&
             bookingInfo.bookingDate != null &&
             bookingInfo.ceremTime != null &&
             bookingInfo.eventTime != null &&
+            bookingInfo.venue != null &&
             bookingInfo.venue != null &&
             bookingInfo.eventSetTime != null &&
             bookingInfo.eventMealTime != null &&
@@ -2415,7 +2537,7 @@
                             Swal.fire({
                                 title: 'Error!',
                                 text: returnedData.data.message,
-                                icon: 'success',
+                                icon: 'error',
                                 confirmButtonColor: '#ec4899',
                             });
                         }

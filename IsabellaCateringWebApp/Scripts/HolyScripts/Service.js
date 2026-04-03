@@ -162,6 +162,12 @@
         });
     }
 
+    this.setBookingViewService = function (bookingID) {
+        return $http.get("/Main/setBookingView", {
+            params: { bookingID: bookingID }
+        });
+    }
+
     //========================================================BOOKING CALENDAR END=======================================================
 
     //========================================================PAYMENT REMINDER START=======================================================

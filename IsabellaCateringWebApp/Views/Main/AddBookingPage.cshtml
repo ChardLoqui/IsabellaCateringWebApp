@@ -3,7 +3,7 @@
     ViewBag.Title = "Create Booking";
 }
 
-<section class="create-booking-page min-h-screen px-3 py-5 lg:px-6" ng-init="authenticateLoginCredentials()">
+<section class="create-booking-page min-h-screen px-3 py-5 lg:px-6" ng-init="authenticateLoginCredentials()" ng-click="handleDocumentClick($event)">
     <div class="mx-auto w-full max-w-[1440px]">
         <header class="mb-6 flex flex-col gap-3 border-b border-rose-100 pb-5 lg:flex-row lg:items-end lg:justify-between">
             <div>

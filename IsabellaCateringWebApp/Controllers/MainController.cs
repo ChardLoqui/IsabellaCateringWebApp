@@ -67,6 +67,10 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+        public ActionResult AdminViewPage()
+        {
+            return View();
+        }
 
         // get creds for login
         public JsonResult JsonLogGetCreds(tblUsersModel userInfo, tblClientsModel clientInfo, string isGuest)
@@ -200,6 +204,20 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
         //get current session
+
+        public JsonResult setBookingView(int bookingID)
+        {
+            try
+            {
+                Session["currentBooking"] = bookingID.ToString();
+                return Json(new { success = true, message = "Session Set!" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+
+        }
         public JsonResult getCurrentSession()
         {
             try
@@ -281,7 +299,7 @@ namespace IsabellaCateringWebApp.Controllers
 
                 }
 
-                return Json(new { success = true, message = "Saved successfully!" });
+                return Json(new { success = true, message = "Saved successfully!" }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -793,19 +811,190 @@ namespace IsabellaCateringWebApp.Controllers
                         var bookingPackage = db.packages_tbl
                                     .Where(p => p.packageID == bookings.packageID)
                                     .FirstOrDefault();
+
                         if (bookingPackage != null)
                         {
-                            var bookingClient = db.clients_tbl
+                            var preMainCourse = db.maincoursetypes_tbl.Where(p => p.mainCourseTypID == bookingPackage.mainCourseTypID).FirstOrDefault();
+                            var preSides = db.sidesgrptypes_tbl.Where(p => p.sidesGrpTypID == bookingPackage.sidesGrpTypID).FirstOrDefault();
+                            var preCenterPiece = db.centerpiecetypes_tbl.Where(p => p.centerPieceTypID == bookingPackage.centerPieceTypID).FirstOrDefault();
+                            var preSeating = db.seatingtypes_tbl.Where(p => p.seatingTypID == bookingPackage.seatingTypID).FirstOrDefault();
+                            var preSpecials = db.specialsgrptypes_tbl.Where(p => p.specialsGrpTypID == bookingPackage.specialsGrpTypID).FirstOrDefault();
+                            var preStaff = db.staffgrptypes_tbl.Where(p => p.staffGrpTypID == bookingPackage.staffGrpTypID).FirstOrDefault();
+                            var preBackdrop = db.backdroptypes_tbl.Where(p => p.backdropTypID == bookingPackage.backdropTypID).FirstOrDefault();
+                            var preEntrance = db.entrancetypes_tbl.Where(p => p.entranceTypID == bookingPackage.entranceTypID).FirstOrDefault();
+                            var preCouch = db.couchtypes_tbl.Where(p => p.couchTypID == bookingPackage.couchTypID).FirstOrDefault();
+                            var preEquip = db.equipgrptypes_tbl.Where(p => p.equipGrpTypID == bookingPackage.equipGrpTypID).FirstOrDefault();
+                            var preEntertainment = db.entertainmentgrptypes_tbl.Where(p => p.entertainmentGrpTypID == bookingPackage.entertainmentGrpTypID).FirstOrDefault();
+                            var prePhoto = db.photogrptypes_tbl.Where(p => p.photoGrpTypID == bookingPackage.photoGrpTypID).FirstOrDefault();
+                            var preKeepsakes = db.keepsakesgrptypes_tbl.Where(p => p.keepsakesGrpTypID == bookingPackage.keepsakesGrptypID).FirstOrDefault();
+                            var preDebut = db.debutgrptypes_tbl.Where(p => p.debutGrpTypID == bookingPackage.debutGrpTypID).FirstOrDefault();
+                            var packageType = db.packagetypes_tbl.Where(p => p.packageTypID == bookingPackage.packageTypID).FirstOrDefault();
+
+                            if (preMainCourse != null &&
+                                preSides != null &&
+                                preCenterPiece != null &&
+                                preSeating != null &&
+                                preSpecials != null &&
+                                preStaff != null &&
+                                preBackdrop != null &&
+                                preEntrance != null &&
+                                preCouch != null &&
+                                preEquip != null &&
+                                preEntertainment != null &&
+                                prePhoto != null &&
+                                preKeepsakes != null &&
+                                preDebut != null)
+                            {
+                                var preSides1 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp1).FirstOrDefault();
+                                var preSides2 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp2).FirstOrDefault();
+                                var preSides3 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp3).FirstOrDefault();
+                                var preSides4 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp4).FirstOrDefault();
+
+                                var preSpecials1 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp1).FirstOrDefault();
+                                var preSpecials2 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp2).FirstOrDefault();
+                                var preSpecials3 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp3).FirstOrDefault();
+                                var preSpecials4 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp4).FirstOrDefault();
+                                var preSpecials5 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp5).FirstOrDefault();
+                                var preSpecials6 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp6).FirstOrDefault();
+                                var preSpecials7 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp7).FirstOrDefault();
+                                var preSpecials8 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp8).FirstOrDefault();
+                                var preSpecials9 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp9).FirstOrDefault();
+
+                                var preStaff1 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp1).FirstOrDefault();
+                                var preStaff2 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp2).FirstOrDefault();
+                                var preStaff3 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp3).FirstOrDefault();
+
+                                var preEquip1 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp1).FirstOrDefault();
+                                var preEquip2 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp2).FirstOrDefault();
+                                var preEquip3 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp3).FirstOrDefault();
+                                var preEquip4 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp4).FirstOrDefault();
+                                var preEquip5 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp5).FirstOrDefault();
+                                var preEquip6 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp6).FirstOrDefault();
+                                var preEquip7 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp7).FirstOrDefault();
+
+                                var preEntertainment1 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp1).FirstOrDefault();
+                                var preEntertainment2 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp2).FirstOrDefault();
+                                var preEntertainment3 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp3).FirstOrDefault();
+                                var preEntertainment4 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp4).FirstOrDefault();
+                                var preEntertainment5 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp5).FirstOrDefault();
+                                var preEntertainment6 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp6).FirstOrDefault();
+                                var preEntertainment7 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp7).FirstOrDefault();
+
+                                var prePhoto1 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp1).FirstOrDefault();
+                                var prePhoto2 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp2).FirstOrDefault();
+                                var prePhoto3 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp3).FirstOrDefault();
+                                var prePhoto4 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp4).FirstOrDefault();
+                                var prePhoto5 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp5).FirstOrDefault();
+                                var prePhoto6 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp6).FirstOrDefault();
+                                var prePhoto7 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp7).FirstOrDefault();
+
+                                var preKeepsakes1 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp1).FirstOrDefault();
+                                var preKeepsakes2 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp2).FirstOrDefault();
+                                var preKeepsakes3 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp3).FirstOrDefault();
+                                var preKeepsakes4 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp4).FirstOrDefault();
+                                var preKeepsakes5 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp5).FirstOrDefault();
+
+                                var preDebut1 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp1).FirstOrDefault();
+                                var preDebut2 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp2).FirstOrDefault();
+                                var preDebut3 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp3).FirstOrDefault();
+
+                                var bookingClient = db.clients_tbl
                                     .Where(c => c.clientID == bookings.clientID)
                                     .FirstOrDefault();
 
-                            if (bookingClient != null)
-                            {
-                                var bookingEvent = db.events_tbl
-                                        .Where(e => e.eventID == bookingClient.clientID)
-                                        .FirstOrDefault();
+                                if (bookingClient != null)
+                                {
+                                    var bookingEvent = db.events_tbl
+                                            .Where(e => e.eventID == bookings.eventID)
+                                            .FirstOrDefault();
 
-                                return Json(new { packages = bookingPackage, clients = bookingClient, events = bookingEvent, success = true, message = "Details Found!" }, JsonRequestBehavior.AllowGet);
+                                    if (bookingEvent != null)
+                                    {
+                                        return Json(new
+                                        {
+                                            packages = bookingPackage,
+                                            clients = bookingClient,
+                                            events = bookingEvent,
+                                            packageType = packageType,
+
+                                            preMainCourse = preMainCourse,
+
+                                            preSides1 = preSides1,
+                                            preSides2 = preSides2,
+                                            preSides3 = preSides3,
+                                            preSides4 = preSides4,
+
+                                            preCenterPiece = preCenterPiece,
+
+                                            preSeating = preSeating,
+
+                                            preSpecials1 = preSpecials1,
+                                            preSpecials2 = preSpecials2,
+                                            preSpecials3 = preSpecials3,
+                                            preSpecials4 = preSpecials4,
+                                            preSpecials5 = preSpecials5,
+                                            preSpecials6 = preSpecials6,
+                                            preSpecials7 = preSpecials7,
+                                            preSpecials8 = preSpecials8,
+                                            preSpecials9 = preSpecials9,
+
+                                            preStaff1 = preStaff1,
+                                            preStaff2 = preStaff2,
+                                            preStaff3 = preStaff3,
+
+                                            preBackdrop = preBackdrop,
+
+                                            preEntrance = preEntrance,
+
+                                            preCouch = preCouch,
+
+                                            preEquip1 = preEquip1,
+                                            preEquip2 = preEquip2,
+                                            preEquip3 = preEquip3,
+                                            preEquip4 = preEquip4,
+                                            preEquip5 = preEquip5,
+                                            preEquip6 = preEquip6,
+                                            preEquip7 = preEquip7,
+
+                                            preEntertainment1 = preEntertainment1,
+                                            preEntertainment2 = preEntertainment2,
+                                            preEntertainment3 = preEntertainment3,
+                                            preEntertainment4 = preEntertainment4,
+                                            preEntertainment5 = preEntertainment5,
+                                            preEntertainment6 = preEntertainment6,
+                                            preEntertainment7 = preEntertainment7,
+
+                                            prePhoto1 = prePhoto1,
+                                            prePhoto2 = prePhoto2,
+                                            prePhoto3 = prePhoto3,
+                                            prePhoto4 = prePhoto4,
+                                            prePhoto5 = prePhoto5,
+                                            prePhoto6 = prePhoto6,
+                                            prePhoto7 = prePhoto7,
+
+                                            preKeepsakes1 = preKeepsakes1,
+                                            preKeepsakes2 = preKeepsakes2,
+                                            preKeepsakes3 = preKeepsakes3,
+                                            preKeepsakes4 = preKeepsakes4,
+                                            preKeepsakes5 = preKeepsakes5,
+
+                                            preDebut1 = preDebut1,
+                                            preDebut2 = preDebut2,
+                                            preDebut3 = preDebut3,
+
+                                            success = true,
+                                            message = "Package Fetched Successfully!"
+                                        }, JsonRequestBehavior.AllowGet);
+                                    }
+                                    else
+                                    {
+                                        return Json(new { success = false, message = "No Event Found!" }, JsonRequestBehavior.AllowGet);
+                                    }
+                                }
+                                else
+                                {
+                                    return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
+                                }
                             }
                             else
                             {
