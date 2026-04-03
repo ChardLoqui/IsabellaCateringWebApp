@@ -7,7 +7,7 @@ namespace IsabellaCateringWebApp.Models.Models
 {
     public class tblCouchTypesModel
     {
-        public int couchtypID { get; set; }
+        public int couchTypID { get; set; }
         public int packageCategoryID { get; set; }
         public string couchTypDesc { get; set; }
         public DateTime dateCreated { get; set; }

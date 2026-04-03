@@ -14,5 +14,6 @@ namespace IsabellaCateringWebApp.Models.Maps
             HasKey(i => i.paymentID);
             ToTable("payments_tbl");
         }
+
     }
 }

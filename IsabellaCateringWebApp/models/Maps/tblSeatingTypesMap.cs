@@ -11,7 +11,7 @@ namespace IsabellaCateringWebApp.Models.Maps
     {
         public tblSeatingTypesMap()
         {
-            HasKey(i => i.seatingtypID);
+            HasKey(i => i.seatingTypID);
             ToTable("seatingtypes_tbl");
         }
     }

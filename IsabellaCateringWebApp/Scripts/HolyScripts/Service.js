@@ -49,6 +49,10 @@
             data: { id: userID }
         });
     };
+    //for logs
+    this.getLogsDataService = function () {
+        return $http.get("/Main/GetLogs");
+    };
 
     //test for navbar
     this.getCurrentSessionServiceNav = function () {
@@ -72,6 +76,8 @@
 
     //========================================================PASSWORD RESET END=======================================================
 
+    
+
     this.getBooking = function (booking) {
         console.log("getBooking called", booking.bookingID);
 
@@ -83,6 +89,7 @@
         return response;
     };
 
+    //========================================================CREATE BOOKING START=======================================================
     this.bookEvent = function (eventData) {
         return $http({
             method: "POST",
@@ -91,13 +98,43 @@
         });
     };
 
+    this.getPackageBookingOptionsService = function () {
+        return $http.get("/Main/getPackageBookingOptions");
+    }
+
+    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+        return $http.post("/Main/insertPackage", {
+            clientInfo: clientInfo,
+            bookingInfo: bookingInfo,
+            paymentInfo: paymentInfo,
+            packages: packages,
+            sidesGrpTypes: sidesGrpTypes,
+            specialsGrpTypes: specialsGrpTypes,
+            staffGrpTypes: staffGrpTypes,
+            equipGrpTypes: equipGrpTypes,
+            entertainmentGrpTypes: entertainmentGrpTypes,
+            photoGrpTypes: photoGrpTypes,
+            keepsakesGrpTypes: keepsakesGrpTypes,
+            debutGrpTypes: debutGrpTypes
+        });
+    }
+
+    this.loadPackagePreOptionService = function (packageID) {
+        return $http.get("/Main/loadPackagePreOption", {
+            params: { packageID: packageID }
+        });
+    }
+
+
+    //========================================================CREATE BOOKING END=======================================================
+
     //========================================================BOOKING CALENDAR START=======================================================
 
     this.getCalendarBookingService = function (formattedDate) {
         return $http.get("/Main/getCalendarBooking", {
             params: { formattedDate: formattedDate }
         });
-    }
+    };
 
     this.getBookingDetailsService = function (bookingID) {
         return $http.get("/Main/getBookingDetails", {
@@ -120,6 +157,10 @@
         return $http.get("/Main/GetPayments");
     }
 
+    this.getBookingsWithoutPayments = function () {
+        return $http.get('/Main/GetBookingsWithoutPayments');
+    };
+
     this.AddPaymentCall = function (paymentData) {
         var response = $http({
             method: "post",
@@ -127,6 +168,22 @@
             data: paymentData
         });
         return response;
+    };
+
+    this.addPaymentService = this.AddPaymentCall;
+
+    this.updatePaymentService = function (paymentData) {
+        return $http({
+            method: 'POST',
+            url: '/Main/UpdatePayment',
+            data: paymentData
+        });
+    };
+
+    this.getClientEmailByBooking = function (bookingID) {
+        return $http.get('/Main/GetClientEmailByBooking', {
+            params: { bookingID: bookingID }
+        });
     };
 
     //========================================================PAYMENT REMINDER END=======================================================

@@ -3,38 +3,28 @@
     ViewBag.Title = "Create Booking";
 }
 
-<!DOCTYPE html>
-<html>
-<body class="bg-gray-50">
+<div class="bg-gray-50">
     <div class="flex min-h-screen w-full items-center justify-center p-4">
 
         <form name="eventForm" ng-submit="bookEvent()" novalidate>
-            <!-- Card -->
-            <div class="flex w-full max-w-4xl flex-col rounded-2xl border bg-white shadow-xl">
 
-                <!-- Steps -->
-                <div class="flex flex-row items-center justify-center px-6 py-6 sm:gap-12 md:gap-4 md:py-12">
-                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-pink-500 font-bold text-white sm:h-8 sm:w-8 md:h-12 md:w-12">1</div>
-                    <div class="z-0 h-1 flex-1 bg-pink-300"></div>
-                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-pink-500 font-bold text-white sm:h-8 sm:w-8 md:h-12 md:w-12">2</div>
-                    <div class="z-0 h-1 flex-1 bg-pink-300"></div>
-                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-pink-500 font-bold text-white sm:h-8 sm:w-8 md:h-12 md:w-12">3</div>
-                </div>
+            <div class="flex w-full max-w-5xl flex-col rounded-2xl border bg-white shadow-xl">
 
-                <!-- Form Grid -->
-                <div class="grid w-full grid-cols-1 gap-6 px-6 pb-8 sm:px-8 md:grid-cols-3 md:px-12">
 
-                    <!-- Heading -->
-                    <h1 class="font-heading col-span-full mb-2 text-2xl sm:text-3xl md:text-4xl">
+
+                <div class="grid w-full grid-cols-1 gap-6 px-6 py-8 sm:px-8 md:grid-cols-3 md:px-12" ng-init="loadPackageOptions()">
+
+
+                    <h1 class="font-heading col-span-3 my-2 text-2xl sm:text-3xl md:text-4xl md:col-span-3">
                         <span class="underline decoration-pink-500 decoration-4 underline-offset-4">
                             Book
                         </span> Your Event
                     </h1>
 
-                    <!-- Event Name -->
-                    <div class="col-span-full flex flex-col">
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Event Name
+                            Event Name <i class="font-label text-red-500">*</i>
                         </label>
                         <input type="text"
                                placeholder="e.g Isabella's Debut"
@@ -43,112 +33,991 @@
                                ng-model="eventName">
                     </div>
 
-                    <!-- Package -->
-                    <div class="flex flex-col md:col-span-2">
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Package
+                            Package <i class="font-label text-red-500">*</i>
                         </label>
-                        <select class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base">
-                        </select>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('packageTypesOpt', $event)"
+                                   ng-value="getPackageDisplayText()" />
+                            <div ng-if="activeDropdown ==='packageTypesOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="package in packageTypesOpt"
+                                     ng-click="selectPackageTypes(package.packageTypDesc, package.packageTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': packageType===package.packageTypDesc}">
+                                    {{package.packageTypDesc}}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Venue -->
-                    <div class="flex flex-col">
+                    <div class="col-span-3 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Venue
+                            Event Type
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('eventsOpt', $event)"
+                                   ng-value="getEventDisplayText()" />
+                            <div ng-if="activeDropdown ==='eventsOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="event in eventsOpt"
+                                     ng-click="selectEventTypes(event.eventDesc, event.eventID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': eventType===event.eventDesc}">
+                                    {{event.eventDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Client's Firstname <i class="font-label text-red-500">*</i>
+                        </label>
+                        <input type="text"
+                               placeholder="Firstname"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cFirstName"
+                               ng-model="cFirstName">
+                    </div>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Client's Lastname <i class="font-label text-red-500">*</i>
+                        </label>
+                        <input type="text"
+                               placeholder="Lastname"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cLastName"
+                               ng-model="cLastName">
+                    </div>
+
+                    <br>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Email <i class="font-label text-red-500">*</i>
+                        </label>
+                        <input type="text"
+                               placeholder="E-mail"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cEmail"
+                               ng-model="cEmail">
+                    </div>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Contact Number <i class="font-label text-red-500">*</i>
+                        </label>
+                        <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="11"
+                               placeholder="Contact Number e.g 09*********"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cContactNum"
+                               ng-model="cContactNum">
+                    </div>
+
+                    <br>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Celebrant's Firstname <i class="font-label text-red-500">*</i>
+                        </label>
+                        <input type="text"
+                               placeholder="Firstname"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cCeleb1FirstName"
+                               ng-model="cCeleb1FirstName">
+                    </div>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Celebrant's Lastname <i class="font-label text-red-500">*</i>
+                        </label>
+                        <input type="text"
+                               placeholder="Lastname"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cCeleb1LastName"
+                               ng-model="cCeleb1LastName">
+                    </div>
+
+                    <br>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            2nd Celebrant's Firstname 
+                        </label>
+                        <input type="text"
+                               placeholder="Firstname"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cCeleb2FirstName"
+                               ng-model="cCeleb2FirstName">
+                    </div>
+
+                    <div class="col-span-2 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            2nd Celebrant's Lastname 
+                        </label>
+                        <input type="text"
+                               placeholder="Lastname"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="cCeleb2LastName"
+                               ng-model="cCeleb2LastName">
+                    </div>
+
+                    <br>
+
+                    <div class="col-span-3 flex flex-col md:col-span-3">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Venue <i class="font-label text-red-500">*</i>
                         </label>
                         <input type="text"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="venue"
-                               ng-model="venue">
+                               placeholder="Venue Address"
+                               ng-model="eventVenue">
                     </div>
 
-                    <!-- Motif -->
-                    <div class="flex flex-col">
+                    <div class="col-span-3 flex flex-col md:col-span-3">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Motif
+                            Preparation Venue <i class="font-label text-red-500">*</i>
+                        </label>
+                        <input type="text"
+                               class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               name="prepVenue"
+                               placeholder="Preparation Venue Address"
+                               ng-model="eventPrepVenue">
+                    </div>
+
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Motif <i class="font-label text-red-500">*</i>
                         </label>
                         <input type="text"
                                placeholder="e.g Disney"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                               ng-model="motif"
+                               ng-model="eventMotif"
                                name="motif">
                     </div>
 
-                    <!-- Theme -->
-                    <div class="flex flex-col md:col-span-2">
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Theme
+                            Theme <i class="font-label text-red-500">*</i>
                         </label>
                         <input type="text"
                                placeholder="e.g Disney"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                               ng-model="theme"
+                               ng-model="eventTheme"
                                name="theme">
                     </div>
 
-                    <!-- Date -->
-                    <div class="flex flex-col">
+                    <br>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Date of Event
+                            Date of Event <i class="font-label text-red-500">*</i>
                         </label>
                         <input type="date"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                               ng-change="changeSummaryDateOutput()"
                                ng-model="dateOfEvent" name="dateOfEvent">
                     </div>
 
-                    <!-- Time Section (Clean 3-column row) -->
-                    <div class="col-span-full grid grid-cols-1 gap-6 md:grid-cols-3">
-
-                        <div class="flex flex-col">
-                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                                Ceremony Time
-                            </label>
-                            <input type="time"
-                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                                   ng-model="ceremTime" name="ceremTime">
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Ceremony Time <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('ceremHour', $event)">
+                                    {{ceremHour || 'Hour'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='ceremHour'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="h in hours"
+                                         ng-click="selectCeremHour(h)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': ceremHour===h}">
+                                        {{h}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('ceremMin', $event)">
+                                    {{ceremMinute || 'Min'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='ceremMin'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="m in minutes"
+                                         ng-click="selectCeremMinute(m)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': ceremMinute===m}">
+                                        {{m}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('ceremPer', $event)">
+                                    {{ceremPeriod || 'AM/PM'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='ceremPer'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="p in periods"
+                                         ng-click="selectCeremPeriod(p)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': ceremPeriod===p}">
+                                        {{p}}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-
-                        <div class="flex flex-col">
-                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                                Event Time
-                            </label>
-                            <input type="time"
-                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                                   ng-model="eventTime" name="eventTime">
-                        </div>
-
-                        <div class="flex flex-col">
-                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                                Meal Time
-                            </label>
-                            <input type="time"
-                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                                   ng-model="eventMealTime" name="eventMealTime">
-                        </div>
-
                     </div>
 
-                    <!-- Set Time (Full width for balance) -->
-                    <div class="col-span-full flex flex-col md:col-span-1">
+                    <div class="col-span-3 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Set Time
+                            Event Time <i class="font-label text-red-500">*</i>
                         </label>
-                        <input type="time"
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('eventHour', $event)">
+                                    {{eventHour || 'Hour'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='eventHour'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="h in hours"
+                                         ng-click="selectEventHour(h)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': eventHour===h}">
+                                        {{h}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('eventMin', $event)">
+                                    {{eventMinute || 'Min'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='eventMin'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="m in minutes"
+                                         ng-click="selectEventMinute(m)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': eventMinute===m}">
+                                        {{m}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('eventPer', $event)">
+                                    {{eventPeriod || 'AM/PM'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='eventPer'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+                                    <div ng-repeat="p in periods"
+                                         ng-click="selectEventPeriod(p)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': eventPeriod===p}">
+                                        {{p}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Meal Time <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('mealHour', $event)">
+                                    {{mealHour || 'Hour'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='mealHour'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="h in hours"
+                                         ng-click="selectMealHour(h)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': mealHour===h}">
+                                        {{h}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('mealMin', $event)">
+                                    {{mealMinute || 'Min'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='mealMin'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="m in minutes"
+                                         ng-click="selectMealMinute(m)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': mealMinute===m}">
+                                        {{m}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('mealPer', $event)">
+                                    {{mealPeriod || 'AM/PM'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='mealPer'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+                                    <div ng-repeat="p in periods"
+                                         ng-click="selectMealPeriod(p)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': mealPeriod===p}">
+                                        {{p}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Set Time <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('setHour', $event)">
+                                    {{setHour || 'Hour'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='setHour'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="h in hours"
+                                         ng-click="selectSetHour(h)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': setHour===h}">
+                                        {{h}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('setMin', $event)">
+                                    {{setMinute || 'Min'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='setMin'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div ng-repeat="m in minutes"
+                                         ng-click="selectSetMinute(m)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': setMinute===m}">
+                                        {{m}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative dropdown-container">
+                                <button type="button"
+                                        class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                        ng-click="toggleDropdown('setPer', $event)">
+                                    {{setPeriod || 'AM/PM'}}
+                                </button>
+                                <div ng-if="activeDropdown ==='setPer'" ng-click="$event.stopPropagation()"
+                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+                                    <div ng-repeat="p in periods"
+                                         ng-click="selectSetPeriod(p)"
+                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': setPeriod===p}">
+                                        {{p}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Main Courses <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('mainCourseOpt', $event)"
+                                   ng-value="getMainCourseDisplayText()" />
+                            <div ng-if="activeDropdown ==='mainCourseOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="mainCourse in maincourseTypesOpt"
+                                     ng-click="selectMainCourseType(mainCourse.mainCourseTypDesc, mainCourse.mainCourseTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': mainCourseType===mainCourse.mainCourseTypDesc}">
+                                    {{mainCourse.mainCourseTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Sides & Dessert <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('sidesOpt', $event)"
+                                   ng-value="getSidesDisplayText()" />
+                            <div ng-if="activeDropdown ==='sidesOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="sides in sidesTypesOpt"
+                                     ng-click="toggleSidesType(sides.sidesTypDesc, sides.sidesTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isSidesSelected(sides.sidesTypDesc)}">
+                                    {{sides.sidesTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Staples & Drinks <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('staplesOpt', $event)"
+                                   ng-value="getStaplesDisplayText()" />
+                            <div ng-if="activeDropdown ==='staplesOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="staples in staplesOpt"
+                                     ng-click="selectStaplesType(staples)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': staplesType===staples}">
+                                    {{staples}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Buffet Setup <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('buffetOpt', $event)"
+                                   ng-value="getBuffetDisplayText()" />
+                            <div ng-if="activeDropdown ==='buffetOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="buffet in buffetOpt"
+                                     ng-click="selectBuffetType(buffet)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': buffetType===buffet}">
+                                    {{buffet}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Styling <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('stylingOpt', $event)"
+                                   ng-value="getStylingDisplayText()" />
+                            <div ng-if="activeDropdown ==='stylingOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="styling in stylingOpt"
+                                     ng-click="selectStylingType(styling)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': stylingType===styling}">
+                                    {{styling}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Table Setup <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('tableOpt', $event)"
+                                   ng-value="getTableDisplayText()" />
+                            <div ng-if="activeDropdown ==='tableOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="table in tableOpt"
+                                     ng-click="selectTableType(table)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': tableType===table}">
+                                    {{table}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Table Centerpiece <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('centerPieceOpt', $event)"
+                                   ng-value="getCenterPieceDisplayText()" />
+                            <div ng-if="activeDropdown ==='centerPieceOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="centerPiece in centerPieceTypesOpt"
+                                     ng-click="selectCenterPieceType(centerPiece.centerPieceTypDesc, centerPiece.centerPieceTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': centerPieceType===centerPiece.centerPieceTypDesc}">
+                                    {{centerPiece.centerPieceTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Seating <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('seatingOpt', $event)"
+                                   ng-value="getSeatingDisplayText()" />
+                            <div ng-if="activeDropdown ==='seatingOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="seating in seatingTypesOpt"
+                                     ng-click="selectSeatingType(seating.seatingTypDesc, seating.seatingTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': seatingType===seating.seatingTypDesc}">
+                                    {{seating.seatingTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Special Tables <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('specialOpt', $event)"
+                                   ng-value="getSpecialsDisplayText()" />
+                            <div ng-if="activeDropdown ==='specialOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="specials in specialsTypesOpt"
+                                     ng-click="toggleSpecialsType(specials.specialsTypDesc, specials.specialsTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isSpecialsSelected(specials.specialsTypDesc)}">
+                                    {{specials.specialsTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Staff <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('staffOpt', $event)"
+                                   ng-value="getStaffDisplayText()" />
+                            <div ng-if="activeDropdown ==='staffOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="staff in staffTypesOpt"
+                                     ng-click="toggleStaffType(staff.staffTypDesc, staff.staffTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isStaffSelected(staff.staffTypDesc)}">
+                                    {{staff.staffTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Dinerware <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('dinerwareOpt', $event)"
+                                   ng-value="getDinerwareDisplayText()" />
+                            <div ng-if="activeDropdown ==='dinerwareOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="dinerware in dinerwareOpt"
+                                     ng-click="selectDinerwareType(dinerware)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': dinerwareType===dinerware}">
+                                    {{dinerware}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Backdrop <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('backdropOpt', $event)"
+                                   ng-value="getBackdropDisplayText()" />
+                            <div ng-if="activeDropdown ==='backdropOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="backdrop in backdropTypesOpt"
+                                     ng-click="selectBackdropType(backdrop.backdropTypDesc, backdrop.backdropTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': backdropType===backdrop.backdropTypDesc}">
+                                    {{backdrop.backdropTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Entrance Arch <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('entranceOpt', $event)"
+                                   ng-value="getEntranceDisplayText()" />
+                            <div ng-if="activeDropdown ==='entranceOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="entrance in entranceTypesOpt"
+                                     ng-click="selectEntranceType(entrance.entranceTypDesc, entrance.entranceTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': entranceType===entrance.entranceTypDesc}">
+                                    {{entrance.entranceTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Celebrant's Couch <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('couchOpt', $event)"
+                                   ng-value="getCouchDisplayText()" />
+                            <div ng-if="activeDropdown ==='couchOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="couch in couchTypesOpt"
+                                     ng-click="selectCouchType(couch.couchTypDesc, couch.couchTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': couchType===couch.couchTypDesc}">
+                                    {{couch.couchTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Equipments & Decor <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('equipOpt', $event)"
+                                   ng-value="getEquipDisplayText()" />
+                            <div ng-if="activeDropdown ==='equipOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="equip in equipTypesOpt"
+                                     ng-click="toggleEquipType(equip.equipTypDesc, equip.equipTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isEquipSelected(equip.equipTypDesc)}">
+                                    {{equip.equipTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Entertainment <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('entertainmentOpt', $event)"
+                                   ng-value="getEntertainmentDisplayText()" />
+                            <div ng-if="activeDropdown ==='entertainmentOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="entertainment in entertainmentTypesOpt"
+                                     ng-click="toggleEntertainmentType(entertainment.entertainmentTypDesc, entertainment.entertainmentTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isEntertainmentSelected(entertainment.entertainmentTypDesc)}">
+                                    {{entertainment.entertainmentTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Photo Operations <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('photoOpt', $event)"
+                                   ng-value="getPhotoDisplayText()" />
+                            <div ng-if="activeDropdown ==='photoOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="photo in photoTypesOpt"
+                                     ng-click="togglePhotoType(photo.photoTypDesc, photo.photoTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isPhotoSelected(photo.photoTypDesc)}">
+                                    {{photo.photoTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Keepsakes <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('keepsakesOpt', $event)"
+                                   ng-value="getKeepsakesDisplayText()" />
+                            <div ng-if="activeDropdown ==='keepsakesOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="keepsakes in keepsakesTypesOpt"
+                                     ng-click="toggleKeepsakesType(keepsakes.keepsakesTypDesc, keepsakes.keepsakesTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isKeepsakesSelected(keepsakes.keepsakesTypDesc)}">
+                                    {{keepsakes.keepsakesTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Debut Additionals <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text" ng-disabled="addDebutInput"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('debutOpt', $event)"
+                                   ng-value="getDebutDisplayText()" />
+                            <div ng-if="activeDropdown ==='debutOpt'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="debut in debutTypesOpt"
+                                     ng-click="toggleDebutType(debut.debutTypDesc, debut.debutTypID)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': isDebutSelected(debut.debutTypDesc)}">
+                                    {{debut.debutTypDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-3">
+                        <label class="font-label mb-1 text-l font-bold text-pink-500 md:text-base">
+                            Package Summary
+                        </label>
+                        <div class="relative">
+                            <label class="font-label mb-1 text-sm font-bold text-gray-400 md:text-base">
+                                Client Information
+                            </label>
+                            <ul>
+                                <li><b>Client's Name:</b> {{cFirstName || "-"}} {{cLastName}}</li>
+                                <li><b>Email:</b> {{cEmail || "-"}}</li>
+                                <li><b>Contact Number:</b> {{cContactNum || "-"}}</li>
+                                <li><b>Celebrant's Name</b> {{cCeleb1FirstName || "-"}} {{cCeleb1LastName}}</li>
+                                <li><b>2nd Celebrant's Name:</b> {{cCeleb2FirstName || "-"}} {{cCeleb2LastName}}</li>
+                            </ul>
+                            <br>
+                            <label class="font-label mb-1 text-sm font-bold text-gray-400 md:text-base">
+                                Booking Information
+                            </label>
+                            <ul>
+                                <li><b>Event Name:</b> {{eventName || "-"}}</li>
+                                <li><b>Package Type:</b> {{packageType || "-"}}</li>
+                                <li><b>Event Type:</b> {{eventType || "-"}}</li>
+                                <li><b>Venue:</b> {{eventVenue || "-"}}</li>
+                                <li><b>Pereparation Venue:</b> {{eventPrepVenue || "-"}}</li>
+                                <li><b>Motif:</b> {{eventMotif || "-"}}</li>
+                                <li><b>Theme:</b> {{eventTheme || "-"}}</li>
+                                <li><b>Date of Event:</b> {{formattedDateOfEvent || "No Date"}}</li>
+                                <li><b>Ceremony Time:</b> {{ceremHour || "00"}}:{{ceremMin || "00"}} {{ceremPeriod}} ({{eventCeremTime || "-"}})</li>
+                                <li><b>Event Time:</b> {{eventHour || "00"}}:{{eventMin || "00"}} {{eventPeriod}} ({{eventEventTime || "-"}})</li>
+                                <li><b>Meal Time:</b> {{mealHour || "00"}}:{{mealMin || "00"}} {{mealPeriod}} ({{eventMealTime || "-"}})</li>
+                                <li><b>Set Time:</b> {{setHour || "00"}}:{{setMin || "00"}} {{setPeriod}} ({{eventSetTime || "-"}})</li>
+                            </ul>
+                            <br>
+                            <label class="font-label mb-1 text-sm font-bold text-gray-400 md:text-base">
+                                Package Inclusion
+                            </label>
+                            <ul>
+                                <li><b>Main Courses:</b> {{mainCourseType || "-"}}</li>
+                                <li><b>Sides & Dessert:</b> {{sidesType || "-"}}</li>
+                                <li><b>Staples & Drinks:</b> {{staplesType || "-"}}</li>
+                                <li><b>Buffet Setup:</b> {{buffetType || "-"}}</li>
+                                <li><b>Styling:</b> {{stylingType || "-"}}</li>
+                                <li><b>Table Setup:</b> {{tableType || "-"}}</li>
+                                <li><b>Table Centerpiece:</b> {{centerPieceType || "-"}}</li>
+                                <li><b>Seating:</b> {{seatingType || "-"}}</li>
+                                <li><b>Special Tables:</b> {{specialsType || "-"}}</li>
+                                <li><b>Staff:</b> {{staffType || "-"}}</li>
+                                <li><b>Dinerware:</b> {{dinerwareType || "-"}}</li>
+                                <li><b>Backdrop:</b> {{backdropType || "-"}}</li>
+                                <li><b>Entrance Arch:</b> {{entranceType || "-"}}</li>
+                                <li><b>Celebrant's Couch:</b> {{couchType || "-"}}</li>
+                                <li><b>Equipments & Decor:</b> {{equipType || "-"}}</li>
+                                <li><b>Entertainment:</b> {{entertainmentType || "-"}}</li>
+                                <li><b>Photo Operations:</b> {{photoType || "-"}}</li>
+                                <li><b>Keppsakes:</b> {{keepsakesType || "-"}}</li>
+                                <li><b>Debut Additionals:</b> {{debutType || "-"}}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Guest Count <i class="font-label text-red-500">*</i>
+                        </label>
+                        <div class="relative dropdown-container">
+                            <input type="text"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                   readonly
+                                   ng-click="toggleDropdown('pricePax', $event)"
+                                   ng-value="getPricePaxDisplayText()" />
+                            <div ng-if="activeDropdown ==='pricePax'" ng-click="$event.stopPropagation()"
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <div ng-repeat="price in pricePaxOpt"
+                                     ng-click="selectPricePaxType(price.pricePaxID, price.pricePaxDesc, price.pricePaxPrice)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                     ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': priceType===price.pricePaxDesc}">
+                                    {{price.pricePaxDesc}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="col-span-3 flex flex-col md:col-span-1">
+                                <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                    Adult Additional
+                                </label>
+                                <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3"
+                                       placeholder="Adult Count"
+                                       class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                       ng-model="addAdult"
+                                       name="adult">
+                            </div>
+                            <div class="col-span-3 flex flex-col md:col-span-1">
+                                <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                    Kid Additional
+                                </label>
+                                <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3" ng-disabled="addKdInput"
+                                       placeholder="Kid Count"
+                                       class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                       ng-model="addKid"
+                                       name="kid">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-1">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Final Price
+                        </label>
+                        <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="11"
+                               placeholder="Final Price"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                               ng-model="eventSetTime" name="eventSetTime">
+                               ng-model="bookingFinalPrice"
+                               name="finalPrice">
+                    </div>
+
+                    <div class="col-span-3 flex flex-col md:col-span-3">
+                        <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                            Booking Note
+                        </label>
+                        <textarea class="w-full h-auto max-h-40 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                  name="bookingNote"
+                                  placeholder="Add Note Here..."
+                                  ng-model="bookingNote">
+                        </textarea>
                     </div>
 
                     <!-- Button -->
                     <div class="col-span-full pt-4">
-                        <button type="submit" class="w-full rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700">
+                        <button type="button" ng-click="createBooking()" class="w-full mx-2 flex cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl placeholder-white text-l">
                             Book Event
                         </button>
                     </div>
 
                 </div>
-            </div>
+              </div>
         </form>
     </div>
-</body>
-</html>
+</div>
