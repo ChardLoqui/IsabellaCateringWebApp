@@ -249,6 +249,12 @@ namespace IsabellaCateringWebApp.Controllers
             }
 
             return Json(new { userName = uName, permID = pID, isGuest = isG}, JsonRequestBehavior.AllowGet);
+            return Json(new
+            {
+                userID = currentID,
+                userName = uName,
+                permID = pID
+            }, JsonRequestBehavior.AllowGet);
         }
 
         //bago, to add user
@@ -1630,6 +1636,34 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return Json(new { success = false, message = innerMsg }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult LogPaymentReminder(tblPaymentRemindersModel model)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var now = DateTime.Now;
+                    var reminder = new tblPaymentRemindersModel
+                    {
+                        paymentID = model.paymentID,
+                        sentBy = model.sentBy,
+                        sentAt = model.sentAt,
+                        note = model.note,
+                        dateCreated = now,
+                        dateUpdated = now
+                    };
+                    db.paymentreminders_tbl.Add(reminder);
+                    db.SaveChanges();
+                }
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
             }
         }
 

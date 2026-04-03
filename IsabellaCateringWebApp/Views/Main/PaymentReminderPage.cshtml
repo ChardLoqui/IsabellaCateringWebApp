@@ -4,187 +4,187 @@
     ViewBag.Title = "Payment Reminders";
 }
 
-<div class="relative z-10 h-full overflow-y-auto" ng-init="authenticateLoginCredentials()">
+<div class="relative z-10 h-full overflow-y-auto">
     <div class="p-8 mb-5">
         <h1 class="mb-6 text-2xl font-semibold text-black">Payment Reminder</h1>
         @*First Row*@
-    <div class="flex flex-wrap lg:flex-nowrap items-stretch gap-6 mb-8">
-        @*Due Payments*@
-        <div class="w-full lg:w-3/4">
-            <div class="flex flex-col rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
+        <div class="flex flex-wrap lg:flex-nowrap items-stretch gap-6 mb-8">
+            @*Due Payments*@
+            <div class="w-full lg:w-3/4">
+                <div class="flex flex-col rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
 
-                <div class="flex items-center justify-between p-4 border-b bg-white">
-                    <div class="flex items-center gap-6">
-                        <h2 class="text-xl font-semibold text-black">Due Payments</h2>
-                        <div class="flex items-center gap-2">
-                            <input type="text"
-                                   ng-model="dueSearchQuery"
-                                   placeholder="Search table data..."
-                                   class="w-64 rounded border border-gray-200 bg-gray-50 p-2 px-4 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
+                    <div class="flex items-center justify-between p-4 border-b bg-white">
+                        <div class="flex items-center gap-6">
+                            <h2 class="text-xl font-semibold text-black">Due Payments</h2>
+                            <div class="flex items-center gap-2">
+                                <input type="text"
+                                       ng-model="dueSearchQuery"
+                                       placeholder="Search table data..."
+                                       class="w-64 rounded border border-gray-200 bg-gray-50 p-2 px-4 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
 
-                        </div>
-                    </div>
-
-                    @*Pagination controls*@
-                    <div class="flex items-center gap-4 font-bold text-gray-800">
-                        <div class="flex items-center gap-1 border-r pr-4">
-                            <button ng-click="duePrevPage()"
-                                    ng-disabled="duePayments.currentPage === 1"
-                                    class="p-1 hover:text-pink-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                                <span class="material-symbols-outlined text-xl leading-none">chevron_left</span>
-                            </button>
-                            <button ng-click="dueNextPage()"
-                                    ng-disabled="duePayments.currentPage === getDueTotalPages()"
-                                    class="p-1 hover:text-pink-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                                <span class="material-symbols-outlined text-xl leading-none">chevron_right</span>
-                            </button>
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <div class="relative" ng-class="{'z-20': duePageDropOpen}">
-                                <div ng-click="duePageDropOpen = !duePageDropOpen"
-                                     class="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors select-none">
-                                    <span class="text-xs">Page {{ duePayments.currentPage }} / {{ getDueTotalPages() }}</span>
-                                    <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                        @*Pagination controls*@
+                        <div class="flex items-center gap-4 font-bold text-gray-800">
+                            <div class="flex items-center gap-1 border-r pr-4">
+                                <button ng-click="duePrevPage()"
+                                        ng-disabled="duePayments.currentPage === 1"
+                                        class="p-1 hover:text-pink-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                                    <span class="material-symbols-outlined text-xl leading-none">chevron_left</span>
+                                </button>
+                                <button ng-click="dueNextPage()"
+                                        ng-disabled="duePayments.currentPage === getDueTotalPages()"
+                                        class="p-1 hover:text-pink-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                                    <span class="material-symbols-outlined text-xl leading-none">chevron_right</span>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <div class="relative" ng-class="{'z-20': duePageDropOpen}">
+                                    <div ng-click="duePageDropOpen = !duePageDropOpen"
+                                         class="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors select-none">
+                                        <span class="text-xs">Page {{ duePayments.currentPage }} / {{ getDueTotalPages() }}</span>
+                                        <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                                    </div>
+                                    <div ng-if="duePageDropOpen"
+                                         class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[80px]">
+                                        <div ng-repeat="p in getDuePageNumbers()"
+                                             ng-click="dueGoToPage(p); duePageDropOpen = false"
+                                             class="px-4 py-2 text-xs cursor-pointer hover:bg-pink-50 hover:text-pink-600 font-medium"
+                                             ng-class="{'bg-pink-50 text-pink-600': p === duePayments.currentPage}">
+                                            Page {{ p }}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div ng-if="duePageDropOpen"
-                                     class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[80px]">
-                                    <div ng-repeat="p in getDuePageNumbers()"
-                                         ng-click="dueGoToPage(p); duePageDropOpen = false"
-                                         class="px-4 py-2 text-xs cursor-pointer hover:bg-pink-50 hover:text-pink-600 font-medium"
-                                         ng-class="{'bg-pink-50 text-pink-600': p === duePayments.currentPage}">
-                                        Page {{ p }}
+
+                                <div class="relative" ng-class="{'z-20': dueSizeDropOpen}">
+                                    <div ng-click="dueSizeDropOpen = !dueSizeDropOpen"
+                                         class="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors select-none">
+                                        <span class="text-xs">{{ duePayments.pageSize }} / page</span>
+                                        <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                                    </div>
+                                    <div ng-if="dueSizeDropOpen"
+                                         class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[90px]">
+                                        <div ng-repeat="s in duePayments.pageSizeOptions"
+                                             ng-click="setDuePageSize(s); dueSizeDropOpen = false"
+                                             class="px-4 py-2 text-xs cursor-pointer hover:bg-pink-50 hover:text-pink-600 font-medium"
+                                             ng-class="{'bg-pink-50 text-pink-600': s === duePayments.pageSize}">
+                                            {{ s }} rows
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="relative" ng-class="{'z-20': dueSizeDropOpen}">
-                                <div ng-click="dueSizeDropOpen = !dueSizeDropOpen"
-                                     class="flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors select-none">
-                                    <span class="text-xs">{{ duePayments.pageSize }} / page</span>
-                                    <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
-                                </div>
-                                <div ng-if="dueSizeDropOpen"
-                                     class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden min-w-[90px]">
-                                    <div ng-repeat="s in duePayments.pageSizeOptions"
-                                         ng-click="setDuePageSize(s); dueSizeDropOpen = false"
-                                         class="px-4 py-2 text-xs cursor-pointer hover:bg-pink-50 hover:text-pink-600 font-medium"
-                                         ng-class="{'bg-pink-50 text-pink-600': s === duePayments.pageSize}">
-                                        {{ s }} rows
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                </div>
 
-                @*Due payments table*@
-                <div class="max-h-[450px] overflow-y-auto overflow-x-hidden">
-                    <table class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 text-left text-xs font-bold tracking-wider text-gray-400 uppercase border-b">
+                    @*Due payments table*@
+                    <div class="max-h-[450px] overflow-y-auto overflow-x-hidden">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-left text-xs font-bold tracking-wider text-gray-400 uppercase border-b">
 
-                                <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('paymentID')">
-                                    Payment ID
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'paymentID'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[12%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('paymentType')">
-                                    Type
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'paymentType'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('amountDue')">
-                                    Amount Due
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'amountDue'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[12%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('amountPaid')">
-                                    Amount Paid
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'amountPaid'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[12%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('paymentStatus')">
-                                    Payment Status
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'paymentStatus'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('dueDate')">
-                                    Due Date
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'dueDate'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('dateCreated')">
-                                    Date Created
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'dateCreated'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
-                                    ng-click="dueSortBy('dateUpdated')">
-                                    Date Updated
-                                    <span class="material-symbols-outlined text-[14px] align-middle"
-                                          ng-if="duePayments.sortField === 'dateUpdated'">
-                                        {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
-                                    </span>
-                                </th>
-                                <th class="p-4 w-[8%] text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm font-medium text-gray-700">
-                            <tr ng-repeat="payment in getDuePaymentsPage()"
-                                class="border-b transition-colors">
-                                <td class="p-4">{{ payment.paymentID }}</td>
-                                <td class="p-4">
-                                    <span class="px-2 py-1 rounded-full text-xs font-bold"
-                                          ng-class="{
+                                    <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('paymentID')">
+                                        Payment ID
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'paymentID'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[12%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('paymentType')">
+                                        Type
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'paymentType'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('amountDue')">
+                                        Amount Due
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'amountDue'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[12%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('amountPaid')">
+                                        Amount Paid
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'amountPaid'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[12%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('paymentStatus')">
+                                        Payment Status
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'paymentStatus'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('dueDate')">
+                                        Due Date
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'dueDate'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('dateCreated')">
+                                        Date Created
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'dateCreated'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[10%] cursor-pointer hover:text-pink-500 select-none"
+                                        ng-click="dueSortBy('dateUpdated')">
+                                        Date Updated
+                                        <span class="material-symbols-outlined text-[14px] align-middle"
+                                              ng-if="duePayments.sortField === 'dateUpdated'">
+                                            {{ duePayments.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                        </span>
+                                    </th>
+                                    <th class="p-4 w-[8%] text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm font-medium text-gray-700">
+                                <tr ng-repeat="payment in getDuePaymentsPage()"
+                                    class="border-b transition-colors">
+                                    <td class="p-4">{{ payment.paymentID }}</td>
+                                    <td class="p-4">
+                                        <span class="px-2 py-1 rounded-full text-xs font-bold"
+                                              ng-class="{
                                           'bg-blue-100 text-blue-700':     payment.paymentType === 'Down Payment',
                                           'bg-purple-100 text-purple-700': payment.paymentType === 'Full Payment',
                                           'bg-orange-100 text-orange-700': payment.paymentType === 'Additional'
                                       }">
-                                        {{ payment.paymentType }}
-                                    </span>
-                                </td>
-                                <td class="p-4">{{ payment.amountDue | currency:"₱" }}</td>
-                                <td class="p-4">{{ payment.amountPaid | currency:"₱" }}</td>
-                                <td class="p-4">
-                                    <div class="flex items-center gap-1.5 flex-wrap">
-                                        <span class="px-2 py-0.5 rounded text-xs font-bold"
-                                              ng-class="{
-                                              'bg-red-600 text-white shadow-sm' : payment.amountPaid <= 0,
+                                            {{ payment.paymentType }}
+                                        </span>
+                                    </td>
+                                    <td class="p-4">{{ payment.amountDue | currency:"₱" }}</td>
+                                    <td class="p-4">{{ payment.amountPaid | currency:"₱" }}</td>
+                                    <td class="p-4">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="px-2 py-0.5 rounded text-xs font-bold"
+                                                  ng-class="{
+                                                  'bg-red-600 text-white shadow-sm' : payment.amountPaid <= 0,
                                                       'bg-yellow-100 text-yellow-700 shadow-sm': payment.amountPaid > 0 && payment.amountPaid < payment.amountDue
                                                   }">
                                                 {{ payment.amountPaid <= 0 ? 'Unpaid' : 'Partially Paid' }}
                                             </span>
-                                        <span ng-if="isOverdue(payment) && payment.amountPaid < payment.amountDue"
-                                              class="px-2 py-0.5 rounded text-xs font-bold bg-red-800 text-white shadow-sm">
-                                            Overdue
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="p-4 font-bold"
-                                    ng-class="{
-                                    'text-red-700' : isOverdue(payment) && payment.amountPaid < payment.amountDue,
+                                            <span ng-if="isOverdue(payment) && payment.amountPaid < payment.amountDue"
+                                                  class="px-2 py-0.5 rounded text-xs font-bold bg-red-800 text-white shadow-sm">
+                                                Overdue
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 font-bold"
+                                        ng-class="{
+                                        'text-red-700' : isOverdue(payment) && payment.amountPaid < payment.amountDue,
                                             'text-yellow-600': isDueSoon(payment) && !isOverdue(payment) && payment.amountPaid < payment.amountDue
                                         }">
                                         {{ payment.dueDate | date:'MM/dd/yyyy' }}
@@ -197,92 +197,92 @@
                                             <span class="material-symbols-outlined text-[14px]">warning</span>
                                         </span>
                                     </td>
-                                <td class="p-4 text-xs text-gray-400">{{ payment.dateCreated | date:'MM/dd/yyyy' }}</td>
-                                <td class="p-4 text-xs text-gray-400">{{ payment.dateUpdated | date:'MM/dd/yyyy' }}</td>
-                                <td class="p-4 text-center">
-                                    <button ng-click="sendDuePaymentReminder(payment)"
-                                            title="Send Payment Reminder"
-                                            class="relative p-2 rounded-full text-pink-500 hover:bg-pink-50 hover:text-pink-700 transition-all duration-200">
-                                        <span class="material-symbols-outlined text-[24px]">notifications</span>
-                                        <span class="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
-                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border-2 border-white"></span>
-                                        </span>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr ng-if="getDuePaymentsPage().length === 0">
-                                <td colspan="9" class="p-10 text-center text-gray-400">
-                                    <i class="bi bi-check-circle text-3xl block mb-2"></i>
-                                    No urgent unpaid payments found.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                    <td class="p-4 text-xs text-gray-400">{{ payment.dateCreated | date:'MM/dd/yyyy' }}</td>
+                                    <td class="p-4 text-xs text-gray-400">{{ payment.dateUpdated | date:'MM/dd/yyyy' }}</td>
+                                    <td class="p-4 text-center">
+                                        <button ng-click="sendDuePaymentReminder(payment)"
+                                                title="Send Payment Reminder"
+                                                class="relative p-2 rounded-full text-pink-500 hover:bg-pink-50 hover:text-pink-700 transition-all duration-200">
+                                            <span class="material-symbols-outlined text-[24px]">notifications</span>
+                                            <span class="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border-2 border-white"></span>
+                                            </span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr ng-if="getDuePaymentsPage().length === 0">
+                                    <td colspan="9" class="p-10 text-center text-gray-400">
+                                        <i class="bi bi-check-circle text-3xl block mb-2"></i>
+                                        No urgent unpaid payments found.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <div class="px-4 py-2 border-t bg-gray-50 text-xs text-gray-400 flex justify-between">
-                    <span>
-                        Showing {{ (duePayments.currentPage - 1) * duePayments.pageSize + 1 }}
-                        – {{ [duePayments.currentPage * duePayments.pageSize, getDuePaymentsFiltered().length] | limitTo: 1 }}
-                        of {{ getDuePaymentsFiltered().length }} records
-                    </span>
-                    <span>Page {{ duePayments.currentPage }} of {{ getDueTotalPages() }}</span>
+                    <div class="px-4 py-2 border-t bg-gray-50 text-xs text-gray-400 flex justify-between">
+                        <span>
+                            Showing {{ (duePayments.currentPage - 1) * duePayments.pageSize + 1 }}
+                            – {{ [duePayments.currentPage * duePayments.pageSize, getDuePaymentsFiltered().length] | limitTo: 1 }}
+                            of {{ getDuePaymentsFiltered().length }} records
+                        </span>
+                        <span>Page {{ duePayments.currentPage }} of {{ getDueTotalPages() }}</span>
+                    </div>
+                </div>
+            </div>
+            @*Summary Due Payments*@
+            <div class="w-full lg:w-1/4">
+                <div class="h-full border border-gray-200 rounded-lg shadow-sm bg-white flex flex-col p-5 gap-4">
+                    <p class="text-xl font-semibold text-black">Due Payments Summary</p>
+                    <div class="flex flex-col gap-2">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">By Status</p>
+
+                        <div class="flex items-center justify-between px-4 py-3 rounded-lg"
+                             style="background-color: #fce7f3;">
+                            <span class="text-sm font-semibold" style="color: #ec4899;">Unpaid</span>
+                            <span class="text-lg font-bold" style="color: #ec4899;">{{ getSummary().unpaid }}</span>
+                        </div>
+
+                        <div class="flex items-center justify-between px-4 py-3 rounded-lg"
+                             style="background-color: #fef3c7;">
+                            <span class="text-sm font-semibold" style="color: #d97706;">Partially Paid</span>
+                            <span class="text-lg font-bold" style="color: #d97706;">{{ getSummary().partial }}</span>
+                        </div>
+
+                        <div class="flex items-center justify-between px-4 py-3 rounded-lg"
+                             style="background-color: #fee2e2;">
+                            <span class="text-sm font-semibold" style="color: #dc2626;">Overdue</span>
+                            <span class="text-lg font-bold" style="color: #dc2626;">{{ getSummary().overdue }}</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-100"></div>
+                    <div class="flex flex-col gap-2">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">By Type</p>
+
+                        <div class="flex items-center justify-between px-4 py-3 rounded-lg"
+                             style="background-color: #dbeafe;">
+                            <span class="text-sm font-semibold" style="color: #2563eb;">Down Payment</span>
+                            <span class="text-lg font-bold" style="color: #2563eb;">{{ getSummary()['Down Payment'] }}</span>
+                        </div>
+
+                        <div class="flex items-center justify-between px-4 py-3 rounded-lg"
+                             style="background-color: #ede9fe;">
+                            <span class="text-sm font-semibold" style="color: #7c3aed;">Full Payment</span>
+                            <span class="text-lg font-bold" style="color: #7c3aed;">{{ getSummary()['Full Payment'] }}</span>
+                        </div>
+
+                        <div class="flex items-center justify-between px-4 py-3 rounded-lg"
+                             style="background-color: #ffedd5;">
+                            <span class="text-sm font-semibold" style="color: #ea580c;">Additional</span>
+                            <span class="text-lg font-bold" style="color: #ea580c;">{{ getSummary()['Additional'] }}</span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
-        @*Summary Due Payments*@
-        <div class="w-full lg:w-1/4">
-            <div class="h-full border border-gray-200 rounded-lg shadow-sm bg-white flex flex-col p-5 gap-4">
-                <p class="text-xl font-semibold text-black">Due Payments Summary</p>
-                <div class="flex flex-col gap-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase">By Status</p>
-
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #fce7f3;">
-                        <span class="text-sm font-semibold" style="color: #ec4899;">Unpaid</span>
-                        <span class="text-lg font-bold" style="color: #ec4899;">{{ getSummary().unpaid }}</span>
-                    </div>
-
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #fef3c7;">
-                        <span class="text-sm font-semibold" style="color: #d97706;">Partially Paid</span>
-                        <span class="text-lg font-bold" style="color: #d97706;">{{ getSummary().partial }}</span>
-                    </div>
-
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #fee2e2;">
-                        <span class="text-sm font-semibold" style="color: #dc2626;">Overdue</span>
-                        <span class="text-lg font-bold" style="color: #dc2626;">{{ getSummary().overdue }}</span>
-                    </div>
-                </div>
-
-                <div class="border-t border-gray-100"></div>
-                <div class="flex flex-col gap-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase">By Type</p>
-
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #dbeafe;">
-                        <span class="text-sm font-semibold" style="color: #2563eb;">Down Payment</span>
-                        <span class="text-lg font-bold" style="color: #2563eb;">{{ getSummary()['Down Payment'] }}</span>
-                    </div>
-
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #ede9fe;">
-                        <span class="text-sm font-semibold" style="color: #7c3aed;">Full Payment</span>
-                        <span class="text-lg font-bold" style="color: #7c3aed;">{{ getSummary()['Full Payment'] }}</span>
-                    </div>
-
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #ffedd5;">
-                        <span class="text-sm font-semibold" style="color: #ea580c;">Additional</span>
-                        <span class="text-lg font-bold" style="color: #ea580c;">{{ getSummary()['Additional'] }}</span>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
 
         @*Second row*@
         <div class="rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
@@ -527,15 +527,17 @@
                                         </button>
                                     </div>
                                     <table class="w-full overflow-hidden text-xs">
-
                                         <tbody>
                                             <tr ng-repeat="payment in group.payments">
+                                                <td class="px-4 py-2.5 text-gray-500 font-mono">
+                                                    <span class="font-bold">#{{ payment.paymentID }}</span>
+                                                </td>
 
                                                 <td class="px-4 py-2.5">
                                                     For
                                                     <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
                                                           ng-class="{
-                                                              'bg-blue-100 text-blue-700':     payment.paymentType === 'Down Payment',
+                                                              'bg-blue-100 text-blue-700':      payment.paymentType === 'Down Payment',
                                                               'bg-purple-100 text-purple-700': payment.paymentType === 'Full Payment',
                                                               'bg-orange-100 text-orange-700': payment.paymentType === 'Additional'
                                                           }">
@@ -572,21 +574,8 @@
                                                     }">
                                                     Due:
                                                     <span class="font-bold">{{ payment.dueDate | date:'MM/dd/yyyy' }}</span>
-                                                    <span ng-if="isOverdue(payment) && payment.paymentStatus !== 'Paid'"
-                                                          class="inline-flex items-center ml-1 text-red-600">
-                                                        <span class="material-symbols-outlined text-[14px]">error</span>
-                                                    </span>
-                                                    <span ng-if="isDueSoon(payment) && !isOverdue(payment) && payment.paymentStatus !== 'Paid'"
-                                                          class="inline-flex items-center ml-1 text-yellow-600">
-                                                        <span class="material-symbols-outlined text-[14px]">warning</span>
-                                                    </span>
                                                 </td>
-                                                <td class="px-4 py-2.5 text-gray-400">
-                                                    Created: <span class="font-bold">{{ payment.dateCreated | date:'MM/dd/yyyy' }}</span>
-                                                </td>
-                                                <td class="px-4 py-2.5 text-gray-400">
-                                                    Updated: <span class="font-bold">{{ payment.dateUpdated | date:'MM/dd/yyyy' }}</span>
-                                                </td>
+
                                                 <td class="px-4 py-2.5 text-right whitespace-nowrap">
                                                     <div class="flex items-center justify-end gap-2">
                                                         <button ng-click="editPayment(payment)"
@@ -627,7 +616,7 @@
 @*CREATE payment modal*@
 <div ng-if="showCreatePaymentModal"
      class="fixed inset-0 z-50 flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+    <div class="absolute inset-0 bg-black/40"
          ng-click="closeCreatePaymentModal()"></div>
     <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div class="flex items-center justify-between px-6 py-4 bg-pink-500">
@@ -757,7 +746,7 @@
 @*ADD payment modal*@
 <div ng-if="showAddPaymentModal"
      class="fixed inset-0 z-50 flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+    <div class="absolute inset-0 bg-black/40"
          ng-click="closeAddPaymentModal()"></div>
     <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div class="flex items-center justify-between px-6 py-4 bg-pink-500">
