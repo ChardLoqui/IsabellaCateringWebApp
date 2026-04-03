@@ -2,14 +2,14 @@
 
     //call the JsonLogGetCreds action method in the Main controller, passing the userData object as the parameter, and return the response
     //context: controller.js
-    this.JsonLogGetCredsService = function (userData) {
-        var response = $http({
-            method: "post",
-            url: "/Main/JsonLogGetCreds",
-            data: userData
+    this.JsonLogGetCredsService = function (userInfo, clientInfo, isGuest) {
+        return $http.post("/Main/JsonLogGetCreds", {
+            clientInfo: clientInfo,
+            userInfo: userInfo,
+            isGuest: isGuest
         });
-        return response;
     }
+
     //call the getCurrentSession action method in the Main controller and return the response
     //context: controller.js
     this.getCurrentSessionService = function () {
@@ -59,11 +59,21 @@
         return $http.get("/Main/getCurrentSessionNav");
     };
 
+    this.logOutService = function () {
+        return $http.get("/Main/logOut");
+    }
+
     //========================================================PASSWORD RESET START=======================================================
 
     this.verifyEmailCreds = function (userEmail) {
         return $http.get("/Main/ForgetVerifyEmail", {
             params: { userEmail: userEmail }
+        });
+    }
+
+    this.verifyClientCreds = function (userEmail, entryCode) {
+        return $http.get("/Main/ForgetVerifyEmailClient", {
+            params: { userEmail: userEmail, entryCode: entryCode }
         });
     }
 
@@ -79,8 +89,6 @@
     
 
     this.getBooking = function (booking) {
-        console.log("getBooking called", booking.bookingID);
-
         var response = $http({
             method: "post",
             url: "/Main/getBooking",
@@ -191,6 +199,10 @@
             params: { bookingID: bookingID }
         });
     };
+    this.logPaymentReminder = function (data) {
+        return $http.post('/Main/LogPaymentReminder', data);
+    };
+
 
     //========================================================PAYMENT REMINDER END=======================================================
 });

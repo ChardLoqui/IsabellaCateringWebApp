@@ -114,10 +114,8 @@
                                    class="login-field w-full rounded-lg bg-white px-4 py-3 pr-14 text-zinc-900 placeholder-zinc-400 outline-none"
                                    placeholder="Enter your password" />
 
-                            <span id="toggleLogInPassword"
-                                  ng-click="toggleShowLogInPassword()"
-                                  ng-class="{'opacity-100 pointer-events-auto': lPassword && lPassword.length > 0, 'opacity-0 pointer-events-none': !lPassword || lPassword.length === 0}"
-                                  class="material-icons absolute right-4 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center cursor-pointer select-none text-[20px] text-zinc-400 transition-opacity duration-200 hover:text-zinc-700">
+                            <span id="toggleLogInPassword" ng-click="toggleShowLogInPassword()"
+                                  class="material-icons absolute w-7 right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
                                 visibility_off
                             </span>
                         </div>
@@ -149,6 +147,3 @@
         </section>
     </div>
 </div>
-
-<script>
-</script>

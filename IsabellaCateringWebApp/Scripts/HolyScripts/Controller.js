@@ -7,7 +7,7 @@
         window.location.href = "/Main/HomePage";
     }
     $scope.redirectToChangePassPage = function () {
-        window.open("/Main/ChangePassPage", "_blank");
+        window.location.href = "/Main/ChangePassPage";
     };
     $scope.redirectToAddBookingPage = function () {
         window.location.href = "/Main/AddBookingPage";
@@ -34,6 +34,13 @@
         $scope.navStateResolved = false;
         IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
             if (returnedData.data.userID == '' && returnedData.data.permID == '') {
+
+                Swal.fire({
+                    title: "Access Denied",
+                    text: "Please log in first!",
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
+                });
                 $scope.redirectToLoginPage();
             } else {
                 if (returnedData.data.permID < 3) {
@@ -46,6 +53,38 @@
                         $scope.redirectToCustomerViewPage();
                     }
                 }
+            }
+        });
+    }
+
+    $scope.authenticateCustomerLoginCredentials = function () {
+        IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
+            if (returnedData.data.userID == '' && returnedData.data.permID == '') {
+
+                Swal.fire({
+                    title: "Access Denied",
+                    text: "Please log in first!",
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
+                });
+                $scope.redirectToLoginPage();
+            }
+        });
+    }
+    $scope.authenticateLoginLoginCredentials = function () {
+        IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
+            if (returnedData.data.userID != '' && returnedData.data.permID != '') {
+
+                Swal.fire({
+                    title: "Access Denied",
+                    text: "Please log out first!",
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
+                });
+                if (returnedData.data.permID == "3")
+                    $scope.redirectToCustomerViewPage();
+                else
+                    $scope.redirectToAddBookingPage();
             }
         });
     }
@@ -144,6 +183,11 @@
 
     $scope.logInService = function () {
         if ($scope.loginForm.$invalid) {
+            fireAuthAlert({
+                title: "Login Info",
+                text: "Please fill in all required fields correctly.",
+                icon: "info"
+            });
             return;
         }
 
@@ -152,16 +196,32 @@
             password: $scope.lPassword
         }
 
-        var getData = IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo);
+        var clientInfo = {
+            entryCode: $scope.lEmail,
+            password: $scope.lPassword
+        }
 
-        getData.then(function (returnedData) {
-            if (returnedData.data.success)
-                $scope.redirectToBookingCalendarPage();
+        IsabellaCateringWebAppService.JsonLogGetCredsService(userInfo, clientInfo, $scope.isGuest).then(function (returnedData) {
+            if (returnedData.data.success) {
+                if (returnedData.data.isGuest)
+                    $scope.redirectToCustomerViewPage();
+                else
+                    $scope.redirectToBookingCalendarPage();
+            }
+            else if (!returnedData.data.success && returnedData.data.message === "Please change your password first!") {
+                Swal.fire({
+                    title: "New Account Detected",
+                    text: returnedData.data.message,
+                    icon: "warning",
+                    confirmButtonColor: "#EC4899"
+                });
 
+
+            }
             else if (!returnedData.data.success && returnedData.data.message === "Invalid Credentials") {
                 fireAuthAlert({
                     title: "Access Denied",
-                    text: "Invalid email or password.",
+                    text: $scope.isGuest ? "Invalid entry code or password." : "Invalid email or password.",
                     icon: "error"
                 });
 
@@ -176,7 +236,8 @@
                 fireAuthAlert({
                     title: "Access Denied",
                     text: "Account locked for 15 minutes due to too many failed attempts.",
-                    icon: "error"
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
                 });
 
                 resetAuthFields($scope.loginForm, {
@@ -190,7 +251,8 @@
                 fireAuthAlert({
                     title: "Access Denied",
                     text: returnedData.data.message,
-                    icon: "error"
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
                 });
 
                 resetAuthFields($scope.loginForm, {
@@ -205,7 +267,7 @@
     }
 
     $scope.changeCredPlaceholder = function () {
-        if ($scope.isGuest == true)
+        if ($scope.isGuest)
             $scope.emailPlaceholder = "Use Entry Code";
         else
             $scope.emailPlaceholder = "Use Email";
@@ -263,20 +325,36 @@
 
     //======================================================== LOGIN END =======================================================
 
+    //======================================================== LOGOUT START =======================================================
+    $scope.logOut = function (){
+        IsabellaCateringWebAppService.logOutService().then(function (returnedData) {
+            Swal.fire({
+                title: "Acount Logged Out!",
+                text: returnedData.data.message,
+                icon: "success",
+                confirmButtonColor: "#EC4899"
+            });
+        });
+    }
+
+    //======================================================== LOGOUT END =======================================================
+
     //======================================================== NAVBAR START =======================================================
     //test for navbar
     $scope.sessionInfo = { name: 'Loading..', permission: '' };
 
     $scope.loadUserSession = function () {
         IsabellaCateringWebAppService.getCurrentSessionServiceNav().then(function (returnedData) {
-            // Validate that we have data
-            if (returnedData.data && returnedData.data.userName) {
+            if (returnedData.data) {
+                $scope.currentUserID = returnedData.data.userID;
+
                 $scope.sessionInfo.name = returnedData.data.userName;
                 $scope.sessionInfo.permission = returnedData.data.permID;
 
                 const roles = { "1": "Admin", "2": "Staff", "3": "User" };
                 $scope.sessionInfo.role = roles[returnedData.data.permID] || "";
 
+                console.log("Logged in as User ID:", $scope.currentUserID);
             }
         }).catch(function (error) {
             console.error("Session fetch failed:", error);
@@ -297,7 +375,8 @@
             Swal.fire({
                 title: "Invalid Input",
                 text: "Please check your email format and ensure all fields are filled.",
-                icon: "info"
+                icon: "info",
+                confirmButtonColor: "#EC4899"
             });
             return;
         }
@@ -306,7 +385,8 @@
             Swal.fire({
                 title: "Duplicate Email",
                 text: "This email address is already in use.",
-                icon: "warning"
+                icon: "warning",
+                confirmButtonColor: "#EC4899"
             });
             return;
         }
@@ -315,7 +395,8 @@
             Swal.fire({
                 title: "Password Mismatch",
                 text: "The passwords you entered do not match.",
-                icon: "error"
+                icon: "error",
+                confirmButtonColor: "#EC4899"
             });
             return;
         }
@@ -330,7 +411,9 @@
         };
         IsabellaCateringWebAppService.AddUsrCall(userInfo).then(function (response) {
             if (response.data.success) {
-                Swal.fire({ title: "Success!", text: "Account created!", icon: "success" });
+                Swal.fire({
+                    title: "Success!", text: "Account created!", icon: "success",
+                    confirmButtonColor: "#EC4899" });
                 // reset after passing
                 $scope.firstName = ''; $scope.lastName = ''; $scope.email = '';
                 $scope.password = ''; $scope.confirmPassword = ''; $scope.permissionID = '';
@@ -341,7 +424,9 @@
                 document.getElementById('passAddCount').innerText = '0 / 20';
                 $scope.getUsersData(); //refresh table 
             } else {
-                Swal.fire({ title: "Error", text: response.data.message, icon: "error" });
+                Swal.fire({
+                    title: "Error", text: response.data.message, icon: "error",
+                    confirmButtonColor: "#EC4899" });
             }
         });
     };
@@ -375,7 +460,9 @@
     // save changes 
     $scope.updateUsrSubmit = function () {
         if (!$scope.selectedUser.firstName || !$scope.selectedUser.lastName || !$scope.selectedUser.permissionID) {
-            Swal.fire({ title: "Blank Fields", text: "Please fill in all required fields.", icon: "warning" });
+            Swal.fire({
+                title: "Blank Fields", text: "Please fill in all required fields.", icon: "warning",
+                confirmButtonColor: "#EC4899" });
             return;
         }
         //fetch data from modal inputs and prepare for update
@@ -389,14 +476,20 @@
         // Call service to update
         IsabellaCateringWebAppService.UpdateUsrCall(updateData).then(function (response) {
             if (response.data.success) {
-                Swal.fire({ title: "Updated!", text: "Account has been updated successfully.", icon: "success" });
+                Swal.fire({
+                    title: "Updated!", text: "Account has been updated successfully.", icon: "success",
+                    confirmButtonColor: "#EC4899" });
                 $scope.getUsersData(); // refresh table 
                 $scope.closeUpdateModal();
             } else {
-                Swal.fire({ title: "Update Failed", text: response.data.message || "An error occurred.", icon: "error" });
+                Swal.fire({
+                    title: "Update Failed", text: response.data.message || "An error occurred.", icon: "error",
+                    confirmButtonColor: "#EC4899" });
             }
         }, function (error) {
-            Swal.fire({ title: "Error", text: "Server connection failed.", icon: "error" });
+            Swal.fire({
+                title: "Error", text: "Server connection failed.", icon: "error",
+                confirmButtonColor: "#EC4899" });
         });
     };
 
@@ -414,11 +507,17 @@
             if (result.isConfirmed) {
                 IsabellaCateringWebAppService.DeleteUsrCall($scope.selectedUser.userID).then(function (response) {
                     if (response.data.success) {
-                        Swal.fire("Deleted!", "Account has been removed.", "success");
+                        Swal.fire({
+                            title: "Deleted!", text: "Account has been removed.", icon: "success",
+                            confirmButtonColor: "#EC4899"
+                        });
                         $scope.getUsersData();
                         $scope.closeUpdateModal();
                     } else {
-                        Swal.fire("Error", "Could not delete account.", "error");
+                        Swal.fire({
+                            title: "Error", text: "Could not delete account.", icon: "error",
+                            confirmButtonColor: "#EC4899"
+                        });
                     }
                 });
             }
@@ -576,7 +675,8 @@
                 fireAuthAlert({
                     title: "Error",
                     text: "Password not Changed. Please request a new link and try again later.",
-                    icon: "error"
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
                 });
             }
         });
@@ -611,46 +711,43 @@
     //======================================================== CUSTOMER VIEW START =======================================================
 
     $scope.getOrderInfo = function () {
+        IsabellaCateringWebAppService.getCurrentSessionService()
+            .then(function (returnedData) {
+                var bookingID = parseInt(returnedData.data.bookingID, 10);
+                if (!bookingID) {
+                    throw new Error('No booking ID found in the current session.');
+                }
 
-        //const bookingID = 1;
-        var booking = {
-            bookingID: 1
-        };
-        IsabellaCateringWebAppService.getBooking(booking)
-            .then(function (res) {
+                return IsabellaCateringWebAppService.getBooking({ bookingID: bookingID })
+                    .then(function (res) {
+                        $scope.order = {
+                            bookingID: res.data.bookingID,
+                            clientID: res.data.clientID,
+                            packageID: res.data.packageID,
+                            bookingDate: convertDate(res.data.bookingDate),
+                            prepVenue: res.data.prepVenue,
+                            venue: res.data.venue,
+                            eventSetTime: convertTime(res.data.eventSetTime),
+                            eventTime: convertTime(res.data.eventTime),
+                            ceremTime: convertTime(res.data.ceremTime),
+                            eventMealTime: convertTime(res.data.eventMealTime),
+                            dsgnTheme: res.data.dsgnTheme,
+                            dsgnMotif: res.data.dsgnMotif,
+                            dateCreated: convertDate(res.data.dateCreated),
+                            dateUpdated: convertDate(res.data.dateUpdated),
+                            progressOne: res.data.progressOne,
+                            progressTwo: res.data.progressTwo,
+                            progressThree: res.data.progressThree
+                        };
 
-                /* ===== DIRECT PASS-THROUGH ===== */
-                $scope.order = {
-                    bookingID: res.data.bookingID,
-                    clientID: res.data.clientID,
-                    packageID: res.data.packageID,
+                        $scope.steps = [
+                            { label: 'Planning', icon: '1', completed: $scope.order.progressOne == 1 },
+                            { label: 'Preparation', icon: '2', completed: $scope.order.progressTwo == 1 },
+                            { label: 'Event Day', icon: '3', completed: $scope.order.progressThree == 1 }
+                        ];
 
-                    bookingDate: convertDate(res.data.bookingDate),
-                    prepVenue: res.data.prepVenue,
-                    venue: res.data.venue,
-                    eventSetTime: convertTime(res.data.eventSetTime),
-                    eventTime: convertTime(res.data.eventTime),
-                    ceremTime: convertTime(res.data.ceremTime),
-                    eventMealTime: convertTime(res.data.eventMealTime),
-                    dsgnTheme: res.data.dsgnTheme,
-                    dsgnMotif: res.data.dsgnMotif,
-
-                    dateCreated: convertDate(res.data.dateCreated),
-                    dateUpdated: convertDate(res.data.dateUpdated),
-
-                    progressOne: res.data.progressOne,
-                    progressTwo: res.data.progressTwo,
-                    progressThree: res.data.progressThree
-                };
-
-                /* ===== PROGRESS BAR ===== */
-                $scope.steps = [
-                    { label: 'Planning', icon: '1', completed: $scope.order.progressOne == 1 },
-                    { label: 'Preparation', icon: '2', completed: $scope.order.progressTwo == 1 },
-                    { label: 'Event Day', icon: '3', completed: $scope.order.progressThree == 1 }
-                ];
-
-                return IsabellaCateringWebAppService.getBookingDetailsService(booking.bookingID);
+                        return IsabellaCateringWebAppService.getBookingDetailsService(bookingID);
+                    });
             })
             .then(function (detailsRes) {
                 if (!detailsRes || !detailsRes.data || !detailsRes.data.success) {
@@ -687,6 +784,7 @@
             })
             .catch(function (err) {
                 console.error('Error loading booking', err);
+                $scope.order = null;
                 $scope.client = null;
                 $scope.package = null;
             });
@@ -1171,7 +1269,8 @@
                 Swal.fire({
                     title: 'Error',
                     text: 'Could not load bookings.',
-                    icon: 'error'
+                    icon: 'error',
+                    confirmButtonColor: "#EC4899"
                 });
             });
 
@@ -1223,22 +1322,31 @@
         var bID = Number($scope.createPayment.bookingID);
 
         if (!bID) {
-            Swal.fire({ title: 'Missing Field', text: 'Please select a Booking.', icon: 'warning' });
+            Swal.fire({
+                title: 'Missing Field', text: 'Please select a Booking.', icon: 'warning',
+                confirmButtonColor: "#EC4899" });
             return;
         }
 
         var err = validatePaymentForm($scope.createPayment, !!$scope.createPayment.dueDate);
-        if (err) { Swal.fire({ title: 'Validation Error', text: err, icon: 'warning' }); return; }
+        if (err) {
+            Swal.fire({
+                title: 'Validation Error', text: err, icon: 'warning',
+                confirmButtonColor: "#EC4899" }); return; }
 
         var group = $scope.groupedPayments.find(function (g) { return g.bookingID === bID; });
         if (group) {
             var types = group.payments.map(function (p) { return p.paymentType; });
             if ($scope.createPayment.paymentType === 'Down Payment' && types.indexOf('Down Payment') !== -1) {
-                Swal.fire({ title: 'Already Exists', text: 'A Down Payment already exists for this booking.', icon: 'warning' });
+                Swal.fire({
+                    title: 'Already Exists', text: 'A Down Payment already exists for this booking.', icon: 'warning',
+                    confirmButtonColor: "#EC4899" });
                 return;
             }
             if ($scope.createPayment.paymentType === 'Full Payment' && types.indexOf('Full Payment') !== -1) {
-                Swal.fire({ title: 'Already Exists', text: 'A Full Payment already exists for this booking.', icon: 'warning' });
+                Swal.fire({
+                    title: 'Already Exists', text: 'A Full Payment already exists for this booking.', icon: 'warning',
+                    confirmButtonColor: "#EC4899" });
                 return;
             }
         }
@@ -1254,7 +1362,9 @@
             dueDate: $scope.createPayment.dueDate
         }).then(function (res) {
             if (res.data.success) {
-                Swal.fire({ title: 'Created!', text: 'Payment created successfully.', icon: 'success' });
+                Swal.fire({
+                    title: 'Created!', text: 'Payment created successfully.', icon: 'success',
+                    confirmButtonColor: "#EC4899" });
                 $scope.closeCreatePaymentModal();
                 $scope.getPaymentData();
             } else {
@@ -1262,7 +1372,9 @@
                 $scope.createPaymentLoading = false;
             }
         }).catch(function () {
-            Swal.fire({ title: 'Server Error', text: 'Could not connect to the server.', icon: 'error' });
+            Swal.fire({
+                title: 'Server Error', text: 'Could not connect to the server.', icon: 'error',
+                confirmButtonColor: "#EC4899" });
             $scope.createPaymentLoading = false;
         });
     };
@@ -1299,16 +1411,23 @@
 
     $scope.submitAddPayment = function () {
         var err = validatePaymentForm($scope.newPayment, !!$scope.newPayment.dueDate);
-        if (err) { Swal.fire({ title: 'Validation Error', text: err, icon: 'warning' }); return; }
+        if (err) {
+            Swal.fire({
+                title: 'Validation Error', text: err, icon: 'warning',
+                confirmButtonColor: "#EC4899" }); return; }
 
         var group = $scope.groupedPayments.find(function (g) { return g.bookingID === $scope.newPayment.bookingID; });
         if (group) {
             var types = group.payments.map(function (p) { return p.paymentType; });
             if ($scope.newPayment.paymentType === 'Down Payment' && types.indexOf('Down Payment') !== -1) {
-                Swal.fire({ title: 'Already Exists', text: 'A Down Payment already exists.', icon: 'warning' }); return;
+                Swal.fire({
+                    title: 'Already Exists', text: 'A Down Payment already exists.', icon: 'warning',
+                    confirmButtonColor: "#EC4899" }); return;
             }
             if ($scope.newPayment.paymentType === 'Full Payment' && types.indexOf('Full Payment') !== -1) {
-                Swal.fire({ title: 'Already Exists', text: 'A Full Payment already exists.', icon: 'warning' }); return;
+                Swal.fire({
+                    title: 'Already Exists', text: 'A Full Payment already exists.', icon: 'warning',
+                    confirmButtonColor: "#EC4899" }); return;
             }
         }
 
@@ -1322,15 +1441,21 @@
             dueDate: $scope.newPayment.dueDate
         }).then(function (res) {
             if (res.data.success) {
-                Swal.fire({ title: 'Saved!', text: 'Payment added successfully.', icon: 'success' });
+                Swal.fire({
+                    title: 'Saved!', text: 'Payment added successfully.', icon: 'success',
+                    confirmButtonColor: "#EC4899" });
                 $scope.closeAddPaymentModal();
                 $scope.getPaymentData();
             } else {
-                Swal.fire({ title: 'Error', text: res.data.message, icon: 'error' });
+                Swal.fire({
+                    title: 'Error', text: res.data.message, icon: 'error',
+                    confirmButtonColor: "#EC4899" });
                 $scope.addPaymentLoading = false;
             }
         }).catch(function () {
-            Swal.fire({ title: 'Server Error', text: 'Could not connect to the server.', icon: 'error' });
+            Swal.fire({
+                title: 'Server Error', text: 'Could not connect to the server.', icon: 'error',
+                confirmButtonColor: "#EC4899" });
             $scope.addPaymentLoading = false;
         });
     };
@@ -1361,7 +1486,10 @@
 
     $scope.submitEditPayment = function () {
         var err = validatePaymentForm($scope.editData, !!$scope.editData.dueDate);
-        if (err) { Swal.fire({ title: 'Validation Error', text: err, icon: 'warning' }); return; }
+        if (err) {
+            Swal.fire({
+                title: 'Validation Error', text: err, icon: 'warning',
+                confirmButtonColor: "#EC4899" }); return; }
 
         $scope.editPaymentLoading = true;
         var d = $scope.editData.dueDate;
@@ -1379,7 +1507,10 @@
             dueDate: str
         }).then(function (res) {
             if (res.data.success) {
-                Swal.fire({ title: 'Updated!', text: 'Payment updated successfully.', icon: 'success' });
+                Swal.fire({
+                    title: 'Updated!', text: 'Payment updated successfully.', icon: 'success',
+                    confirmButtonColor: "#EC4899"
+});
                 $scope.closeEditPaymentModal();
                 $scope.getPaymentData();
             } else {
@@ -1387,7 +1518,9 @@
                 $scope.editPaymentLoading = false;
             }
         }).catch(function () {
-            Swal.fire({ title: 'Server Error', text: 'Could not connect to the server.', icon: 'error' });
+            Swal.fire({
+                title: 'Server Error', text: 'Could not connect to the server.', icon: 'error',
+                confirmButtonColor: "#EC4899" });
             $scope.editPaymentLoading = false;
         });
     };
@@ -1403,21 +1536,27 @@
             text: 'This action cannot be undone.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#ef4444',
+            confirmButtonColor: "#EC4899",
             confirmButtonText: 'Yes, delete it'
         }).then(function (result) {
             if (!result.isConfirmed) return;
             $http.post('/Main/DeletePayment', { id: payment.paymentID })
                 .then(function (res) {
                     if (res.data.success) {
-                        Swal.fire({ title: 'Deleted!', text: 'Payment removed.', icon: 'success' });
+                        Swal.fire({
+                            title: 'Deleted!', text: 'Payment removed.', icon: 'success',
+                            confirmButtonColor: "#EC4899" });
                         $scope.closeEditPaymentModal();
                         $scope.getPaymentData();
                     } else {
-                        Swal.fire({ title: 'Error', text: res.data.message, icon: 'error' });
+                        Swal.fire({
+                            title: 'Error', text: res.data.message, icon: 'error',
+                            confirmButtonColor: "#EC4899" });
                     }
                 }).catch(function () {
-                    Swal.fire({ title: 'Server Error', text: 'Could not connect.', icon: 'error' });
+                    Swal.fire({
+                        title: 'Server Error', text: 'Could not connect.', icon: 'error',
+                        confirmButtonColor: "#EC4899" });
                 });
         });
     };
@@ -1573,17 +1712,22 @@
 
     //payment reminder in PAYMENTS table
     $scope.sendPaymentReminder = function (group) {
-        if (!group) return;
+        if (!group) {
+            console.warn("sendPaymentReminder called with no group data.");
+            return;
+        }
         IsabellaCateringWebAppService.getClientEmailByBooking(group.bookingID)
             .then(function (res) {
                 if (!res.data.success) {
                     Swal.fire({
                         title: 'Error',
                         text: res.data.message,
-                        icon: 'error'
+                        icon: 'error',
+                        confirmButtonColor: "#EC4899"
                     });
                     return;
                 }
+
                 var email = res.data.email;
                 var firstName = res.data.firstName;
                 var lastName = res.data.lastName;
@@ -1606,14 +1750,8 @@
                         + ' | Due: ' + date;
                 }).join('\n');
 
-                var types = pendingPayments.map(function (p) {
-                    return p.paymentType;
-                }).join(', ');
-
-                var subject = encodeURIComponent(
-                    'Payment Reminder — ' + types + ' | Booking #' + group.bookingID
-                );
-
+                var types = pendingPayments.map(function (p) { return p.paymentType; }).join(', ');
+                var subject = encodeURIComponent('Payment Reminder — ' + types + ' | Booking #' + group.bookingID);
                 var body = encodeURIComponent(
                     'Dear ' + firstName + ' ' + lastName + ',\n\n' +
                     'We are Isabella Catering and Events. We hope this message finds you well.\n\n' +
@@ -1632,14 +1770,44 @@
                     + '&to=' + encodeURIComponent(email)
                     + '&su=' + subject
                     + '&body=' + body;
+
                 window.open(gmailUrl, '_blank');
-            })
-            .catch(function () {
-                Swal.fire({
-                    title: 'Server Error',
-                    text: 'Could not retrieve client information.',
-                    icon: 'error'
+
+                var hasReturned = false;
+                window.onfocus = function () {
+                    if (!hasReturned) {
+                        hasReturned = true;
+
+                        Swal.fire({
+                            title: 'Action Logged',
+                            text: 'The reminder attempt for Booking #' + group.bookingID + ' has been recorded.',
+                            icon: 'success',
+                            confirmButtonColor: '#ec4899'
+                        });
+
+                        window.onfocus = null;
+                    }
+                };
+
+                var sentAt = new Date().toISOString();
+                var noteText = 'Payment reminder sent via Gmail | Booking #' + group.bookingID +
+                    ' (' + pendingPayments.length + ' payments)';
+
+                pendingPayments.forEach(function (p) {
+                    IsabellaCateringWebAppService.logPaymentReminder({
+                        paymentID: p.paymentID,
+                        sentBy: $scope.currentUserID,
+                        sentAt: sentAt,
+                        note: noteText,
+                        dateCreated: sentAt,
+                        dateUpdated: sentAt
+                    }).catch(function () {
+                        console.warn('Could not log reminder for paymentID ' + p.paymentID);
+                    });
                 });
+            })
+            .catch(function (error) {
+                Swal.fire({ title: 'Server Error', text: 'Check console for details.', icon: 'error' });
             });
     };
 
@@ -1648,7 +1816,10 @@
         $http.get('/Main/GetClientEmailByBooking?bookingID=' + payment.bookingID)
             .then(function (response) {
                 if (!response.data.success) {
-                    Swal.fire('Error', 'Client email not found.', 'error');
+                    Swal.fire({
+                        title: 'Error',text: 'Client email not found.',icon: 'error',
+                        confirmButtonColor: "#EC4899"
+                    });
                     return;
                 }
 
@@ -1656,14 +1827,9 @@
                 var name = response.data.firstName + ' ' + response.data.lastName;
                 var balance = Math.max(0,
                     Number(payment.amountDue) - Number(payment.amountPaid)
-                ).toLocaleString('en-PH', {
-                    minimumFractionDigits: 2
-                });
+                ).toLocaleString('en-PH', { minimumFractionDigits: 2 });
 
-                var subject = encodeURIComponent(
-                    'Payment Reminder - Booking #' + payment.bookingID
-                );
-
+                var subject = encodeURIComponent('Payment Reminder - Booking #' + payment.bookingID);
                 var body = encodeURIComponent(
                     'Dear ' + name + ',\n\n' +
                     'This is a friendly reminder regarding your upcoming payment:\n\n' +
@@ -1679,11 +1845,44 @@
                     'Isabella Catering and Events'
                 );
 
-                window.location.href =
+                window.open(
                     'https://mail.google.com/mail/?view=cm&fs=1' +
                     '&to=' + encodeURIComponent(email) +
                     '&su=' + subject +
-                    '&body=' + body;
+                    '&body=' + body,
+                    '_blank'
+                );
+
+                var returnedToTab = false;
+                window.onfocus = function () {
+                    if (!returnedToTab) {
+                        returnedToTab = true;
+
+                        Swal.fire({
+                            title: 'Process Complete',
+                            text: 'Reminder for Booking #' + payment.bookingID + ' processed.',
+                            icon: 'success',
+                            confirmButtonColor: '#ec4899'
+                        });
+
+                        window.onfocus = null;
+                    }
+                };
+
+                var sentAt = new Date().toISOString();
+                var noteText = 'Due payment reminder sent via Gmail — '
+                    + payment.paymentType + ' | Booking #' + payment.bookingID;
+
+                IsabellaCateringWebAppService.logPaymentReminder({
+                    paymentID: payment.paymentID,
+                    sentBy: $scope.currentUserID,
+                    sentAt: sentAt,
+                    note: noteText,
+                    dateCreated: sentAt,
+                    dateUpdated: sentAt
+                }).catch(function () {
+                    console.warn('Could not log reminder for paymentID ' + payment.paymentID);
+                });
             });
     };
 
@@ -1794,7 +1993,9 @@
         IsabellaCateringWebAppService.getClientEmailByBooking(payment.bookingID)
             .then(function (res) {
                 if (!res.data.success) {
-                    Swal.fire({ title: 'Error', text: res.data.message, icon: 'error' });
+                    Swal.fire({
+                        title: 'Error', text: res.data.message, icon: 'error',
+                        confirmButtonColor: "#EC4899" });
                     return;
                 }
 
@@ -1900,7 +2101,9 @@
                 pdfMake.createPdf(docDefinition).download(fileName);
             })
             .catch(function () {
-                Swal.fire({ title: 'Error', text: 'Could not generate receipt.', icon: 'error' });
+                Swal.fire({
+                    title: 'Error', text: 'Could not generate receipt.', icon: 'error',
+                    confirmButtonColor: "#EC4899" });
             });
     };
 
@@ -1909,7 +2112,9 @@
         IsabellaCateringWebAppService.getClientEmailByBooking(group.bookingID)
             .then(function (res) {
                 if (!res.data.success) {
-                    Swal.fire({ title: 'Error', text: res.data.message, icon: 'error' });
+                    Swal.fire({
+                        title: 'Error', text: res.data.message, icon: 'error',
+                        confirmButtonColor: "#EC4899" });
                     return;
                 }
 
@@ -2022,7 +2227,9 @@
                 pdfMake.createPdf(docDefinition).download(fileName);
             })
             .catch(function () {
-                Swal.fire({ title: 'Error', text: 'Could not generate summary receipt.', icon: 'error' });
+                Swal.fire({
+                    title: 'Error', text: 'Could not generate summary receipt.', icon: 'error',
+                    confirmButtonColor: "#EC4899" });
             });
     };
 
@@ -2051,8 +2258,7 @@
                 $scope.eventsOpt = returnedData.data.eventTypes
                 $scope.packageTypesOpt = returnedData.data.packageTypes;
             }
-            var getData = IsabellaCateringWebAppService.getCurrentSessionService();
-            getData.then(function (returnedData) {
+            IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
 
                 if (returnedData.data.selectedDate) {
                     var dateParts = returnedData.data.selectedDate.split("-");
