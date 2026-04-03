@@ -200,7 +200,8 @@
                                 <td class="p-4 text-xs text-gray-400">{{ payment.dateCreated | date:'MM/dd/yyyy' }}</td>
                                 <td class="p-4 text-xs text-gray-400">{{ payment.dateUpdated | date:'MM/dd/yyyy' }}</td>
                                 <td class="p-4 text-center">
-                                    <button ng-click="sendDuePaymentReminder(payment)"
+                                    <button type="button"
+                                            ng-click="sendDuePaymentReminder(payment)"
                                             title="Send Payment Reminder"
                                             class="relative p-2 rounded-full text-pink-500 hover:bg-pink-50 hover:text-pink-700 transition-all duration-200">
                                         <span class="material-symbols-outlined text-[24px]">notifications</span>
@@ -238,22 +239,19 @@
                 <div class="flex flex-col gap-2">
                     <p class="text-xs font-semibold text-gray-500 uppercase">By Status</p>
 
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #fce7f3;">
-                        <span class="text-sm font-semibold" style="color: #ec4899;">Unpaid</span>
-                        <span class="text-lg font-bold" style="color: #ec4899;">{{ getSummary().unpaid }}</span>
+                    <div class="payment-summary-card payment-summary-unpaid flex items-center justify-between px-4 py-3 rounded-lg">
+                        <span class="payment-summary-accent text-sm font-semibold">Unpaid</span>
+                        <span class="payment-summary-accent text-lg font-bold">{{ getSummary().unpaid }}</span>
                     </div>
 
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #fef3c7;">
-                        <span class="text-sm font-semibold" style="color: #d97706;">Partially Paid</span>
-                        <span class="text-lg font-bold" style="color: #d97706;">{{ getSummary().partial }}</span>
+                    <div class="payment-summary-card payment-summary-partial flex items-center justify-between px-4 py-3 rounded-lg">
+                        <span class="payment-summary-accent text-sm font-semibold">Partially Paid</span>
+                        <span class="payment-summary-accent text-lg font-bold">{{ getSummary().partial }}</span>
                     </div>
 
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #fee2e2;">
-                        <span class="text-sm font-semibold" style="color: #dc2626;">Overdue</span>
-                        <span class="text-lg font-bold" style="color: #dc2626;">{{ getSummary().overdue }}</span>
+                    <div class="payment-summary-card payment-summary-overdue flex items-center justify-between px-4 py-3 rounded-lg">
+                        <span class="payment-summary-accent text-sm font-semibold">Overdue</span>
+                        <span class="payment-summary-accent text-lg font-bold">{{ getSummary().overdue }}</span>
                     </div>
                 </div>
 
@@ -261,22 +259,19 @@
                 <div class="flex flex-col gap-2">
                     <p class="text-xs font-semibold text-gray-500 uppercase">By Type</p>
 
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #dbeafe;">
-                        <span class="text-sm font-semibold" style="color: #2563eb;">Down Payment</span>
-                        <span class="text-lg font-bold" style="color: #2563eb;">{{ getSummary()['Down Payment'] }}</span>
+                    <div class="payment-summary-card payment-summary-down-payment flex items-center justify-between px-4 py-3 rounded-lg">
+                        <span class="payment-summary-accent text-sm font-semibold">Down Payment</span>
+                        <span class="payment-summary-accent text-lg font-bold">{{ getSummary()['Down Payment'] }}</span>
                     </div>
 
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #ede9fe;">
-                        <span class="text-sm font-semibold" style="color: #7c3aed;">Full Payment</span>
-                        <span class="text-lg font-bold" style="color: #7c3aed;">{{ getSummary()['Full Payment'] }}</span>
+                    <div class="payment-summary-card payment-summary-full-payment flex items-center justify-between px-4 py-3 rounded-lg">
+                        <span class="payment-summary-accent text-sm font-semibold">Full Payment</span>
+                        <span class="payment-summary-accent text-lg font-bold">{{ getSummary()['Full Payment'] }}</span>
                     </div>
 
-                    <div class="flex items-center justify-between px-4 py-3 rounded-lg"
-                         style="background-color: #ffedd5;">
-                        <span class="text-sm font-semibold" style="color: #ea580c;">Additional</span>
-                        <span class="text-lg font-bold" style="color: #ea580c;">{{ getSummary()['Additional'] }}</span>
+                    <div class="payment-summary-card payment-summary-additional flex items-center justify-between px-4 py-3 rounded-lg">
+                        <span class="payment-summary-accent text-sm font-semibold">Additional</span>
+                        <span class="payment-summary-accent text-lg font-bold">{{ getSummary()['Additional'] }}</span>
                     </div>
                 </div>
 
@@ -625,7 +620,8 @@
 </div>
 
 @*CREATE payment modal*@
-<div ng-if="showCreatePaymentModal"
+<div ng-cloak
+     ng-if="showCreatePaymentModal"
      class="fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
          ng-click="closeCreatePaymentModal()"></div>
@@ -755,7 +751,8 @@
 </div>
 
 @*ADD payment modal*@
-<div ng-if="showAddPaymentModal"
+<div ng-cloak
+     ng-if="showAddPaymentModal"
      class="fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
          ng-click="closeAddPaymentModal()"></div>
@@ -856,7 +853,8 @@
 </div>
 
 @*EDIT payment modal*@
-<div ng-if="showEditPaymentModal"
+<div ng-cloak
+     ng-if="showEditPaymentModal"
      class="fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
          ng-click="closeEditPaymentModal()"></div>

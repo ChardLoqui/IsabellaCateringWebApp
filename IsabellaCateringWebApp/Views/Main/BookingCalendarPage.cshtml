@@ -1,172 +1,106 @@
-﻿@{
+@{
 
     Layout = "~/Views/Shared/_ManagementLayout.cshtml";
     ViewBag.Title = "Calendar Dashboard";
 }
-<div class="container mx-auto h-screen p-10" ng-init="authenticateLoginCredentials()">
-    <div>
-        <h1 class="text-2xl font-semibold text-black mb-6">Booking Calendar</h1>
-    </div>
 
-    <div class="col-span-2 flex items-center justify-center" ng-init="renderCalendar()">
-        <div class="mx-auto w-[90%] h-[80%] text-[#000000]">
-            <div class="flex items-center pb-4">
-                <div id="prevMonth" ng-click="togglePrevMonth()"
-                     class="mx-2 flex h-[32px] w-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-full w-[20%] h-15 placeholder-white text-2xl">
-                    <span class="material-icons text-l">chevron_left</span>
-                </div>
-                <span id="currentMonth" class="w-[20%] text-center text-xl font-medium capitalize ">
-                    August 2023
-                </span>
-                <div id="nextMonth" ng-click="toggleNextMonth()"
-                     class="mx-2 flex h-[32px] w-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-full w-[20%] h-15 placeholder-white text-2xl">
-                    <span class="material-icons text-l">chevron_right</span>
-                </div>
-                <input id="searchCalendar"
-                       type="text"
-                       placeholder="Search Calendar"
-                       class="mx-[5%] w-96 px-5 rounded bg-gray-100 p-2 focus:outline-none border border-transparent focus:border-pink-500 transition-all" />
-                <div id="addBooking" ng-click="addBooking()"
-                     class="mx-2 flex h-[32px] cursor-pointer items-center justify-center bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-[30%] h-15 placeholder-white text-l">
-                    <span class="mx-1 material-icons text-l">add</span>Add Booking
-                </div>
+<section class="booking-calendar-page min-h-screen px-2 py-5 lg:px-4"
+         ng-init="authenticateLoginCredentials(); renderCalendar()">
+    <div class="mx-auto w-full max-w-[1680px]">
+        <header class="mb-6 flex flex-col gap-4 border-b border-rose-100 pb-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-semibold text-zinc-950 sm:text-4xl">Booking Calendar</h1>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
+                    Review the month at a glance, check booked dates, and select an available day before creating a new booking.
+                </p>
             </div>
-            <div id="datepicker-container"
-                 class="z-30 w-auto flex-col rounded-xl bg-white p-4 shadow-four sm:p-[30px] dark:bg-dark-2 dark:shadow-box-dark border-gray-400 border-2">
 
-                <div class="grid grid-cols-7 justify-between pb-2 pt-4 text-sm font-medium capitalize text-body-color sm:text-lg dark:text-dark-6">
-                    <span class="flex h-[38px] w-[100%] items-center justify-center">
-                        Sunday
-                    </span>
+            <p class="text-sm font-medium text-rose-700">
+                Select a date first, then continue to Add Booking.
+            </p>
+        </header>
 
-                    <span class="flex h-[38px] w-[100%] items-center justify-center">
-                        Monday
-                    </span>
+        <section class="panel-surface overflow-hidden rounded-xl">
+            <div class="border-b border-rose-100 px-3 py-4 lg:px-4">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div class="booking-month-nav">
+                        <button id="prevMonth"
+                                type="button"
+                                ng-click="togglePrevMonth()"
+                                class="booking-nav-btn">
+                            <span class="material-icons text-[20px]">chevron_left</span>
+                        </button>
 
-                    <span class="flex h-[38px] w-[100%] items-center justify-center">
-                        Tuesday
-                    </span>
+                        <span id="currentMonth" class="booking-month-label text-xl font-semibold capitalize text-zinc-950 sm:text-2xl">
+                            August 2023
+                        </span>
 
-                    <span class="flex h-[38px] w-[100%] items-center justify-center">
-                        Wednesday
-                    </span>
+                        <button id="nextMonth"
+                                type="button"
+                                ng-click="toggleNextMonth()"
+                                class="booking-nav-btn">
+                            <span class="material-icons text-[20px]">chevron_right</span>
+                        </button>
+                    </div>
 
-                    <span class="flex h-[38px] w-[100%] items-center justify-center">
-                        Thursday
-                    </span>
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <div class="relative">
+                            <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-zinc-400">search</span>
+                            <input id="searchCalendar"
+                                   type="text"
+                                   placeholder="Search calendar"
+                                   class="booking-toolbar-input w-full sm:w-[18rem]" />
+                        </div>
 
-                    <span class="flex h-[38px] w-[100%] items-center justify-center">
-                        Friday
-                    </span>
-
-                    <span class="flex h-[38px] w-[100%] items-center justify-center">
-                        Saturday
-                    </span>
-
-                </div>
-
-                <div id="days-container" class="border border-gray-200 grid grid-cols-7 grid-rows-[repeat(6,120px)] justify-between text-sm font-medium sm:text-lg">
-                    <!-- Default calendar layout - will be replaced by JavaScript when available -->
-                    <div></div>
-                    <div></div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        1
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        2
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        3
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        4
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        5
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        6
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        7
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        8
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        9
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        10
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        11
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        12
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        13
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        14
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        15
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        16
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        17
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        18
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        19
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        20
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        21
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        22
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        23
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        24
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        25
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        26
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        27
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        28
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        29
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        30
-                    </div>
-                    <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-[.5px] border-transparent ">
-                        31
+                        <button id="addBooking"
+                                type="button"
+                                ng-click="addBooking()"
+                                class="booking-primary-action inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold">
+                            <span class="material-icons text-[18px]">add</span>
+                            <span>Add Booking</span>
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="px-3 py-4 lg:px-4 lg:py-5">
+                <div class="grid grid-cols-7 gap-2 pb-3 text-center text-xs font-semibold text-zinc-500 sm:text-sm">
+                    <span class="py-2">Sunday</span>
+                    <span class="py-2">Monday</span>
+                    <span class="py-2">Tuesday</span>
+                    <span class="py-2">Wednesday</span>
+                    <span class="py-2">Thursday</span>
+                    <span class="py-2">Friday</span>
+                    <span class="py-2">Saturday</span>
+                </div>
+
+                <div id="datepicker-container" class="mt-2">
+                    <div id="days-container" class="text-sm font-medium sm:text-base">
+                        <div></div>
+                        <div></div>
+                        <div class="calendar-day">
+                            <div class="date-block flex items-center justify-center">1</div>
+                            <div class="current"></div>
+                        </div>
+                        <div class="calendar-day">
+                            <div class="date-block flex items-center justify-center">2</div>
+                            <div class="current"></div>
+                        </div>
+                        <div class="calendar-day">
+                            <div class="date-block flex items-center justify-center">3</div>
+                            <div class="current"></div>
+                        </div>
+                        <div class="calendar-day">
+                            <div class="date-block flex items-center justify-center">4</div>
+                            <div class="current"></div>
+                        </div>
+                        <div class="calendar-day">
+                            <div class="date-block flex items-center justify-center">5</div>
+                            <div class="current"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
-</div>
-
-
-
+</section>

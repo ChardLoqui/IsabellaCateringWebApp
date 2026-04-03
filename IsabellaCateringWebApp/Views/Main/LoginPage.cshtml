@@ -3,137 +3,6 @@
     ViewBag.Title = "Log In";
 }
 
-<style>
-    .login-shell,
-    .login-shell input,
-    .login-shell button,
-    .login-shell label,
-    .login-shell small,
-    .login-shell p {
-        font-family: "Montserrat", sans-serif;
-    }
-
-    .login-shell h1,
-    .login-shell h2 {
-        font-family: "Josefin Sans", sans-serif;
-    }
-
-    .login-shell {
-        background:
-            radial-gradient(circle at top left, rgba(255, 255, 255, 0.4), transparent 22%),
-            linear-gradient(135deg, #f7d3e3 0%, #f5cade 42%, #f2c0d9 100%);
-    }
-
-    .login-showcase::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(24, 24, 27, 0.08) 0%, rgba(24, 24, 27, 0.26) 100%);
-        pointer-events: none;
-    }
-
-    .login-showcase::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        background: linear-gradient(135deg, rgba(236, 72, 153, 0.22) 0%, rgba(244, 114, 182, 0.12) 42%, rgba(252, 211, 231, 0.04) 100%);
-        pointer-events: none;
-    }
-
-    .login-carousel-shell {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-    }
-
-    .login-fade {
-        animation: loginFade 0.65s ease-out both;
-    }
-
-    .login-fade-delayed {
-        animation: loginFade 0.85s ease-out both;
-    }
-
-    .login-field {
-        transition: box-shadow 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
-    }
-
-    .login-field:focus {
-        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.14);
-        background-color: #ffffff;
-        transform: translateY(-1px);
-    }
-
-    .login-submit {
-        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-    }
-
-    .login-submit:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 16px 30px rgba(190, 24, 93, 0.18);
-    }
-
-    .login-progress {
-        display: flex;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
-        border-radius: 9999px;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-    }
-
-    .login-progress-btn {
-        height: 6px;
-        width: 1.25rem;
-        border-radius: 9999px;
-        background: rgba(255, 255, 255, 0.3);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-    }
-
-    .login-progress-btn[aria-current="true"] {
-        width: 2.5rem;
-        background: #ffffff;
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    }
-
-    .login-header {
-        letter-spacing: 0.22em;
-    }
-
-    @@media (max-width: 1023px) {
-        .login-shell-main {
-            grid-template-columns: 1fr;
-        }
-
-        .login-showcase {
-            display: block;
-            min-height: 16rem;
-        }
-
-        .login-brand-lockup {
-            position: static;
-            transform: none;
-            margin-bottom: 1.5rem;
-            white-space: normal;
-        }
-    }
-
-    @@keyframes loginFade {
-        from {
-            opacity: 0;
-            transform: translateY(18px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
-
 <div ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController" class="login-shell min-h-screen">
     <div class="login-shell-main grid min-h-screen w-full lg:grid-cols-[60%_40%]">
         <section class="login-showcase relative hidden lg:block">
@@ -170,61 +39,78 @@
             </div>
         </section>
 
-        <section class="flex min-h-screen items-center justify-center bg-[#fcd1e5] px-6 py-10 sm:px-10 lg:px-14">
-            <div class="w-full max-w-md">
+        <section class="login-auth-panel flex min-h-screen items-center justify-center px-6 py-10 sm:px-10 lg:px-14">
+            <div class="login-form-shell">
                 <div class="login-fade relative flex flex-col items-center justify-center text-center">
                     <div class="login-brand-lockup absolute left-1/2 top-[-4.75rem] flex -translate-x-1/2 items-center justify-center gap-3 whitespace-nowrap">
                         <img src="~/Content/images/isabellaLogo.jpg" alt="Isabella Catering and Events Logo" class="h-12 w-12 rounded-lg object-cover">
-                        <h1 class="login-header text-lg font-semibold uppercase text-rose-700/85">Isabella Catering</h1>
+                        <h1 class="login-header text-lg font-semibold uppercase text-pink-700/85">Isabella Catering</h1>
                     </div>
                     <h2 class="mt-2 text-4xl font-semibold tracking-tight text-zinc-950">Welcome Back</h2>
-                    <p class="mt-8 text-sm text-rose-700/70">Login by entering your credentials</p>
+                    <p class="mt-8 text-sm text-pink-700/70">Login by entering your credentials</p>
                 </div>
 
-                <div class="login-fade-delayed mt-8">
-                    <div class="flex flex-col">
+                <form class="mt-8 space-y-5" name="loginForm" ng-submit="logInService()" novalidate>
+                    <div class="login-fade-delayed login-field-group">
                         <div class="mb-2 flex items-center justify-between">
-                            <label for="logEmail" class="text-sm font-medium text-zinc-800">Email</label>
-                            <small id="emailCount" class="text-xs text-zinc-400">0 / 50</small>
+                            <label for="logEmail" class="login-label text-sm font-medium text-zinc-800">
+                                <span>{{isGuest ? 'Entry Code' : 'Email'}}</span>
+                                <span class="login-required">*</span>
+                            </label>
+                            <small id="emailCount" class="login-meta">0 / 50</small>
                         </div>
 
                         <div class="relative">
                             <input id="logEmail"
+                                   name="loginIdentifier"
                                    ng-model="lEmail"
-                                   type="email"
+                                   type="text"
                                    required
                                    maxlength="50"
+                                   ng-pattern="isGuest ? guestCodePattern : emailPattern"
                                    oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('emailCount').innerText = this.value.length + ' / 50';"
+                                   ng-class="{'login-field-invalid': shouldShowFieldError(loginForm, 'loginIdentifier')}"
                                    class="login-field w-full rounded-lg bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 outline-none"
                                    placeholder="{{emailPlaceholder || 'Use Email'}}" />
                         </div>
+                        <p class="login-error"
+                           ng-if="shouldShowFieldError(loginForm, 'loginIdentifier', 'required')">
+                            {{isGuest ? 'Entry code is required.' : 'Email is required.'}}
+                        </p>
+                        <p class="login-error"
+                           ng-if="!isGuest && shouldShowFieldError(loginForm, 'loginIdentifier', 'pattern')">
+                            Enter a valid email address.
+                        </p>
                     </div>
-                </div>
 
-                <div class="login-fade-delayed mt-4 flex items-center">
-                    <label class="flex cursor-pointer items-center gap-3 text-sm font-medium text-zinc-700">
-                        <input type="checkbox"
-                               ng-model="isGuest"
-                               ng-change="changeCredPlaceholder()"
-                               class="h-4 w-4 rounded border-rose-200 bg-white text-rose-500 accent-rose-500 focus:ring-rose-400" />
-                        <span>Login as Guest</span>
-                    </label>
-                </div>
+                    <div class="login-fade-delayed flex items-center">
+                        <label class="flex cursor-pointer items-center gap-3 text-sm font-medium text-zinc-700">
+                            <input type="checkbox"
+                                   ng-model="isGuest"
+                                   ng-change="changeCredPlaceholder()"
+                                   class="h-4 w-4 rounded border-pink-200 bg-white text-pink-500 accent-pink-500 focus:ring-pink-400" />
+                            <span>Login as Guest</span>
+                        </label>
+                    </div>
 
-                <form class="mt-5 space-y-5" name="loginForm" novalidate>
-                    <div class="login-fade-delayed flex flex-col">
+                    <div class="login-fade-delayed login-field-group">
                         <div class="mb-2 flex items-center justify-between">
-                            <label for="logPWord" class="text-sm font-medium text-zinc-800">Password</label>
-                            <small id="passCount" class="text-xs text-zinc-400">0 / 20</small>
+                            <label for="logPWord" class="login-label text-sm font-medium text-zinc-800">
+                                <span>Password</span>
+                                <span class="login-required">*</span>
+                            </label>
+                            <small id="passCount" class="login-meta">0 / 20</small>
                         </div>
 
                         <div class="relative">
                             <input id="logPWord"
+                                   name="loginPassword"
                                    ng-model="lPassword"
                                    type="password"
                                    required
                                    maxlength="20"
                                    oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('passCount').innerText = this.value.length + ' / 20';"
+                                   ng-class="{'login-field-invalid': shouldShowFieldError(loginForm, 'loginPassword')}"
                                    class="login-field w-full rounded-lg bg-white px-4 py-3 pr-14 text-zinc-900 placeholder-zinc-400 outline-none"
                                    placeholder="Enter your password" />
 
@@ -235,24 +121,27 @@
                                 visibility_off
                             </span>
                         </div>
+                        <p class="login-error"
+                           ng-if="shouldShowFieldError(loginForm, 'loginPassword', 'required')">
+                            Password is required.
+                        </p>
                     </div>
 
                     <div class="login-fade-delayed flex items-center justify-between gap-4 text-sm">
                         <label class="flex items-center gap-3 text-zinc-700">
                             <input type="checkbox"
-                                   class="h-4 w-4 rounded border-rose-200 bg-white text-rose-500 accent-rose-500 focus:ring-rose-400" />
+                                   class="h-4 w-4 rounded border-pink-200 bg-white text-pink-500 accent-pink-500 focus:ring-pink-400" />
                             <span>Remember me</span>
                         </label>
                         <button type="button"
                                 ng-click="redirectToForgetPassPage()"
-                                class="font-medium text-rose-700 transition hover:text-rose-800">
+                                class="font-medium text-pink-700 transition hover:text-pink-800">
                             Forgot password?
                         </button>
                     </div>
 
                     <button type="submit"
-                            ng-click="logInService()"
-                            class="login-submit login-fade-delayed w-full rounded-lg bg-rose-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-900/10 hover:bg-rose-600">
+                            class="login-submit login-fade-delayed w-full rounded-lg bg-pink-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-900/10 hover:bg-pink-600">
                         Log in
                     </button>
                 </form>

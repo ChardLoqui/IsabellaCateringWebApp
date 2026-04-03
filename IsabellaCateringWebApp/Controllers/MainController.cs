@@ -289,7 +289,7 @@ namespace IsabellaCateringWebApp.Controllers
                             });
                             db.SaveChanges();
 
-                            string link = "https://localhost:44323/Main/chgPassPage?token=" + token;
+                            string link = "https://localhost:44323/Main/ChangePassPage?token=" + token;
 
                             var smtp = new SmtpClient();
                             smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
