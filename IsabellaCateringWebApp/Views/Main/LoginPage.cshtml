@@ -75,23 +75,27 @@
                         </div>
                         @*email input*@
                         <input id="logEmail" ng-model="lEmail"
-                               type="email" required maxlength="50"
+                               type="text" required maxlength="50"
                                oninput="this.value = this.value.replace(/\s/g, '');
                                document.getElementById('emailCount').innerText = this.value.length + ' / 50';"
                                class="w-full rounded bg-white p-2 focus:outline-none"
-                               placeholder="{{emailPlaceholder}}"/>
+                               placeholder="{{emailPlaceholder || 'Use Email'}}"/>
                             
                     </div>
 
                     <div class="flex items-center mb-4">
-                        <label class="relative flex items-center cursor-pointer" ng-click="changeCredPlaceholder()">
-                            <input type="checkbox"
+                        <label class="relative flex items-center cursor-pointer">
+                            <input type="checkbox"  ng-change="changeCredPlaceholder()"
                                    ng-model="isGuest"
                                    class="sr-only peer">
                             <div class="w-6 h-6 bg-white border-2 border-pink-500 rounded transition-all peer-checked:bg-pink-500 peer-checked:border-pink-500 flex items-center justify-center">
                                 <svg class="w-4 h-4 text-white hidden peer-checked:block"
                                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7">
+                                        <span class="peer-checked:flex items-center justify-center">
+                                            <i class="material-icons text-white text-sm font-bold">check</i>
+                                        </span>
+                                    </path>
                                 </svg>
                             </div>
 
@@ -108,7 +112,7 @@
                         @* Password input*@
                         <div class="relative">
                             <input id="logPWord" ng-model="lPassword"
-                                   type="password" required maxlength="20"
+                                   type="password" ng-required="!isGuest" maxlength="20"
                                    oninput="this.value = this.value.replace(/\s/g, '');
                                    document.getElementById('passCount').innerText = this.value.length + ' / 20';"
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
@@ -120,7 +124,7 @@
                             </span>
                         </div>
 
-                        <a href="#" class="mt-1 text-xs text-pink-500 hover:text-pink-900">
+                        <a href="#" class="mt-1 text-xs text-pink-500 hover:text-pink-900" ng-click="redirectToForgetPassPage()">
                             Forgot Password?
                         </a>
                     </div>
