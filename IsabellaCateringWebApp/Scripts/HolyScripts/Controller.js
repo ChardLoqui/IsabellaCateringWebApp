@@ -19,6 +19,11 @@
         window.location.href = "/Main/CustomerViewPage";
     }
 
+    const currentPath = (window.location.pathname || '').toLowerCase();
+    function isCurrentPage(pageName) {
+        return currentPath.indexOf(("/main/" + pageName).toLowerCase()) !== -1;
+    }
+
     $scope.authenticateLoginCredentials = function () {
         IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
             $scope.displayNavOptions = false;
@@ -261,7 +266,9 @@
             });
         });
     };
-    $scope.getUsersData();
+    if (isCurrentPage("AccountsPage")) {
+        $scope.getUsersData();
+    }
 
     // MODAL STARTTTT
     // select user to update 
@@ -400,8 +407,9 @@
             });
         });
     };
-
-    $scope.getLogsData();
+    if (isCurrentPage("LogsPage")) {
+        $scope.getLogsData();
+    }
 
 
     //======================================================== ACCOUNT MANAGEMENT END =======================================================
@@ -533,11 +541,14 @@
                     packageID: res.data.packageID,
 
                     bookingDate: convertDate(res.data.bookingDate),
+                    prepVenue: res.data.prepVenue,
                     venue: res.data.venue,
                     eventSetTime: convertTime(res.data.eventSetTime),
                     eventTime: convertTime(res.data.eventTime),
                     ceremTime: convertTime(res.data.ceremTime),
                     eventMealTime: convertTime(res.data.eventMealTime),
+                    dsgnTheme: res.data.dsgnTheme,
+                    dsgnMotif: res.data.dsgnMotif,
 
                     dateCreated: convertDate(res.data.dateCreated),
                     dateUpdated: convertDate(res.data.dateUpdated),
@@ -634,6 +645,7 @@
 
     let currentDate = new Date();
     let selectedDate = null;
+    let activeCalendarRequestId = 0;
     // Month navigation
     $scope.togglePrevMonth = function () {
         currentDate.setMonth(currentDate.getMonth() - 1);
@@ -647,8 +659,13 @@
     }
 
     $scope.renderCalendar = function () {
+        if (!daysContainer || !currentMonthElement) {
+            return;
+        }
+
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
+        const requestId = ++activeCalendarRequestId;
 
         currentMonthElement.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -681,7 +698,8 @@
                 : "flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
 
             const dayString = `${year}-${month + 1}-${i}`;
-            daysContainer.innerHTML += `<div class="border-gray-400 border" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full h-[60%] overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-white rounded-lg border shadow-inner" data-date="${dayString}"></div></div>`;
+            const selectedDayClass = isSelectedDay ? "selected-day" : "";
+            daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full h-[60%] overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-white rounded-lg border shadow-inner" data-date="${dayString}"></div></div>`;
         }
 
         for (let i = 1; i <= (42 - daysInMonth - firstDayOfMonth); i++) {
@@ -700,47 +718,68 @@
             });
         });
 
-        document.querySelectorAll('.current').forEach(day => {
-            IsabellaCateringWebAppService.getCalendarBookingService(day.dataset.date).then(function (bookingResponse) {
-                bookingResponse.data.bookingData.forEach(item => {
-                    if (bookingResponse.data.success) {
-                        IsabellaCateringWebAppService.getBookingDetailsService(item.bookingID).then(function (detailsResponse) {
-                            if (detailsResponse.data.success) {
-                                const eventCard = document.createElement("div");
-                                eventCard.className = "mb-1 mx-1 flex cursor-pointer items-center justify-left bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 h-15 placeholder-white text-xs";
+        IsabellaCateringWebAppService.getCalendarMonthService(year, month + 1).then(function (bookingResponse) {
+            if (requestId !== activeCalendarRequestId) {
+                return;
+            }
 
-                                eventCard.innerText = `${detailsResponse.data.clients.eventName}, 
-                                                        ${convertTime(item.eventTime)}`;
-
-                                eventCard.dataset.date = day.dataset.date;
-
-                                eventCard.addEventListener("click", function () {
-                                    alert(`Trial ${this.dataset.date} clicked!`);
-                                });
-                                day.appendChild(eventCard);
-                            } else {
-                                Swal.fire({
-                                    title: "Error",
-                                    text: detailsResponse.data.message,
-                                    icon: "error"
-                                });
-                            }
-                        });
-                    }
-                    else {
-                        return;
-                    }
+            if (!bookingResponse.data.success) {
+                Swal.fire({
+                    title: "Error",
+                    text: bookingResponse.data.message || "Could not load calendar bookings.",
+                    icon: "error"
                 });
+                return;
+            }
 
+            const bookingsByDate = {};
+            (bookingResponse.data.bookingData || []).forEach(function (item) {
+                if (!bookingsByDate[item.dateKey]) {
+                    bookingsByDate[item.dateKey] = [];
+                }
+
+                bookingsByDate[item.dateKey].push(item);
+            });
+
+            document.querySelectorAll('.current').forEach(function (day) {
+                const bookings = bookingsByDate[day.dataset.date] || [];
+
+                bookings.forEach(function (item) {
+                    const eventCard = document.createElement("div");
+                    eventCard.className = "mb-1 mx-1 flex cursor-pointer items-center justify-left bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 h-15 placeholder-white text-xs";
+                    eventCard.innerText = `${item.eventName || 'Untitled Event'}, ${convertTime(item.eventTime)}`;
+                    eventCard.dataset.date = day.dataset.date;
+
+                    eventCard.addEventListener("click", function () {
+                        alert(`Trial ${this.dataset.date} clicked!`);
+                    });
+
+                    day.appendChild(eventCard);
+                });
+            });
+        }).catch(function () {
+            if (requestId !== activeCalendarRequestId) {
+                return;
+            }
+
+            Swal.fire({
+                title: "Error",
+                text: "Could not load calendar bookings.",
+                icon: "error"
             });
         });
 
-        document.querySelectorAll('#days-container div .date-block').forEach(day => {
-            if (day.dataset && day.dataset.date) { // Only add event listeners to cells with day numbers
+        document.querySelectorAll('#days-container .calendar-day').forEach(day => {
+            if (day.dataset && day.dataset.date) {
                 day.addEventListener('click', function () {
                     selectedDate = this.dataset.date;
-                    document.querySelectorAll('#days-container div .date-block').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
-                    this.classList.add('bg-[#EC4899]', 'text-white', 'selected');
+                    document.querySelectorAll('#days-container .calendar-day').forEach(d => d.classList.remove('selected-day'));
+                    document.querySelectorAll('#days-container .calendar-day .date-block').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
+                    this.classList.add('selected-day');
+                    const dateBlock = this.querySelector('.date-block');
+                    if (dateBlock) {
+                        dateBlock.classList.add('bg-[#EC4899]', 'text-white', 'selected');
+                    }
                 });
             }
         });
@@ -944,7 +983,9 @@
     };
     $scope.showEditPaymentModal = false;  
     $scope.editData = {};               
-    $scope.getPaymentData();
+    if (isCurrentPage("PaymentReminderPage")) {
+        $scope.getPaymentData();
+    }
 
     //validations for due date
     $scope.isUpcomingDue = function (payment) {
