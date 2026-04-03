@@ -196,9 +196,19 @@
                                    maxlength="50"
                                    oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('emailCount').innerText = this.value.length + ' / 50';"
                                    class="login-field w-full rounded-lg bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 outline-none"
-                                   placeholder="Enter your email" />
+                                   placeholder="{{emailPlaceholder || 'Use Email'}}" />
                         </div>
                     </div>
+                </div>
+
+                <div class="login-fade-delayed mt-4 flex items-center">
+                    <label class="flex cursor-pointer items-center gap-3 text-sm font-medium text-zinc-700">
+                        <input type="checkbox"
+                               ng-model="isGuest"
+                               ng-change="changeCredPlaceholder()"
+                               class="h-4 w-4 rounded border-rose-200 bg-white text-rose-500 accent-rose-500 focus:ring-rose-400" />
+                        <span>Login as Guest</span>
+                    </label>
                 </div>
 
                 <form class="mt-5 space-y-5" name="loginForm" novalidate>
