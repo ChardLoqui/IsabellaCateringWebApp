@@ -3214,19 +3214,12 @@
 
     //====================================================== CLICK OUTSIDE DIRECTIVE START ======================================================
 
-    document.addEventListener('click', function (event) {
-        const isInside = event.target.closest('.dropdown-container');
-
-        if (!isInside && typeof $scope.$applyAsync === 'function') {
-            $scope.$applyAsync(function () {
-                $scope.activeDropdown = null;
-            });
+    $scope.handleDocumentClick = function (event) {
+        if (!event.target.closest('.dropdown-container')) {
+            $scope.activeDropdown = null;
         }
-
-        if (typeof $scope.computeFinalPrice === 'function') {
-            $scope.computeFinalPrice();
-        }
-    });
+        $scope.computeFinalPrice();
+    };
 
     $scope.computeFinalPrice = function () {
         var adultTotal = ($scope.addAdult || 0) * ($scope.pricePaxAdMulti || 0);
