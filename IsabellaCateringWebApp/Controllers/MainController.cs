@@ -155,20 +155,25 @@ namespace IsabellaCateringWebApp.Controllers
         {
             var uID = Session["currentLog"]?.ToString();
             var pID = Session["currentPerm"]?.ToString() ?? "";
-            var dSel = Session["bookingSelectedDate"]?.ToString();
-            string uName = "Loading..";
+            string uName = "Guest";
+            int currentID = 0;
 
             if (!string.IsNullOrEmpty(uID))
             {
-                int id = int.Parse(uID);
+                currentID = int.Parse(uID);
                 using (var db = new IsabellaCateringContext())
                 {
-                    var user = db.users_tbl.FirstOrDefault(x => x.userID == id);
+                    var user = db.users_tbl.FirstOrDefault(x => x.userID == currentID);
                     if (user != null) uName = $"{user.firstName} {user.lastName}";
                 }
             }
 
-            return Json(new { userName = uName, permID = pID, selectedDate=dSel}, JsonRequestBehavior.AllowGet);
+            return Json(new
+            {
+                userID = currentID,
+                userName = uName,
+                permID = pID
+            }, JsonRequestBehavior.AllowGet);
         }
 
         //bago, to add user
@@ -1498,6 +1503,34 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return Json(new { success = false, message = innerMsg }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult LogPaymentReminder(tblPaymentRemindersModel model)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var now = DateTime.Now;
+                    var reminder = new tblPaymentRemindersModel
+                    {
+                        paymentID = model.paymentID,
+                        sentBy = model.sentBy,
+                        sentAt = model.sentAt,
+                        note = model.note,
+                        dateCreated = now,
+                        dateUpdated = now
+                    };
+                    db.paymentreminders_tbl.Add(reminder);
+                    db.SaveChanges();
+                }
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
