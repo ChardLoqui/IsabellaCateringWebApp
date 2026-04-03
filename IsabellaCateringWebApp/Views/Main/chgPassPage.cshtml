@@ -2,7 +2,38 @@
     Layout = "~/Views/Shared/_MainLayout.cshtml";
     ViewBag.Title = "Log In";
 
-    <body ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
+    <style>
+        .login-shell {
+            font-family: "Montserrat", sans-serif;
+        }
+
+        .login-progress {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 9999px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .login-progress-btn {
+            height: 6px;
+            width: 1.25rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .login-progress-btn[aria-current="true"] {
+            width: 2.5rem;
+            background: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+
+    <body ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController" class="login-shell">
 
         <div class="flex h-screen w-full">
             <!-- Left side -->
@@ -47,13 +78,14 @@
                         </div>
 
                         <!-- Indicators -->
-                        <div class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3">
-                            <button class="w-3 h-3 rounded-full bg-white" data-carousel-slide-to="0"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="1"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="2"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="3"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="4"></button>
-
+                        <div class="absolute z-30 flex -translate-x-1/2 bottom-10 left-1/2">
+                            <div class="login-progress" id="loginCarouselProgress" data-carousel-indicators>
+                                <button type="button" class="login-progress-btn" aria-current="true" data-carousel-slide-to="0"></button>
+                                <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="1"></button>
+                                <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="2"></button>
+                                <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="3"></button>
+                                <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="4"></button>
+                            </div>
                         </div>
 
                         <!-- Controls -->
@@ -98,32 +130,32 @@
 
                         <div class="relative">
                             @* Password input*@
-                            <input id="logPWord" ng-model="Password"
+                            <input id="oldPWord" ng-model="oldPassword"
                                    type="password"
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
                             <!-- Toggle icon -->
-                            <span id="togglePassword"
-                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                            <span id="toggleOldPassword" onclick="togglePassVisibility('oldPWord', this)"
+                                  class="material-icons absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center cursor-pointer text-gray-500 select-none text-[20px]">
                                 visibility_off
                             </span>
                         </div>
                     </div>
 
                     <div class="flex flex-col relative">
-                        <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                        <label for="newPWord" class="mb-1 text-black text-sm font-semibold">
                             New Password
                         </label>
 
                         <div class="relative">
                             @* Password input*@
-                            <input id="logPWord" ng-model="Password"
+                            <input id="newPWord" ng-model="newPassword"
                                    type="password"
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
                             <!-- Toggle icon -->
-                            <span id="togglePassword"
-                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                            <span id="toggleNewPassword" onclick="togglePassVisibility('newPWord', this)"
+                                  class="material-icons absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center cursor-pointer text-gray-500 select-none text-[20px]">
                                 visibility_off
                             </span>
                         </div>
@@ -131,19 +163,19 @@
 
                     <!-- Password -->
                     <div class="flex flex-col relative">
-                        <label for="logPWord" class="mb-1 text-black text-sm font-semibold">
+                        <label for="cNewPWord" class="mb-1 text-black text-sm font-semibold">
                             Confirm Password
                         </label>
 
                         <div class="relative">
                             @* Password input*@
-                            <input id="logPWord" ng-model="cPassword"
+                            <input id="cNewPWord" ng-model="cNewPassword"
                                    type="password"
                                    class="w-full rounded bg-white p-2 pr-10 focus:outline-none" />
 
                             <!-- Toggle icon -->
-                            <span id="togglePassword"
-                                  class="material-icons absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none">
+                            <span id="toggleCNewPassword" onclick="togglePassVisibility('cNewPWord', this)"
+                                  class="material-icons absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center cursor-pointer text-gray-500 select-none text-[20px]">
                                 visibility_off
                             </span>
                         </div>
@@ -161,5 +193,51 @@
         </div>
 
     </body>
+
+    <script>
+        (function () {
+            var progressButtons = Array.prototype.slice.call(document.querySelectorAll('#loginCarouselProgress .login-progress-btn'));
+            var carouselItems = Array.prototype.slice.call(document.querySelectorAll('#default-carousel [data-carousel-item]'));
+
+            if (!progressButtons.length || !carouselItems.length) {
+                return;
+            }
+
+            function setActiveProgress() {
+                var activeIndex = carouselItems.findIndex(function (item) {
+                    return !item.classList.contains('hidden');
+                });
+
+                if (activeIndex >= 0) {
+                    progressButtons.forEach(function (button, index) {
+                        button.classList.toggle('is-active', index === activeIndex);
+                    });
+                }
+            }
+
+            // Initial sync
+            setActiveProgress();
+
+            // Observe changes to the carousel items
+            var observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.attributeName === 'class') {
+                        setActiveProgress();
+                    }
+                });
+            });
+
+            carouselItems.forEach(function (item) {
+                observer.observe(item, { attributes: true, attributeFilter: ['class'] });
+            });
+
+            // Also handle manual clicks
+            progressButtons.forEach(function (button, index) {
+                button.addEventListener('click', function () {
+                    setTimeout(setActiveProgress, 50);
+                });
+            });
+        })();
+    </script>
 }
 

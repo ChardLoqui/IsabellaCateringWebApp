@@ -1,77 +1,191 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_LogInLayout.cshtml";
     ViewBag.Title = "Log In";
+}
 
-    <body ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
+<style>
+    .login-shell,
+    .login-shell input,
+    .login-shell button,
+    .login-shell label,
+    .login-shell small,
+    .login-shell p {
+        font-family: "Montserrat", sans-serif;
+    }
 
-        <div class="flex h-screen w-full">
-            <!-- Left side -->
-            <div class="w-1/2 flex items-center justify-center">
+    .login-shell h1,
+    .login-shell h2 {
+        font-family: "Josefin Sans", sans-serif;
+    }
 
-                <div class="w-1/2 h-full w-full">
-                    <div id="default-carousel" class="relative w-full h-full" data-carousel="slide">
-                        <!-- Carousel wrapper -->
-                        <div class="relative h-full overflow-hidden">
-                            <!-- Item 1 -->
-                            <div class="duration-700 ease-in-out" data-carousel-item>
-                                <img src="/Content/images/img1.jpg"
-                                     class="w-full h-full object-cover"
-                                     alt="Slide 1">
-                            </div>
+    .login-shell {
+        background:
+            radial-gradient(circle at top left, rgba(255, 255, 255, 0.4), transparent 22%),
+            linear-gradient(135deg, #f7d3e3 0%, #f5cade 42%, #f2c0d9 100%);
+    }
 
-                            <!-- Item 2 -->
-                            <div class="hidden duration-700 ease-in-out" data-carousel-item>
-                                <img src="/Content/images/img2.jpg"
-                                     class="w-full h-full object-cover"
-                                     alt="Slide 2">
-                            </div>
+    .login-showcase::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(24, 24, 27, 0.08) 0%, rgba(24, 24, 27, 0.26) 100%);
+        pointer-events: none;
+    }
 
-                            <!-- Item 3 -->
-                            <div class="hidden duration-700 ease-in-out" data-carousel-item>
-                                <img src="/Content/images/img3.jpg"
-                                     class="w-full h-full object-cover"
-                                     alt="Slide 3">
-                            </div>
-                            <!-- Item 4 -->
-                            <div class="hidden duration-700 ease-in-out" data-carousel-item>
-                                <img src="/Content/images/img4.jpg"
-                                     class="w-full h-full object-cover"
-                                     alt="Slide 4">
-                            </div>
-                            <!-- Item 5 -->
-                            <div class="hidden duration-700 ease-in-out" data-carousel-item>
-                                <img src="/Content/images/img5.jpg"
-                                     class="w-full h-full object-cover"
-                                     alt="Slide 5">
-                            </div>
+    .login-showcase::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.22) 0%, rgba(244, 114, 182, 0.12) 42%, rgba(252, 211, 231, 0.04) 100%);
+        pointer-events: none;
+    }
+
+    .login-carousel-shell {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+    }
+
+    .login-fade {
+        animation: loginFade 0.65s ease-out both;
+    }
+
+    .login-fade-delayed {
+        animation: loginFade 0.85s ease-out both;
+    }
+
+    .login-field {
+        transition: box-shadow 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .login-field:focus {
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.14);
+        background-color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .login-submit {
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .login-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 30px rgba(190, 24, 93, 0.18);
+    }
+
+    .login-progress {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 9999px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+    }
+
+    .login-progress-btn {
+        height: 6px;
+        width: 1.25rem;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.3);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .login-progress-btn[aria-current="true"] {
+        width: 2.5rem;
+        background: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    .login-header {
+        letter-spacing: 0.22em;
+    }
+
+    @@media (max-width: 1023px) {
+        .login-shell-main {
+            grid-template-columns: 1fr;
+        }
+
+        .login-showcase {
+            display: block;
+            min-height: 16rem;
+        }
+
+        .login-brand-lockup {
+            position: static;
+            transform: none;
+            margin-bottom: 1.5rem;
+            white-space: normal;
+        }
+    }
+
+    @@keyframes loginFade {
+        from {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController" class="login-shell min-h-screen">
+    <div class="login-shell-main grid min-h-screen w-full lg:grid-cols-[60%_40%]">
+        <section class="login-showcase relative hidden lg:block">
+            <div class="login-carousel-shell">
+                <div id="default-carousel" class="absolute inset-0 h-full w-full" data-carousel="slide">
+                    <div class="relative h-full overflow-hidden">
+                        <div class="duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img1.jpg" class="h-full w-full object-cover" alt="Elegant catering setup">
                         </div>
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img2.jpg" class="h-full w-full object-cover" alt="Styled event venue">
+                        </div>
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img3.jpg" class="h-full w-full object-cover" alt="Signature dining arrangement">
+                        </div>
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img4.jpg" class="h-full w-full object-cover" alt="Celebration table styling">
+                        </div>
+                        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+                            <img src="/Content/images/img5.jpg" class="h-full w-full object-cover" alt="Refined event presentation">
+                        </div>
+                    </div>
 
-                        <div class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3">
-                            <button class="w-3 h-3 rounded-full bg-white" data-carousel-slide-to="0"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="1"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="2"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="3"></button>
-                            <button class="w-3 h-3 rounded-full bg-gray-400" data-carousel-slide-to="4"></button>
-
+                    <div class="absolute bottom-10 left-10 z-20">
+                        <div class="login-progress" id="loginCarouselProgress" data-carousel-indicators aria-label="Carousel progress">
+                            <button type="button" class="login-progress-btn" aria-current="true" data-carousel-slide-to="0" aria-label="Slide 1"></button>
+                            <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="1" aria-label="Slide 2"></button>
+                            <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="2" aria-label="Slide 3"></button>
+                            <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="3" aria-label="Slide 4"></button>
+                            <button type="button" class="login-progress-btn" aria-current="false" data-carousel-slide-to="4" aria-label="Slide 5"></button>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Right side -->
-            <div class="w-1/2 flex items-center justify-center" style="background-color:#fcd1e5;">
-                <form class="w-3/4 max-w-md space-y-5" name="loginForm">
+        </section>
 
-                    <!-- Header -->
-                    <header class="text-center">
-                        <img src="~/Content/images/isabellaLogo.jpg" alt="Isabella Catering and Events Logo" class="w-52 h-auto mx-auto" />
-                        <p class="text-2xl font-semibold text-black">Isabella Catering and Events</p>
-                    </header>
+        <section class="flex min-h-screen items-center justify-center bg-[#fcd1e5] px-6 py-10 sm:px-10 lg:px-14">
+            <div class="w-full max-w-md">
+                <div class="login-fade relative flex flex-col items-center justify-center text-center">
+                    <div class="login-brand-lockup absolute left-1/2 top-[-4.75rem] flex -translate-x-1/2 items-center justify-center gap-3 whitespace-nowrap">
+                        <img src="~/Content/images/isabellaLogo.jpg" alt="Isabella Catering and Events Logo" class="h-12 w-12 rounded-lg object-cover">
+                        <h1 class="login-header text-lg font-semibold uppercase text-rose-700/85">Isabella Catering</h1>
+                    </div>
+                    <h2 class="mt-2 text-4xl font-semibold tracking-tight text-zinc-950">Welcome Back</h2>
+                    <p class="mt-8 text-sm text-rose-700/70">Login by entering your credentials</p>
+                </div>
 
-                    <!-- Email -->
+                <div class="login-fade-delayed mt-8">
                     <div class="flex flex-col">
-                        <div class="flex justify-between items-center mb-1">
-                            <label for="logEmail" class="text-black text-sm font-semibold">Email</label>
-                            <small id="emailCount" style="color: gray; font-size: 11px;">0 / 50</small>
+                        <div class="mb-2 flex items-center justify-between">
+                            <label for="logEmail" class="text-sm font-medium text-zinc-800">Email</label>
+                            <small id="emailCount" class="text-xs text-zinc-400">0 / 50</small>
                         </div>
                         @*email input*@
                         <input id="logEmail" ng-model="lEmail"
@@ -102,14 +216,25 @@
                             <span class="ml-3 text-sm font-bold text-gray-700">Login as Guest</span>
                         </label>
                     </div>
+                </div>
 
-                    <!-- Password -->
-                    <div class="flex flex-col relative">
-                        <div class="flex justify-between items-center mb-1">
-                            <label for="logPWord" class="text-black text-sm font-semibold">Password</label>
-                            <small id="passCount" style="color: gray; font-size: 11px;">0 / 20</small>
+                <div class="login-fade-delayed mt-4 flex items-center">
+                    <label class="flex cursor-pointer items-center gap-3 text-sm font-medium text-zinc-700">
+                        <input type="checkbox"
+                               ng-model="isGuest"
+                               ng-change="changeCredPlaceholder()"
+                               class="h-4 w-4 rounded border-rose-200 bg-white text-rose-500 accent-rose-500 focus:ring-rose-400" />
+                        <span>Login as Guest</span>
+                    </label>
+                </div>
+
+                <form class="mt-5 space-y-5" name="loginForm" novalidate>
+                    <div class="login-fade-delayed flex flex-col">
+                        <div class="mb-2 flex items-center justify-between">
+                            <label for="logPWord" class="text-sm font-medium text-zinc-800">Password</label>
+                            <small id="passCount" class="text-xs text-zinc-400">0 / 20</small>
                         </div>
-                        @* Password input*@
+
                         <div class="relative">
                             <input id="logPWord" ng-model="lPassword"
                                    type="password" ng-required="!isGuest" maxlength="20"
@@ -123,23 +248,31 @@
                                 visibility_off
                             </span>
                         </div>
-
-                        <a href="#" class="mt-1 text-xs text-pink-500 hover:text-pink-900" ng-click="redirectToForgetPassPage()">
-                            Forgot Password?
-                        </a>
                     </div>
 
-                    <!-- Button -->
-                    @*get the log in button to call the logInService function in the main controller when clicked*@
-                    <button type="submit" ng-click="logInService()"
-                            class="w-full rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-lg">
+                    <div class="login-fade-delayed flex items-center justify-between gap-4 text-sm">
+                        <label class="flex items-center gap-3 text-zinc-700">
+                            <input type="checkbox"
+                                   class="h-4 w-4 rounded border-rose-200 bg-white text-rose-500 accent-rose-500 focus:ring-rose-400" />
+                            <span>Remember me</span>
+                        </label>
+                        <button type="button"
+                                ng-click="redirectToForgetPassPage()"
+                                class="font-medium text-rose-700 transition hover:text-rose-800">
+                            Forgot password?
+                        </button>
+                    </div>
+
+                    <button type="submit"
+                            ng-click="logInService()"
+                            class="login-submit login-fade-delayed w-full rounded-lg bg-rose-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-900/10 hover:bg-rose-600">
                         Log in
                     </button>
-
                 </form>
             </div>
-        </div>
+        </section>
+    </div>
+</div>
 
-    </body>
-
-}
+<script>
+</script>

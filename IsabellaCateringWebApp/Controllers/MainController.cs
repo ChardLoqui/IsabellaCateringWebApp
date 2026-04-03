@@ -732,6 +732,49 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
+        public JsonResult getCalendarMonth(int year, int month)
+        {
+            try
+            {
+                if (month < 1 || month > 12)
+                {
+                    return Json(new { success = false, message = "Invalid month." }, JsonRequestBehavior.AllowGet);
+                }
+
+                var monthStart = new DateTime(year, month, 1);
+                var monthEnd = monthStart.AddMonths(1);
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookings = (from booking in db.bookings_tbl
+                                    join client in db.clients_tbl on booking.clientID equals client.clientID
+                                    where booking.bookingDate >= monthStart && booking.bookingDate < monthEnd
+                                    select new
+                                    {
+                                        bookingID = booking.bookingID,
+                                        bookingDate = booking.bookingDate,
+                                        eventName = client.eventName,
+                                        eventTime = booking.eventTime
+                                    })
+                                    .ToList()
+                                    .Select(booking => new
+                                    {
+                                        booking.bookingID,
+                                        dateKey = booking.bookingDate.Year + "-" + booking.bookingDate.Month + "-" + booking.bookingDate.Day,
+                                        booking.eventName,
+                                        booking.eventTime
+                                    })
+                                    .ToList();
+
+                    return Json(new { bookingData = bookings, success = true }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
         public JsonResult getBookingDetails(int bookingID)
         {
             try

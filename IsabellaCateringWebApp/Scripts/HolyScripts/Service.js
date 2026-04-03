@@ -144,6 +144,12 @@
         });
     };
 
+    this.getCalendarMonthService = function (year, month) {
+        return $http.get("/Main/getCalendarMonth", {
+            params: { year: year, month: month }
+        });
+    };
+
     this.getBookingDetailsService = function (bookingID) {
         return $http.get("/Main/getBookingDetails", {
             params: { bookingID: bookingID }
