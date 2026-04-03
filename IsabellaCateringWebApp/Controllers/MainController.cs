@@ -69,62 +69,130 @@ namespace IsabellaCateringWebApp.Controllers
         }
 
         // get creds for login
-        public JsonResult JsonLogGetCreds(tblUsersModel userInfo)
+        public JsonResult JsonLogGetCreds(tblUsersModel userInfo, tblClientsModel clientInfo, string isGuest)
         {
             try
             {
                 using (var db = new IsabellaCateringContext())
                 {
-
-                    var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
-                    if (verify == null)
+                    if (isGuest == "True")
                     {
-                        return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet); ;
-                    }
+                        
 
-                    if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
-                    {
-                        var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
-
-                        waitTime = waitTime == 0 ? 1 : waitTime;
-
-                        return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    else if (verify.password == userInfo.password)
-                    {
-                        verify.attempts = 0;
-                        verify.lockoutEnd = null;
-                        db.SaveChanges();
-
-                        var creds = new tblUsersModel()
+                        var verify = db.clients_tbl.Where(x => x.entryCode.Equals(clientInfo.entryCode)).FirstOrDefault();
+                        if (verify == null)
                         {
-                            userID = verify.userID,
-                            permissionID = verify.permissionID
-                        };
-                        Session["currentLog"] = creds.userID.ToString();
-                        Session["currentPerm"] = creds.permissionID.ToString();
-                        return Json(new { success = true, data = creds }, JsonRequestBehavior.AllowGet);
-                    }
-                    else
-                    {
-                        verify.attempts += 1;
-
-                        if (verify.attempts >= 3)
-                        {
-                            verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
-                            db.SaveChanges();
-
-                            return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
+                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet);
                         }
 
-                        db.SaveChanges(); // Save the incremented attempt
+                        if (verify.password == "0")
+                        {
+                            ForgetVerifyEmailClient(verify.cEmail, verify.entryCode);
+                            return Json(new { success = false, message = "Please change your password first! \n Check your email for a password reset link!" }, JsonRequestBehavior.AllowGet);
+                        }
 
-                        int attemptsLeft = 3 - verify.attempts;
-                        return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
+                        if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
+                        {
+                            var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
+
+                            waitTime = waitTime == 0 ? 1 : waitTime;
+
+                            return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
+                        }
+                        else if (verify.password == clientInfo.password)
+                        {
+                            verify.attempts = 0;
+                            verify.lockoutEnd = null;
+                            db.SaveChanges();
+
+                            var creds = new tblClientsModel()
+                            {
+                                clientID = verify.clientID,
+                                permissionID = verify.permissionID,
+                                receiptID = verify.receiptID
+                            };
+
+                            var receipt = db.bookingreceipts_tbl.Where(x => x.receiptID.Equals(creds.receiptID)).FirstOrDefault();
+                            if (receipt != null)
+                            {
+                                Session["currentLog"] = creds.clientID.ToString();
+                                Session["currentPerm"] = creds.permissionID.ToString();
+                                Session["isGuest"] = "True";
+                                Session["currentBooking"] = receipt.bookingID.ToString();
+                                return Json(new { success = true, data = creds, isGuest=true }, JsonRequestBehavior.AllowGet);
+                            }
+                            else {
+                                return Json(new { success = false, message = "Receipt not found! Please contact us!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                        else
+                        {
+                            verify.attempts += 1;
+
+                            if (verify.attempts >= 3)
+                            {
+                                verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
+                                db.SaveChanges();
+
+                                return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
+                            }
+
+                            db.SaveChanges(); // Save the incremented attempt
+
+                            int attemptsLeft = 3 - verify.attempts;
+                            return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
+                        }
+                    } else {
+
+                        var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
+                        if (verify == null)
+                        {
+                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet); ;
+                        }
+
+                        if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
+                        {
+                            var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
+
+                            waitTime = waitTime == 0 ? 1 : waitTime;
+
+                            return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
+                        }
+                        else if (verify.password == userInfo.password)
+                        {
+                            verify.attempts = 0;
+                            verify.lockoutEnd = null;
+                            db.SaveChanges();
+
+                            var creds = new tblUsersModel()
+                            {
+                                userID = verify.userID,
+                                permissionID = verify.permissionID
+                            };
+                            Session["currentLog"] = creds.userID.ToString();
+                            Session["currentPerm"] = creds.permissionID.ToString();
+                            Session["isGuest"] = "False";
+                            return Json(new { success = true, data = creds, isGuest=false }, JsonRequestBehavior.AllowGet);
+                        }
+                        else
+                        {
+                            verify.attempts += 1;
+
+                            if (verify.attempts >= 3)
+                            {
+                                verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
+                                db.SaveChanges();
+
+                                return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
+                            }
+
+                            db.SaveChanges(); // Save the incremented attempt
+
+                            int attemptsLeft = 3 - verify.attempts;
+                            return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
+                        }
                     }
                 }
-                ;
             }
             catch (Exception ex)
             {
@@ -140,13 +208,15 @@ namespace IsabellaCateringWebApp.Controllers
                 {
                     userID = Session["currentLog"]?.ToString() ?? string.Empty,
                     permID = Session["currentPerm"]?.ToString() ?? string.Empty,
-                    selectedDate = Session["bookingSelectedDate"]?.ToString() ?? string.Empty
+                    selectedDate = Session["bookingSelectedDate"]?.ToString() ?? string.Empty,
+                    isGuest = Session["isGuest"]?.ToString() ?? string.Empty,
+                    bookingID = Session["currentBooking"]?.ToString() ?? string.Empty
                 };
                 return Json(creds, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
         }
 
@@ -155,19 +225,30 @@ namespace IsabellaCateringWebApp.Controllers
         {
             var uID = Session["currentLog"]?.ToString();
             var pID = Session["currentPerm"]?.ToString() ?? "";
-            string uName = "Guest";
-            int currentID = 0;
+            var isG = Session["isGuest"]?.ToString();
+            string uName = "Loading..";
 
             if (!string.IsNullOrEmpty(uID))
             {
-                currentID = int.Parse(uID);
-                using (var db = new IsabellaCateringContext())
-                {
-                    var user = db.users_tbl.FirstOrDefault(x => x.userID == currentID);
-                    if (user != null) uName = $"{user.firstName} {user.lastName}";
+                if (isG == "True") {
+                    int id = int.Parse(uID);
+                    using (var db = new IsabellaCateringContext())
+                    {
+                        var user = db.clients_tbl.FirstOrDefault(x => x.clientID == id);
+                        if (user != null) uName = $"{user.cFName} {user.cLName}";
+                    }
+                } else { 
+                    int id = int.Parse(uID);
+                    using (var db = new IsabellaCateringContext())
+                    {
+                        var user = db.users_tbl.FirstOrDefault(x => x.userID == id);
+                        if (user != null) uName = $"{user.firstName} {user.lastName}";
+                    }
                 }
+                    
             }
 
+            return Json(new { userName = uName, permID = pID, isGuest = isG}, JsonRequestBehavior.AllowGet);
             return Json(new
             {
                 userID = currentID,
@@ -215,7 +296,7 @@ namespace IsabellaCateringWebApp.Controllers
                     }
                 }
 
-                return Json(new { success = false, message = realError });
+                return Json(new { success = false, message = realError }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -237,6 +318,20 @@ namespace IsabellaCateringWebApp.Controllers
                 }).ToList(); // Execution happens here
 
                 return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult logOut()
+        {
+            try
+            {
+                Session.Clear();
+                Session.Abandon();
+                return Json(new { success = true, message = "Logout Success" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
             }
         }
 
@@ -288,13 +383,14 @@ namespace IsabellaCateringWebApp.Controllers
                             db.passwordtokens_tbl.Add(new tblPasswordTokensModel
                             {
                                 userID = verify.userID,
+                                clientID = 0,
                                 hashedToken = tokenHash,
                                 dateCreated = DateTime.UtcNow,
                                 dateExpiry = DateTime.UtcNow.AddMinutes(10)
                             });
                             db.SaveChanges();
 
-                            string link = "https://localhost:44323/Main/chgPassPage?token=" + token;
+                            string link = "https://localhost:44323/Main/ChangePassPage?token=" + token;
 
                             var smtp = new SmtpClient();
                             smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
@@ -308,6 +404,71 @@ namespace IsabellaCateringWebApp.Controllers
 
                             smtp.Send(mail);
                             return verify.userID;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    else
+                        return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        public int? ForgetVerifyEmailClient(string userEmail, string entryCode)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var now = DateTime.UtcNow;
+                    string token = GenerateToken();
+                    string tokenHash = HashToken(token);
+                    var verify = db.clients_tbl.Where(x => x.entryCode.Equals(entryCode)).FirstOrDefault();
+                    if (verify != null)
+                    {
+                        userEmail = verify.cEmail;
+                        var expiredTokens = db.passwordtokens_tbl
+                            .Where(x => x.dateExpiry < now)
+                            .ToList();
+                        db.passwordtokens_tbl.RemoveRange(expiredTokens);
+                        db.SaveChanges();
+
+                        var existingToken = db.passwordtokens_tbl
+                            .FirstOrDefault(x => x.clientID == verify.clientID
+                            && x.dateExpiry > now);
+
+                        if (existingToken == null)
+                        {
+                            db.passwordtokens_tbl.Add(new tblPasswordTokensModel
+                            {
+                                userID = 0,
+                                clientID = verify.clientID,
+                                hashedToken = tokenHash,
+                                dateCreated = DateTime.UtcNow,
+                                dateExpiry = DateTime.UtcNow.AddMinutes(10)
+                            });
+                            db.SaveChanges();
+
+                            string link = "https://localhost:44323/Main/ChangePassPage?token=" + token;
+
+                            var smtp = new SmtpClient();
+                            smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                            smtp.PickupDirectoryLocation = @"C:\Emails";
+
+                            var mail = new MailMessage();
+                            mail.From = new MailAddress("no-reply@localhost");
+                            mail.To.Add(userEmail);
+                            mail.Subject = "Reset Password";
+                            mail.Body = "Your Password Reset Link " + link;
+
+                            smtp.Send(mail);
+                            return verify.clientID;
                         }
                         else
                         {
@@ -361,11 +522,26 @@ namespace IsabellaCateringWebApp.Controllers
                     }
                     else
                     {
-                        var userData = db.users_tbl.Where(x => x.userID.Equals(verify.userID)).FirstOrDefault();
-                        userData.password = newPassword;
-                        db.passwordtokens_tbl.Remove(verify);
-                        db.SaveChanges();
-                        return true;
+                        if(verify.clientID == 0)
+                        {
+                            var userData = db.users_tbl.Where(x => x.userID.Equals(verify.userID)).FirstOrDefault();
+                            userData.password = newPassword;
+                            db.passwordtokens_tbl.Remove(verify);
+                            db.SaveChanges();
+                            return true;
+                        }
+                        else if(verify.userID == 0)
+                        {
+                            var clientData = db.clients_tbl.Where(x => x.clientID.Equals(verify.clientID)).FirstOrDefault();
+                            clientData.password = newPassword;
+                            db.passwordtokens_tbl.Remove(verify);
+                            db.SaveChanges();
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
                     }
 
                 }
