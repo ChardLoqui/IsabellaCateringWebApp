@@ -247,13 +247,12 @@ namespace IsabellaCateringWebApp.Controllers
                 }
                     
             }
-
-            return Json(new { userName = uName, permID = pID, isGuest = isG}, JsonRequestBehavior.AllowGet);
             return Json(new
             {
-                userID = currentID,
+                userID = uID,
                 userName = uName,
-                permID = pID
+                permID = pID,
+                isGuest = isG
             }, JsonRequestBehavior.AllowGet);
         }
 

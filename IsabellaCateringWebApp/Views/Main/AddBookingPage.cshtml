@@ -3,7 +3,7 @@
     ViewBag.Title = "Create Booking";
 }
 
-<div class="bg-gray-50" ng-init="authenticateLoginCredentials()">
+<div class="bg-gray-50" ng-init="authenticateLoginCredentials()" ng-click="handleDocumentClick($event)">
     <div class="flex min-h-screen w-full items-center justify-center p-4">
 
         <form name="eventForm" ng-submit="bookEvent()" novalidate>
