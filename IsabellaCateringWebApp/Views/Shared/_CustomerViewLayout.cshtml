@@ -19,10 +19,6 @@
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- PDFmaker -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-
     <style>
         .sidebar {
             width: 80px;
@@ -118,7 +114,7 @@
 
 </head>
 
-<body class="bg-white" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController" ng-init="authenticateAdminLoginCredentials()">
+<body class="bg-white" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController" ng-init="authenticateCustomerLoginCredentials()">
 
     <aside class="sidebar fixed top-0 left-0 z-50 flex h-screen flex-col overflow-hidden">
         @*Logo*@
@@ -131,37 +127,10 @@
 
                 <li class="nav-item">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "BookingCalendarPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("BookingCalendarPage", "Main")">
+                @(currentAction == "CustomerViewPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                       href="@Url.Action("CustomerViewPage", "Main")">
                         <span class="material-icons min-w-[24px]">calendar_month</span>
-                        <span class="nav-text ml-4">Booking Calendar</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "PaymentReminderPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("PaymentReminderPage", "Main")">
-                        <span class="material-icons min-w-[24px]">payments</span>
-                        <span class="nav-text ml-4">Manage Payment</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "AccountsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("AccountsPage", "Main")">
-                        <span class="material-icons min-w-[24px]">group</span>
-                        <span class="nav-text ml-4">Accounts</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "LogsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("LogsPage", "Main")">
-                        <span class="material-icons min-w-[24px]">receipt_long</span>
-                        <span class="nav-text ml-4">Logs</span>
+                        <span class="nav-text ml-4">Event Progress</span>
                     </a>
                 </li>
             </ul>
