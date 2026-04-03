@@ -3,7 +3,7 @@
     ViewBag.Title = "Log In";
 }
 
-<div ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController" class="login-shell min-h-screen">
+<div ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController"  ng-init="authenticateLoginLoginCredentials()" class="login-shell min-h-screen">
     <div class="login-shell-main grid min-h-screen w-full lg:grid-cols-[60%_40%]">
         <section class="login-showcase relative hidden lg:block">
             <div class="login-carousel-shell">
@@ -43,9 +43,12 @@
             <div class="login-form-shell">
                 <div class="login-fade relative flex flex-col items-center justify-center text-center">
                     <div class="login-brand-lockup absolute left-1/2 top-[-4.75rem] flex -translate-x-1/2 items-center justify-center gap-3 whitespace-nowrap">
-                        <img src="~/Content/images/isabellaLogo.jpg" alt="Isabella Catering and Events Logo" class="h-12 w-12 rounded-lg object-cover">
-                        <h1 class="login-header text-lg font-semibold uppercase text-pink-700/85">Isabella Catering</h1>
+                        <img src="~/Content/images/isabellaLogo.jpg" alt="Isabella Catering and Events Logo" class="h-32 w-32 rounded-lg object-cover">
                     </div>
+                    <br />
+                    <br />
+                    <br />
+                    <h1 class="login-header text-lg font-semibold uppercase text-pink-700/85">Isabella Catering</h1>
                     <h2 class="mt-2 text-4xl font-semibold tracking-tight text-zinc-950">Welcome Back</h2>
                     <p class="mt-8 text-sm text-pink-700/70">Login by entering your credentials</p>
                 </div>

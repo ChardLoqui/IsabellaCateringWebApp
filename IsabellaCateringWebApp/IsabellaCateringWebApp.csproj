@@ -1123,7 +1123,7 @@
     <Content Include="Views\Main\PaymentReminderPage.cshtml" />
     <Content Include="Views\Shared\NavbarLayout.cshtml" />
     <Content Include="Views\Shared\_ManagementLayout.cshtml" />
-    <Content Include="Views\Shared\_CustomerViewLayout.cshtml" />
+    <Content Include="Views\Main\AdminViewPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
