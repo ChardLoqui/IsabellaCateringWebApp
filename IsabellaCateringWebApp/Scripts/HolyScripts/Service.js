@@ -185,6 +185,10 @@
             params: { bookingID: bookingID }
         });
     };
+    this.logPaymentReminder = function (data) {
+        return $http.post('/Main/LogPaymentReminder', data);
+    };
+
 
     //========================================================PAYMENT REMINDER END=======================================================
 });
