@@ -12,8 +12,28 @@
     $scope.redirectToBookingCalendarPage = function () {
         window.location.href = "/Main/BookingCalendarPage";
     }
+    $scope.redirectToLoginPage = function () {
+        window.location.href = "/Main/LoginPage";
+    }
+    $scope.redirectToCustomerViewPage = function () {
+        window.location.href = "/Main/CustomerViewPage";
+    }
 
-
+    $scope.authenticateLoginCredentials = function () {
+        IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
+            $scope.displayNavOptions = false;
+            if (returnedData.data.userID == '' && returnedData.data.permID == '') {
+                $scope.redirectToLoginPage();
+            } else {
+                if (returnedData.data.permID < 3) {
+                    $scope.displayNavOptions = true;
+                } else {
+                    $scope.displayNavOptions = false;
+                    $sscope.redirectToCustomerViewPage();
+                }
+            } 
+        });
+    }
     //======================================================== LOGIN START =======================================================
     const emailLogCreds = document.getElementById('logEmail');
     const passwordLogCreds = document.getElementById('logPWord');
@@ -40,7 +60,7 @@
 
         getData.then(function (returnedData) {
             if (returnedData.data.success)
-                $scope.redirectToHomePage();
+                $scope.redirectToBookingCalendarPage();
 
             else if (!returnedData.data.success && returnedData.data.message === "Invalid Credentials") {
                 // pag incorrct yung credentials
@@ -89,6 +109,13 @@
                 document.getElementById('passCount').innerText = '0 / 20';
             }
         });
+    }
+
+    $scope.changeCredPlaceholder = function () {
+        if ($scope.isGuest == true)
+            $scope.emailPlaceholder = "Use Entry Code";
+        else
+            $scope.emailPlaceholder = "Use Email";
     }
 
     //for testing purposes only

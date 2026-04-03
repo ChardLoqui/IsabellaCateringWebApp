@@ -124,7 +124,17 @@
         @*Navbar*@
         <nav class="flex-1 py-4">
             <ul class="space-y-1">
-                <li class="nav-item">
+
+                <li class="nav-item" ng-if="!displayNavOptions">
+                    <a class="group flex items-center px-6 py-3 transition-all duration-200
+                @(currentAction == "CustomerViewPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                       href="@Url.Action("CustomerViewPage", "Main")">
+                        <span class="material-icons min-w-[24px]">calendar_month</span>
+                        <span class="nav-text ml-4">Event Progress</span>
+                    </a>
+                </li>
+
+                <li class="nav-item" ng-if="displayNavOptions">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
                @(currentAction == "BookingCalendarPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                        href="@Url.Action("BookingCalendarPage", "Main")">
@@ -133,7 +143,7 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item" ng-if="displayNavOptions">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
                @(currentAction == "PaymentReminderPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                        href="@Url.Action("PaymentReminderPage", "Main")">
@@ -142,7 +152,7 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item" ng-if="displayNavOptions">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
                @(currentAction == "AccountsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                        href="@Url.Action("AccountsPage", "Main")">
@@ -151,7 +161,7 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item" ng-if="displayNavOptions">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
                @(currentAction == "LogsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                        href="@Url.Action("LogsPage", "Main")">
