@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
@@ -21,6 +22,14 @@ namespace IsabellaCateringWebApp.Controllers
 {
     public class MainController : Controller
     {
+        private class PasswordResetRequestResult
+        {
+            public bool Success { get; set; }
+            public bool HasActiveToken { get; set; }
+            public int? OwnerId { get; set; }
+            public string Message { get; set; }
+        }
+
         // GET: Main
         public ActionResult HomePage()
         {
@@ -91,8 +100,20 @@ namespace IsabellaCateringWebApp.Controllers
 
                         if (verify.password == "0")
                         {
-                            ForgetVerifyEmailClient(verify.cEmail, verify.entryCode);
-                            return Json(new { success = false, message = "Please change your password first! \n Check your email for a password reset link!" }, JsonRequestBehavior.AllowGet);
+                            var resetResult = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                            var detailMessage = resetResult.Success
+                                ? "Check your email for a password reset link!"
+                                : resetResult.HasActiveToken
+                                    ? "A reset link is already active. Please check your email."
+                                    : resetResult.Message ?? "We could not send a reset link. Please contact us.";
+
+                            return Json(new
+                            {
+                                success = false,
+                                requiresPasswordChange = true,
+                                message = "Please change your password first!",
+                                detail = detailMessage
+                            }, JsonRequestBehavior.AllowGet);
                         }
 
                         if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
@@ -373,127 +394,213 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        public int? ForgetVerifyEmail(string userEmail)
+        private string NormalizePasswordResetToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return null;
+            }
+
+            return token.Trim().Replace(" ", "+");
+        }
+
+        private void RemoveExpiredPasswordResetTokens(IsabellaCateringContext db, DateTime now)
+        {
+            var expiredTokens = db.passwordtokens_tbl
+                .Where(x => x.dateExpiry < now)
+                .ToList();
+
+            if (expiredTokens.Any())
+            {
+                db.passwordtokens_tbl.RemoveRange(expiredTokens);
+                db.SaveChanges();
+            }
+        }
+
+        private string BuildPasswordResetLink(string token)
+        {
+            if (Request != null && Request.Url != null)
+            {
+                return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
+            }
+
+            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
+        }
+
+        private void SendPasswordResetEmail(string recipientEmail, string token)
+        {
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                throw new InvalidOperationException("No email address is available for password reset.");
+            }
+
+            var pickupDirectory = @"C:\Emails";
+            Directory.CreateDirectory(pickupDirectory);
+
+            using (var smtp = new SmtpClient())
+            using (var mail = new MailMessage())
+            {
+                smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                smtp.PickupDirectoryLocation = pickupDirectory;
+
+                mail.From = new MailAddress("no-reply@localhost");
+                mail.To.Add(recipientEmail);
+                mail.Subject = "Reset Password";
+                mail.Body = "Your Password Reset Link " + BuildPasswordResetLink(token);
+
+                smtp.Send(mail);
+            }
+        }
+
+        private PasswordResetRequestResult CreatePasswordResetRequest(IsabellaCateringContext db, int userId, int clientId, string recipientEmail)
+        {
+            if (userId <= 0 && clientId <= 0)
+            {
+                return new PasswordResetRequestResult
+                {
+                    Success = false,
+                    Message = "No account was found for password reset."
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                return new PasswordResetRequestResult
+                {
+                    Success = false,
+                    OwnerId = userId > 0 ? userId : clientId,
+                    Message = "The account does not have a valid email address."
+                };
+            }
+
+            var now = DateTime.UtcNow;
+            RemoveExpiredPasswordResetTokens(db, now);
+
+            var hasActiveToken = userId > 0
+                ? db.passwordtokens_tbl.Any(x => x.userID == userId && x.dateExpiry > now)
+                : db.passwordtokens_tbl.Any(x => x.clientID == clientId && x.dateExpiry > now);
+
+            if (hasActiveToken)
+            {
+                return new PasswordResetRequestResult
+                {
+                    Success = false,
+                    HasActiveToken = true,
+                    OwnerId = userId > 0 ? userId : clientId,
+                    Message = "A reset link is already active. Please check your email."
+                };
+            }
+
+            var token = GenerateToken();
+            var tokenHash = HashToken(token);
+
+            var passwordToken = new tblPasswordTokensModel
+            {
+                userID = userId,
+                clientID = clientId,
+                hashedToken = tokenHash,
+                dateCreated = now,
+                dateExpiry = now.AddMinutes(10)
+            };
+
+            db.passwordtokens_tbl.Add(passwordToken);
+            db.SaveChanges();
+
+            try
+            {
+                SendPasswordResetEmail(recipientEmail, token);
+            }
+            catch
+            {
+                db.passwordtokens_tbl.Remove(passwordToken);
+                db.SaveChanges();
+                throw;
+            }
+
+            return new PasswordResetRequestResult
+            {
+                Success = true,
+                OwnerId = userId > 0 ? userId : clientId,
+                Message = "Password reset link sent."
+            };
+        }
+
+        private bool IsPasswordResetTokenValid(IsabellaCateringContext db, string token)
+        {
+            var normalizedToken = NormalizePasswordResetToken(token);
+            if (string.IsNullOrWhiteSpace(normalizedToken))
+            {
+                return false;
+            }
+
+            var hash = HashToken(normalizedToken);
+            var verify = db.passwordtokens_tbl.FirstOrDefault(x => x.hashedToken.Equals(hash));
+
+            return verify != null && verify.dateExpiry >= DateTime.UtcNow;
+        }
+
+        public JsonResult ForgetVerifyEmail(string userEmail)
         {
             try
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    var now = DateTime.UtcNow;
-                    string token = GenerateToken();
-                    string tokenHash = HashToken(token);
-                    var verify = db.users_tbl.Where(x => x.email.Equals(userEmail)).FirstOrDefault();
-                    if (verify != null)
+                    var normalizedEmail = (userEmail ?? string.Empty).Trim();
+                    var verify = db.users_tbl.FirstOrDefault(x => x.email.Equals(normalizedEmail));
+                    if (verify == null)
                     {
-                        var expiredTokens = db.passwordtokens_tbl
-                            .Where(x => x.dateExpiry < now)
-                            .ToList();
-                        db.passwordtokens_tbl.RemoveRange(expiredTokens);
-                        db.SaveChanges();
-
-                        var existingToken = db.passwordtokens_tbl
-                            .FirstOrDefault(x => x.userID == verify.userID
-                            && x.dateExpiry > now);
-
-                        if (existingToken == null)
+                        return Json(new
                         {
-                            db.passwordtokens_tbl.Add(new tblPasswordTokensModel
-                            {
-                                userID = verify.userID,
-                                clientID = 0,
-                                hashedToken = tokenHash,
-                                dateCreated = DateTime.UtcNow,
-                                dateExpiry = DateTime.UtcNow.AddMinutes(10)
-                            });
-                            db.SaveChanges();
-
-                            string link = "https://localhost:44323/Main/ChangePassPage?token=" + token;
-
-                            var smtp = new SmtpClient();
-                            smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-                            smtp.PickupDirectoryLocation = @"C:\Emails";
-
-                            var mail = new MailMessage();
-                            mail.From = new MailAddress("no-reply@localhost");
-                            mail.To.Add(userEmail);
-                            mail.Subject = "Reset Password";
-                            mail.Body = "Your Password Reset Link " + link;
-
-                            smtp.Send(mail);
-                            return verify.userID;
-                        }
-                        else
-                        {
-                            return null;
-                        }
+                            success = false,
+                            hasActiveToken = false,
+                            ownerId = (int?)null,
+                            message = "The email you entered is not registered in our system."
+                        }, JsonRequestBehavior.AllowGet);
                     }
-                    else
-                        return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
-            }
-        }
 
-        public int? ForgetVerifyEmailClient(string userEmail, string entryCode)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var now = DateTime.UtcNow;
-                    string token = GenerateToken();
-                    string tokenHash = HashToken(token);
-                    var verify = db.clients_tbl.Where(x => x.entryCode.Equals(entryCode)).FirstOrDefault();
-                    if (verify != null)
+                    var result = CreatePasswordResetRequest(db, verify.userID, 0, verify.email);
+                    return Json(new
                     {
-                        userEmail = verify.cEmail;
-                        var expiredTokens = db.passwordtokens_tbl
-                            .Where(x => x.dateExpiry < now)
-                            .ToList();
-                        db.passwordtokens_tbl.RemoveRange(expiredTokens);
-                        db.SaveChanges();
+                        success = result.Success,
+                        hasActiveToken = result.HasActiveToken,
+                        ownerId = result.OwnerId,
+                        message = result.Message
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
 
-                        var existingToken = db.passwordtokens_tbl
-                            .FirstOrDefault(x => x.clientID == verify.clientID
-                            && x.dateExpiry > now);
-
-                        if (existingToken == null)
+        public JsonResult ForgetVerifyEmailClient(string userEmail, string entryCode)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var normalizedEntryCode = (entryCode ?? string.Empty).Trim();
+                    var verify = db.clients_tbl.FirstOrDefault(x => x.entryCode.Equals(normalizedEntryCode));
+                    if (verify == null)
+                    {
+                        return Json(new
                         {
-                            db.passwordtokens_tbl.Add(new tblPasswordTokensModel
-                            {
-                                userID = 0,
-                                clientID = verify.clientID,
-                                hashedToken = tokenHash,
-                                dateCreated = DateTime.UtcNow,
-                                dateExpiry = DateTime.UtcNow.AddMinutes(10)
-                            });
-                            db.SaveChanges();
-
-                            string link = "https://localhost:44323/Main/ChangePassPage?token=" + token;
-
-                            var smtp = new SmtpClient();
-                            smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-                            smtp.PickupDirectoryLocation = @"C:\Emails";
-
-                            var mail = new MailMessage();
-                            mail.From = new MailAddress("no-reply@localhost");
-                            mail.To.Add(userEmail);
-                            mail.Subject = "Reset Password";
-                            mail.Body = "Your Password Reset Link " + link;
-
-                            smtp.Send(mail);
-                            return verify.clientID;
-                        }
-                        else
-                        {
-                            return null;
-                        }
+                            success = false,
+                            hasActiveToken = false,
+                            ownerId = (int?)null,
+                            message = "The entry code you entered is not registered in our system."
+                        }, JsonRequestBehavior.AllowGet);
                     }
-                    else
-                        return null;
+
+                    var result = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                    return Json(new
+                    {
+                        success = result.Success,
+                        hasActiveToken = result.HasActiveToken,
+                        ownerId = result.OwnerId,
+                        message = result.Message
+                    }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
@@ -502,19 +609,16 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        public Boolean VerifyForgetToken(string token)
+        public JsonResult VerifyForgetToken(string token)
         {
             try
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    string hash = HashToken(token);
-
-                    var verify = db.passwordtokens_tbl.Where(x => x.hashedToken.Equals(hash)).FirstOrDefault();
-                    if (verify == null || verify.dateExpiry < DateTime.UtcNow)
-                        return false;
-                    else
-                        return true;
+                    return Json(new
+                    {
+                        valid = IsPasswordResetTokenValid(db, token)
+                    }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
@@ -523,43 +627,60 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        public Boolean changeForgotPassword(string unhashedToken, string newPassword)
+        public JsonResult changeForgotPassword(string unhashedToken, string newPassword)
         {
             try
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    string correctedToken = unhashedToken.Replace(" ", "+");
+                    var correctedToken = NormalizePasswordResetToken(unhashedToken);
+                    if (string.IsNullOrWhiteSpace(correctedToken) || string.IsNullOrWhiteSpace(newPassword))
+                    {
+                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                    }
+
                     string hash = HashToken(correctedToken);
 
-                    var verify = db.passwordtokens_tbl.Where(x => x.hashedToken.Equals(hash)).FirstOrDefault();
+                    var verify = db.passwordtokens_tbl.FirstOrDefault(x => x.hashedToken.Equals(hash));
                     if (verify == null || verify.dateExpiry < DateTime.UtcNow)
                     {
-                        return false;
+                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    if (verify.clientID == 0)
+                    {
+                        var userData = db.users_tbl.FirstOrDefault(x => x.userID.Equals(verify.userID));
+                        if (userData == null)
+                        {
+                            return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        userData.password = newPassword;
+                        userData.attempts = 0;
+                        userData.lockoutEnd = null;
+                        userData.dateUpdated = DateTime.Now;
+                    }
+                    else if (verify.userID == 0)
+                    {
+                        var clientData = db.clients_tbl.FirstOrDefault(x => x.clientID.Equals(verify.clientID));
+                        if (clientData == null)
+                        {
+                            return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        clientData.password = newPassword;
+                        clientData.attempts = 0;
+                        clientData.lockoutEnd = null;
+                        clientData.dateUpdated = DateTime.Now;
                     }
                     else
                     {
-                        if(verify.clientID == 0)
-                        {
-                            var userData = db.users_tbl.Where(x => x.userID.Equals(verify.userID)).FirstOrDefault();
-                            userData.password = newPassword;
-                            db.passwordtokens_tbl.Remove(verify);
-                            db.SaveChanges();
-                            return true;
-                        }
-                        else if(verify.userID == 0)
-                        {
-                            var clientData = db.clients_tbl.Where(x => x.clientID.Equals(verify.clientID)).FirstOrDefault();
-                            clientData.password = newPassword;
-                            db.passwordtokens_tbl.Remove(verify);
-                            db.SaveChanges();
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
+                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
                     }
+
+                    db.passwordtokens_tbl.Remove(verify);
+                    db.SaveChanges();
+                    return Json(new { success = true }, JsonRequestBehavior.AllowGet);
 
                 }
             }
@@ -1070,6 +1191,120 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        private int ResolvePackageId(IsabellaCateringContext db, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        {
+            var now = DateTime.Now;
+            var existingSides = db.sidesgrptypes_tbl.FirstOrDefault(x => x.sidesGrpTyp1 == sidesGrpTypes.sidesGrpTyp1 && x.sidesGrpTyp2 == sidesGrpTypes.sidesGrpTyp2 && x.sidesGrpTyp3 == sidesGrpTypes.sidesGrpTyp3 && x.sidesGrpTyp4 == sidesGrpTypes.sidesGrpTyp4);
+            var grpSidesID = existingSides != null ? existingSides.sidesGrpTypID : 0;
+            if (existingSides == null)
+            {
+                var newSides = new tblSidesGrpTypesModel() { sidesGrpTyp1 = sidesGrpTypes.sidesGrpTyp1, sidesGrpTyp2 = sidesGrpTypes.sidesGrpTyp2, sidesGrpTyp3 = sidesGrpTypes.sidesGrpTyp3, sidesGrpTyp4 = sidesGrpTypes.sidesGrpTyp4, dateCreated = now, dateUpdated = now };
+                db.sidesgrptypes_tbl.Add(newSides);
+                db.SaveChanges();
+                grpSidesID = newSides.sidesGrpTypID;
+            }
+
+            var existingSpecials = db.specialsgrptypes_tbl.FirstOrDefault(x => x.specialsGrpTyp1 == specialsGrpTypes.specialsGrpTyp1 && x.specialsGrpTyp2 == specialsGrpTypes.specialsGrpTyp2 && x.specialsGrpTyp3 == specialsGrpTypes.specialsGrpTyp3 && x.specialsGrpTyp4 == specialsGrpTypes.specialsGrpTyp4 && x.specialsGrpTyp5 == specialsGrpTypes.specialsGrpTyp5 && x.specialsGrpTyp6 == specialsGrpTypes.specialsGrpTyp6 && x.specialsGrpTyp7 == specialsGrpTypes.specialsGrpTyp7 && x.specialsGrpTyp8 == specialsGrpTypes.specialsGrpTyp8 && x.specialsGrpTyp9 == specialsGrpTypes.specialsGrpTyp9);
+            var grpSpecialsID = existingSpecials != null ? existingSpecials.specialsGrpTypID : 0;
+            if (existingSpecials == null)
+            {
+                var newSpecials = new tblSpecialsGrpTypesModel() { specialsGrpTyp1 = specialsGrpTypes.specialsGrpTyp1, specialsGrpTyp2 = specialsGrpTypes.specialsGrpTyp2, specialsGrpTyp3 = specialsGrpTypes.specialsGrpTyp3, specialsGrpTyp4 = specialsGrpTypes.specialsGrpTyp4, specialsGrpTyp5 = specialsGrpTypes.specialsGrpTyp5, specialsGrpTyp6 = specialsGrpTypes.specialsGrpTyp6, specialsGrpTyp7 = specialsGrpTypes.specialsGrpTyp7, specialsGrpTyp8 = specialsGrpTypes.specialsGrpTyp8, specialsGrpTyp9 = specialsGrpTypes.specialsGrpTyp9, dateCreated = now, dateUpdated = now };
+                db.specialsgrptypes_tbl.Add(newSpecials);
+                db.SaveChanges();
+                grpSpecialsID = newSpecials.specialsGrpTypID;
+            }
+
+            var existingStaff = db.staffgrptypes_tbl.FirstOrDefault(x => x.staffGrpTyp1 == staffGrpTypes.staffGrpTyp1 && x.staffGrpTyp2 == staffGrpTypes.staffGrpTyp2 && x.staffGrpTyp3 == staffGrpTypes.staffGrpTyp3);
+            var grpStaffID = existingStaff != null ? existingStaff.staffGrpTypID : 0;
+            if (existingStaff == null)
+            {
+                var newStaff = new tblStaffGrpTypesModel() { staffGrpTyp1 = staffGrpTypes.staffGrpTyp1, staffGrpTyp2 = staffGrpTypes.staffGrpTyp2, staffGrpTyp3 = staffGrpTypes.staffGrpTyp3, dateCreated = now, dateUpdated = now };
+                db.staffgrptypes_tbl.Add(newStaff);
+                db.SaveChanges();
+                grpStaffID = newStaff.staffGrpTypID;
+            }
+
+            var existingEquipment = db.equipgrptypes_tbl.FirstOrDefault(x => x.equipGrpTyp1 == equipGrpTypes.equipGrpTyp1 && x.equipGrpTyp2 == equipGrpTypes.equipGrpTyp2 && x.equipGrpTyp3 == equipGrpTypes.equipGrpTyp3 && x.equipGrpTyp4 == equipGrpTypes.equipGrpTyp4 && x.equipGrpTyp5 == equipGrpTypes.equipGrpTyp5 && x.equipGrpTyp6 == equipGrpTypes.equipGrpTyp6 && x.equipGrpTyp7 == equipGrpTypes.equipGrpTyp7);
+            var grpEquipID = existingEquipment != null ? existingEquipment.equipGrpTypID : 0;
+            if (existingEquipment == null)
+            {
+                var newEquip = new tblEquipGrpTypesModel() { equipGrpTyp1 = equipGrpTypes.equipGrpTyp1, equipGrpTyp2 = equipGrpTypes.equipGrpTyp2, equipGrpTyp3 = equipGrpTypes.equipGrpTyp3, equipGrpTyp4 = equipGrpTypes.equipGrpTyp4, equipGrpTyp5 = equipGrpTypes.equipGrpTyp5, equipGrpTyp6 = equipGrpTypes.equipGrpTyp6, equipGrpTyp7 = equipGrpTypes.equipGrpTyp7, dateCreated = now, dateUpdated = now };
+                db.equipgrptypes_tbl.Add(newEquip);
+                db.SaveChanges();
+                grpEquipID = newEquip.equipGrpTypID;
+            }
+
+            var existingEntertainment = db.entertainmentgrptypes_tbl.FirstOrDefault(x => x.entertainmentGrpTyp1 == entertainmentGrpTypes.entertainmentGrpTyp1 && x.entertainmentGrpTyp2 == entertainmentGrpTypes.entertainmentGrpTyp2 && x.entertainmentGrpTyp3 == entertainmentGrpTypes.entertainmentGrpTyp3 && x.entertainmentGrpTyp4 == entertainmentGrpTypes.entertainmentGrpTyp4 && x.entertainmentGrpTyp5 == entertainmentGrpTypes.entertainmentGrpTyp5 && x.entertainmentGrpTyp6 == entertainmentGrpTypes.entertainmentGrpTyp6 && x.entertainmentGrpTyp7 == entertainmentGrpTypes.entertainmentGrpTyp7);
+            var grpEntertainmentID = existingEntertainment != null ? existingEntertainment.entertainmentGrpTypID : 0;
+            if (existingEntertainment == null)
+            {
+                var newEntertainment = new tblEntertainmentGrpTypesModel() { entertainmentGrpTyp1 = entertainmentGrpTypes.entertainmentGrpTyp1, entertainmentGrpTyp2 = entertainmentGrpTypes.entertainmentGrpTyp2, entertainmentGrpTyp3 = entertainmentGrpTypes.entertainmentGrpTyp3, entertainmentGrpTyp4 = entertainmentGrpTypes.entertainmentGrpTyp4, entertainmentGrpTyp5 = entertainmentGrpTypes.entertainmentGrpTyp5, entertainmentGrpTyp6 = entertainmentGrpTypes.entertainmentGrpTyp6, entertainmentGrpTyp7 = entertainmentGrpTypes.entertainmentGrpTyp7, dateCreated = now, dateUpdated = now };
+                db.entertainmentgrptypes_tbl.Add(newEntertainment);
+                db.SaveChanges();
+                grpEntertainmentID = newEntertainment.entertainmentGrpTypID;
+            }
+
+            var existingPhoto = db.photogrptypes_tbl.FirstOrDefault(x => x.photoGrpTyp1 == photoGrpTypes.photoGrpTyp1 && x.photoGrpTyp2 == photoGrpTypes.photoGrpTyp2 && x.photoGrpTyp3 == photoGrpTypes.photoGrpTyp3 && x.photoGrpTyp4 == photoGrpTypes.photoGrpTyp4 && x.photoGrpTyp5 == photoGrpTypes.photoGrpTyp5 && x.photoGrpTyp6 == photoGrpTypes.photoGrpTyp6 && x.photoGrpTyp7 == photoGrpTypes.photoGrpTyp7);
+            var grpPhotoID = existingPhoto != null ? existingPhoto.photoGrpTypID : 0;
+            if (existingPhoto == null)
+            {
+                var newPhoto = new tblPhotoGrpTypesModel() { photoGrpTyp1 = photoGrpTypes.photoGrpTyp1, photoGrpTyp2 = photoGrpTypes.photoGrpTyp2, photoGrpTyp3 = photoGrpTypes.photoGrpTyp3, photoGrpTyp4 = photoGrpTypes.photoGrpTyp4, photoGrpTyp5 = photoGrpTypes.photoGrpTyp5, photoGrpTyp6 = photoGrpTypes.photoGrpTyp6, photoGrpTyp7 = photoGrpTypes.photoGrpTyp7, dateCreated = now, dateUpdated = now };
+                db.photogrptypes_tbl.Add(newPhoto);
+                db.SaveChanges();
+                grpPhotoID = newPhoto.photoGrpTypID;
+            }
+
+            var existingKeepsakes = db.keepsakesgrptypes_tbl.FirstOrDefault(x => x.keepsakesGrpTyp1 == keepsakesGrpTypes.keepsakesGrpTyp1 && x.keepsakesGrpTyp2 == keepsakesGrpTypes.keepsakesGrpTyp2 && x.keepsakesGrpTyp3 == keepsakesGrpTypes.keepsakesGrpTyp3 && x.keepsakesGrpTyp4 == keepsakesGrpTypes.keepsakesGrpTyp4 && x.keepsakesGrpTyp5 == keepsakesGrpTypes.keepsakesGrpTyp5);
+            var grpKeepsakesID = existingKeepsakes != null ? existingKeepsakes.keepsakesGrpTypID : 0;
+            if (existingKeepsakes == null)
+            {
+                var newKeepsakes = new tblKeepsakesGrpTypesModel() { keepsakesGrpTyp1 = keepsakesGrpTypes.keepsakesGrpTyp1, keepsakesGrpTyp2 = keepsakesGrpTypes.keepsakesGrpTyp2, keepsakesGrpTyp3 = keepsakesGrpTypes.keepsakesGrpTyp3, keepsakesGrpTyp4 = keepsakesGrpTypes.keepsakesGrpTyp4, keepsakesGrpTyp5 = keepsakesGrpTypes.keepsakesGrpTyp5, dateCreated = now, dateUpdated = now };
+                db.keepsakesgrptypes_tbl.Add(newKeepsakes);
+                db.SaveChanges();
+                grpKeepsakesID = newKeepsakes.keepsakesGrpTypID;
+            }
+
+            var existingDebut = db.debutgrptypes_tbl.FirstOrDefault(x => x.debutGrpTyp1 == debutGrpTypes.debutGrpTyp1 && x.debutGrpTyp2 == debutGrpTypes.debutGrpTyp2 && x.debutGrpTyp3 == debutGrpTypes.debutGrpTyp3);
+            var grpDebutID = existingDebut != null ? existingDebut.debutGrpTypID : 0;
+            if (existingDebut == null)
+            {
+                var newDebut = new tblDebutGrpTypesModel() { debutGrpTyp1 = debutGrpTypes.debutGrpTyp1, debutGrpTyp2 = debutGrpTypes.debutGrpTyp2, debutGrpTyp3 = debutGrpTypes.debutGrpTyp3, dateCreated = now, dateUpdated = now };
+                db.debutgrptypes_tbl.Add(newDebut);
+                db.SaveChanges();
+                grpDebutID = newDebut.debutGrpTypID;
+            }
+
+            var existingPackage = db.packages_tbl.FirstOrDefault(x => x.packageTypID == packages.packageTypID && x.pricePaxID == packages.pricePaxID && x.mainCourseTypID == packages.mainCourseTypID && x.sidesGrpTypID == grpSidesID && x.centerPieceTypID == packages.centerPieceTypID && x.seatingTypID == packages.seatingTypID && x.specialsGrpTypID == grpSpecialsID && x.staffGrpTypID == grpStaffID && x.backdropTypID == packages.backdropTypID && x.entranceTypID == packages.entranceTypID && x.couchTypID == packages.couchTypID && x.equipGrpTypID == grpEquipID && x.entertainmentGrpTypID == grpEntertainmentID && x.photoGrpTypID == grpPhotoID && x.keepsakesGrptypID == grpKeepsakesID && x.debutGrpTypID == grpDebutID && x.incStaples == packages.incStaples && x.incBftSet == packages.incBftSet && x.incStyling == packages.incStyling && x.incTableSet == packages.incTableSet && x.incDnrWare == packages.incDnrWare);
+            if (existingPackage != null)
+            {
+                return existingPackage.packageID;
+            }
+
+            var newPackage = new tblPackagesModel() { packageTypID = packages.packageTypID, pricePaxID = packages.pricePaxID, mainCourseTypID = packages.mainCourseTypID, sidesGrpTypID = grpSidesID, centerPieceTypID = packages.centerPieceTypID, seatingTypID = packages.seatingTypID, specialsGrpTypID = grpSpecialsID, staffGrpTypID = grpStaffID, backdropTypID = packages.backdropTypID, entranceTypID = packages.entranceTypID, couchTypID = packages.couchTypID, equipGrpTypID = grpEquipID, entertainmentGrpTypID = grpEntertainmentID, photoGrpTypID = grpPhotoID, keepsakesGrptypID = grpKeepsakesID, debutGrpTypID = grpDebutID, incStaples = packages.incStaples, incBftSet = packages.incBftSet, incStyling = packages.incStyling, incTableSet = packages.incTableSet, incDnrWare = packages.incDnrWare, dateCreated = now, dateUpdated = now };
+            db.packages_tbl.Add(newPackage);
+            db.SaveChanges();
+
+            return newPackage.packageID;
+        }
+
+        private void UpdatePrimaryBookingPayment(IsabellaCateringContext db, int bookingID, tblPaymentsModel paymentInfo, DateTime bookingDate)
+        {
+            if (paymentInfo == null)
+            {
+                return;
+            }
+
+            var existingPayment = db.payments_tbl.Where(p => p.bookingID == bookingID).OrderBy(p => p.paymentType == "-" || p.paymentType == null || p.paymentType == "" ? 0 : 1).ThenBy(p => p.paymentID).FirstOrDefault();
+            if (existingPayment == null)
+            {
+                return;
+            }
+
+            existingPayment.amountDue = paymentInfo.amountDue;
+            existingPayment.dueDate = bookingDate;
+            existingPayment.dateUpdated = DateTime.Now;
+        }
+
         [HttpPost]
         public JsonResult insertPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
         {
@@ -1077,325 +1312,7 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    int grpSidesID;
-                    int grpSpecialsID;
-                    int grpStaffID;
-                    int grpEquipID;
-                    int grpEntertainmentID;
-                    int grpPhotoID;
-                    int grpKeepsakesID;
-                    int grpDebutID;
-                    int currPackageID;
-
-                    var existingSides = db.sidesgrptypes_tbl.FirstOrDefault(x =>
-                        x.sidesGrpTyp1 == sidesGrpTypes.sidesGrpTyp1 &&
-                        x.sidesGrpTyp2 == sidesGrpTypes.sidesGrpTyp2 &&
-                        x.sidesGrpTyp3 == sidesGrpTypes.sidesGrpTyp3 &&
-                        x.sidesGrpTyp4 == sidesGrpTypes.sidesGrpTyp4
-                    );
-                    if (existingSides != null)
-                    {
-                        grpSidesID = existingSides.sidesGrpTypID;
-                    }
-                    else
-                    {
-                        var newSides = new tblSidesGrpTypesModel()
-                        {
-                            sidesGrpTyp1 = sidesGrpTypes.sidesGrpTyp1,
-                            sidesGrpTyp2 = sidesGrpTypes.sidesGrpTyp2,
-                            sidesGrpTyp3 = sidesGrpTypes.sidesGrpTyp3,
-                            sidesGrpTyp4 = sidesGrpTypes.sidesGrpTyp4,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.sidesgrptypes_tbl.Add(newSides);
-                        db.SaveChanges();
-
-                        grpSidesID = newSides.sidesGrpTypID;
-                    }
-
-                    var existingSpecials = db.specialsgrptypes_tbl.FirstOrDefault(x =>
-                        x.specialsGrpTyp1 == specialsGrpTypes.specialsGrpTyp1 &&
-                        x.specialsGrpTyp2 == specialsGrpTypes.specialsGrpTyp2 &&
-                        x.specialsGrpTyp3 == specialsGrpTypes.specialsGrpTyp3 &&
-                        x.specialsGrpTyp4 == specialsGrpTypes.specialsGrpTyp4 &&
-                        x.specialsGrpTyp5 == specialsGrpTypes.specialsGrpTyp5 &&
-                        x.specialsGrpTyp6 == specialsGrpTypes.specialsGrpTyp6 &&
-                        x.specialsGrpTyp7 == specialsGrpTypes.specialsGrpTyp7 &&
-                        x.specialsGrpTyp8 == specialsGrpTypes.specialsGrpTyp8 &&
-                        x.specialsGrpTyp9 == specialsGrpTypes.specialsGrpTyp9
-                    );
-                    if (existingSpecials != null)
-                    {
-                        grpSpecialsID = existingSpecials.specialsGrpTypID;
-                    }
-                    else
-                    {
-                        var newSpecials = new tblSpecialsGrpTypesModel()
-                        {
-                            specialsGrpTyp1 = specialsGrpTypes.specialsGrpTyp1,
-                            specialsGrpTyp2 = specialsGrpTypes.specialsGrpTyp2,
-                            specialsGrpTyp3 = specialsGrpTypes.specialsGrpTyp3,
-                            specialsGrpTyp4 = specialsGrpTypes.specialsGrpTyp4,
-                            specialsGrpTyp5 = specialsGrpTypes.specialsGrpTyp5,
-                            specialsGrpTyp6 = specialsGrpTypes.specialsGrpTyp6,
-                            specialsGrpTyp7 = specialsGrpTypes.specialsGrpTyp7,
-                            specialsGrpTyp8 = specialsGrpTypes.specialsGrpTyp8,
-                            specialsGrpTyp9 = specialsGrpTypes.specialsGrpTyp9,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.specialsgrptypes_tbl.Add(newSpecials);
-                        db.SaveChanges();
-
-                        grpSpecialsID = newSpecials.specialsGrpTypID;
-                    }
-
-                    var existingStaff = db.staffgrptypes_tbl.FirstOrDefault(x =>
-                        x.staffGrpTyp1 == staffGrpTypes.staffGrpTyp1 &&
-                        x.staffGrpTyp2 == staffGrpTypes.staffGrpTyp2 &&
-                        x.staffGrpTyp3 == staffGrpTypes.staffGrpTyp3
-                    );
-                    if (existingStaff != null)
-                    {
-                        grpStaffID = existingStaff.staffGrpTypID;
-                    }
-                    else
-                    {
-                        var newStaff = new tblStaffGrpTypesModel()
-                        {
-                            staffGrpTyp1 = staffGrpTypes.staffGrpTyp1,
-                            staffGrpTyp2 = staffGrpTypes.staffGrpTyp2,
-                            staffGrpTyp3 = staffGrpTypes.staffGrpTyp3,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.staffgrptypes_tbl.Add(newStaff);
-                        db.SaveChanges();
-
-                        grpStaffID = newStaff.staffGrpTypID;
-                    }
-
-                    var existingEquipment = db.equipgrptypes_tbl.FirstOrDefault(x =>
-                        x.equipGrpTyp1 == equipGrpTypes.equipGrpTyp1 &&
-                        x.equipGrpTyp2 == equipGrpTypes.equipGrpTyp2 &&
-                        x.equipGrpTyp3 == equipGrpTypes.equipGrpTyp3 &&
-                        x.equipGrpTyp4 == equipGrpTypes.equipGrpTyp4 &&
-                        x.equipGrpTyp5 == equipGrpTypes.equipGrpTyp5 &&
-                        x.equipGrpTyp6 == equipGrpTypes.equipGrpTyp6 &&
-                        x.equipGrpTyp7 == equipGrpTypes.equipGrpTyp7
-                    );
-                    if (existingEquipment != null)
-                    {
-                        grpEquipID = existingEquipment.equipGrpTypID;
-                    }
-                    else
-                    {
-                        var newEquip = new tblEquipGrpTypesModel()
-                        {
-                            equipGrpTyp1 = equipGrpTypes.equipGrpTyp1,
-                            equipGrpTyp2 = equipGrpTypes.equipGrpTyp2,
-                            equipGrpTyp3 = equipGrpTypes.equipGrpTyp3,
-                            equipGrpTyp4 = equipGrpTypes.equipGrpTyp4,
-                            equipGrpTyp5 = equipGrpTypes.equipGrpTyp5,
-                            equipGrpTyp6 = equipGrpTypes.equipGrpTyp6,
-                            equipGrpTyp7 = equipGrpTypes.equipGrpTyp7,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.equipgrptypes_tbl.Add(newEquip);
-                        db.SaveChanges();
-
-                        grpEquipID = newEquip.equipGrpTypID;
-                    }
-
-                    var existingEntertainment = db.entertainmentgrptypes_tbl.FirstOrDefault(x =>
-                        x.entertainmentGrpTyp1 == entertainmentGrpTypes.entertainmentGrpTyp1 &&
-                        x.entertainmentGrpTyp2 == entertainmentGrpTypes.entertainmentGrpTyp2 &&
-                        x.entertainmentGrpTyp3 == entertainmentGrpTypes.entertainmentGrpTyp3 &&
-                        x.entertainmentGrpTyp4 == entertainmentGrpTypes.entertainmentGrpTyp4 &&
-                        x.entertainmentGrpTyp5 == entertainmentGrpTypes.entertainmentGrpTyp5 &&
-                        x.entertainmentGrpTyp6 == entertainmentGrpTypes.entertainmentGrpTyp6 &&
-                        x.entertainmentGrpTyp7 == entertainmentGrpTypes.entertainmentGrpTyp7
-                    );
-                    if (existingEntertainment != null)
-                    {
-                        grpEntertainmentID = existingEntertainment.entertainmentGrpTypID;
-                    }
-                    else
-                    {
-                        var newEntertainment = new tblEntertainmentGrpTypesModel()
-                        {
-                            entertainmentGrpTyp1 = entertainmentGrpTypes.entertainmentGrpTyp1,
-                            entertainmentGrpTyp2 = entertainmentGrpTypes.entertainmentGrpTyp2,
-                            entertainmentGrpTyp3 = entertainmentGrpTypes.entertainmentGrpTyp3,
-                            entertainmentGrpTyp4 = entertainmentGrpTypes.entertainmentGrpTyp4,
-                            entertainmentGrpTyp5 = entertainmentGrpTypes.entertainmentGrpTyp5,
-                            entertainmentGrpTyp6 = entertainmentGrpTypes.entertainmentGrpTyp6,
-                            entertainmentGrpTyp7 = entertainmentGrpTypes.entertainmentGrpTyp7,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.entertainmentgrptypes_tbl.Add(newEntertainment);
-                        db.SaveChanges();
-
-                        grpEntertainmentID = newEntertainment.entertainmentGrpTypID;
-                    }
-
-                    var existingPhoto = db.photogrptypes_tbl.FirstOrDefault(x =>
-                        x.photoGrpTyp1 == photoGrpTypes.photoGrpTyp1 &&
-                        x.photoGrpTyp2 == photoGrpTypes.photoGrpTyp2 &&
-                        x.photoGrpTyp3 == photoGrpTypes.photoGrpTyp3 &&
-                        x.photoGrpTyp4 == photoGrpTypes.photoGrpTyp4 &&
-                        x.photoGrpTyp5 == photoGrpTypes.photoGrpTyp5 &&
-                        x.photoGrpTyp6 == photoGrpTypes.photoGrpTyp6 &&
-                        x.photoGrpTyp7 == photoGrpTypes.photoGrpTyp7
-                    );
-                    if (existingPhoto != null)
-                    {
-                        grpPhotoID = existingPhoto.photoGrpTypID;
-                    }
-                    else
-                    {
-                        var newPhoto = new tblPhotoGrpTypesModel()
-                        {
-                            photoGrpTyp1 = photoGrpTypes.photoGrpTyp1,
-                            photoGrpTyp2 = photoGrpTypes.photoGrpTyp2,
-                            photoGrpTyp3 = photoGrpTypes.photoGrpTyp3,
-                            photoGrpTyp4 = photoGrpTypes.photoGrpTyp4,
-                            photoGrpTyp5 = photoGrpTypes.photoGrpTyp5,
-                            photoGrpTyp6 = photoGrpTypes.photoGrpTyp6,
-                            photoGrpTyp7 = photoGrpTypes.photoGrpTyp7,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.photogrptypes_tbl.Add(newPhoto);
-                        db.SaveChanges();
-
-                        grpPhotoID = newPhoto.photoGrpTypID;
-                    }
-
-                    var existingKeepsakes = db.keepsakesgrptypes_tbl.FirstOrDefault(x =>
-                        x.keepsakesGrpTyp1 == keepsakesGrpTypes.keepsakesGrpTyp1 &&
-                        x.keepsakesGrpTyp2 == keepsakesGrpTypes.keepsakesGrpTyp2 &&
-                        x.keepsakesGrpTyp3 == keepsakesGrpTypes.keepsakesGrpTyp3 &&
-                        x.keepsakesGrpTyp4 == keepsakesGrpTypes.keepsakesGrpTyp4 &&
-                        x.keepsakesGrpTyp5 == keepsakesGrpTypes.keepsakesGrpTyp5
-                    );
-                    if (existingKeepsakes != null)
-                    {
-                        grpKeepsakesID = existingKeepsakes.keepsakesGrpTypID;
-                    }
-                    else
-                    {
-                        var newKeepsakes = new tblKeepsakesGrpTypesModel()
-                        {
-                            keepsakesGrpTyp1 = keepsakesGrpTypes.keepsakesGrpTyp1,
-                            keepsakesGrpTyp2 = keepsakesGrpTypes.keepsakesGrpTyp2,
-                            keepsakesGrpTyp3 = keepsakesGrpTypes.keepsakesGrpTyp3,
-                            keepsakesGrpTyp4 = keepsakesGrpTypes.keepsakesGrpTyp4,
-                            keepsakesGrpTyp5 = keepsakesGrpTypes.keepsakesGrpTyp5,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.keepsakesgrptypes_tbl.Add(newKeepsakes);
-                        db.SaveChanges();
-
-                        grpKeepsakesID = newKeepsakes.keepsakesGrpTypID;
-                    }
-
-                    var existingDebut = db.debutgrptypes_tbl.FirstOrDefault(x =>
-                        x.debutGrpTyp1 == debutGrpTypes.debutGrpTyp1 &&
-                        x.debutGrpTyp2 == debutGrpTypes.debutGrpTyp2 &&
-                        x.debutGrpTyp3 == debutGrpTypes.debutGrpTyp3
-                    );
-                    if (existingDebut != null)
-                    {
-                        grpDebutID = existingDebut.debutGrpTypID;
-                    }
-                    else
-                    {
-                        var newDebut = new tblDebutGrpTypesModel()
-                        {
-                            debutGrpTyp1 = debutGrpTypes.debutGrpTyp1,
-                            debutGrpTyp2 = debutGrpTypes.debutGrpTyp2,
-                            debutGrpTyp3 = debutGrpTypes.debutGrpTyp3,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.debutgrptypes_tbl.Add(newDebut);
-                        db.SaveChanges();
-
-                        grpDebutID = newDebut.debutGrpTypID;
-                    }
-
-                    var existingPackage = db.packages_tbl.FirstOrDefault(x =>
-                        x.mainCourseTypID == packages.mainCourseTypID &&
-                        x.sidesGrpTypID == grpSidesID &&
-                        x.centerPieceTypID == packages.centerPieceTypID &&
-                        x.seatingTypID == packages.seatingTypID &&
-                        x.specialsGrpTypID == grpSpecialsID &&
-                        x.staffGrpTypID == grpStaffID &&
-                        x.backdropTypID == packages.backdropTypID &&
-                        x.entranceTypID == packages.entranceTypID &&
-                        x.couchTypID == packages.couchTypID &&
-                        x.equipGrpTypID == grpEquipID &&
-                        x.entertainmentGrpTypID == grpEntertainmentID &&
-                        x.photoGrpTypID == grpPhotoID &&
-                        x.keepsakesGrptypID == grpKeepsakesID &&
-                        x.debutGrpTypID == grpDebutID &&
-                        x.incStaples == packages.incStaples &&
-                        x.incBftSet == packages.incBftSet &&
-                        x.incStyling == packages.incStyling &&
-                        x.incTableSet == packages.incTableSet &&
-                        x.incDnrWare == packages.incDnrWare
-                    );
-                    if (existingPackage != null)
-                    {
-                        currPackageID = existingPackage.packageID;
-                    }
-                    else
-                    {
-                        var newPackage = new tblPackagesModel()
-                        {
-                            packageTypID = 0,
-                            pricePaxID = 0,
-                            mainCourseTypID = packages.mainCourseTypID,
-                            sidesGrpTypID = grpSidesID,
-                            centerPieceTypID = packages.centerPieceTypID,
-                            seatingTypID = packages.seatingTypID,
-                            specialsGrpTypID = grpSpecialsID,
-                            staffGrpTypID = grpStaffID,
-                            backdropTypID = packages.backdropTypID,
-                            entranceTypID = packages.entranceTypID,
-                            couchTypID = packages.couchTypID,
-                            equipGrpTypID = grpEquipID,
-                            entertainmentGrpTypID = grpEntertainmentID,
-                            photoGrpTypID = grpPhotoID,
-                            keepsakesGrptypID = grpKeepsakesID,
-                            debutGrpTypID = grpDebutID,
-                            incStaples = packages.incStaples,
-                            incBftSet = packages.incBftSet,
-                            incStyling = packages.incStyling,
-                            incTableSet = packages.incTableSet,
-                            incDnrWare = packages.incDnrWare,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-
-                        db.packages_tbl.Add(newPackage);
-                        db.SaveChanges();
-
-                        currPackageID = newPackage.packageID;
-                    }
+                    var currPackageID = ResolvePackageId(db, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes);
 
                     string datePart = DateTime.Now.ToString("yyMMdd");
                     string randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
@@ -1495,6 +1412,151 @@ namespace IsabellaCateringWebApp.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult UpdateBooking(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    var existingBooking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingInfo.bookingID);
+                    if (existingBooking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    var existingClient = db.clients_tbl.FirstOrDefault(c => c.clientID == existingBooking.clientID);
+                    if (existingClient == null)
+                    {
+                        return Json(new { success = false, message = "Client not found for this booking." });
+                    }
+
+                    var resolvedPackageID = ResolvePackageId(db, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes);
+
+                    existingClient.eventName = clientInfo.eventName;
+                    existingClient.cFName = clientInfo.cFName;
+                    existingClient.cLName = clientInfo.cLName;
+                    existingClient.cEmail = clientInfo.cEmail;
+                    existingClient.cContact = clientInfo.cContact;
+                    existingClient.cCeleb1FName = clientInfo.cCeleb1FName;
+                    existingClient.cCeleb1LName = clientInfo.cCeleb1LName;
+                    existingClient.cCeleb2FName = clientInfo.cCeleb2FName;
+                    existingClient.cCeleb2LName = clientInfo.cCeleb2LName;
+                    existingClient.dateUpdated = DateTime.Now;
+
+                    existingBooking.packageID = resolvedPackageID;
+                    existingBooking.eventID = bookingInfo.eventID;
+                    existingBooking.dsgnTheme = bookingInfo.dsgnTheme;
+                    existingBooking.dsgnMotif = bookingInfo.dsgnMotif;
+                    existingBooking.prepVenue = bookingInfo.prepVenue;
+                    existingBooking.bookingDate = bookingInfo.bookingDate;
+                    existingBooking.ceremTime = bookingInfo.ceremTime;
+                    existingBooking.eventTime = bookingInfo.eventTime;
+                    existingBooking.venue = bookingInfo.venue;
+                    existingBooking.eventSetTime = bookingInfo.eventSetTime;
+                    existingBooking.eventMealTime = bookingInfo.eventMealTime;
+                    existingBooking.bookingNote = bookingInfo.bookingNote;
+                    existingBooking.paxCount = bookingInfo.paxCount;
+                    existingBooking.addAdult = bookingInfo.addAdult;
+                    existingBooking.addKid = bookingInfo.addKid;
+                    existingBooking.dateUpdated = DateTime.Now;
+
+                    UpdatePrimaryBookingPayment(db, existingBooking.bookingID, paymentInfo, bookingInfo.bookingDate);
+                    db.SaveChanges();
+                    transaction.Commit();
+
+                    return Json(new { success = true, message = "Booking updated successfully!" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult DeleteBooking(int bookingID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    var existingBooking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (existingBooking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    var paymentIds = db.payments_tbl.Where(p => p.bookingID == bookingID).Select(p => p.paymentID).ToList();
+                    if (paymentIds.Any())
+                    {
+                        var reminders = db.paymentreminders_tbl.Where(r => paymentIds.Contains(r.paymentID)).ToList();
+                        foreach (var reminder in reminders)
+                        {
+                            db.paymentreminders_tbl.Remove(reminder);
+                        }
+
+                        var payments = db.payments_tbl.Where(p => p.bookingID == bookingID).ToList();
+                        foreach (var payment in payments)
+                        {
+                            db.payments_tbl.Remove(payment);
+                        }
+                    }
+
+                    var tasks = db.tasks_tbl.Where(t => t.bookingID == bookingID).ToList();
+                    if (tasks.Any())
+                    {
+                        var taskIds = tasks.Select(t => t.taskID).ToList();
+                        var taskHistory = db.taskhistory_tbl.Where(h => taskIds.Contains(h.taskID)).ToList();
+                        foreach (var history in taskHistory)
+                        {
+                            db.taskhistory_tbl.Remove(history);
+                        }
+
+                        foreach (var task in tasks)
+                        {
+                            db.tasks_tbl.Remove(task);
+                        }
+                    }
+
+                    var receipts = db.bookingreceipts_tbl.Where(r => r.bookingID == bookingID).ToList();
+                    foreach (var receipt in receipts)
+                    {
+                        db.bookingreceipts_tbl.Remove(receipt);
+                    }
+
+                    var clientID = existingBooking.clientID;
+                    db.bookings_tbl.Remove(existingBooking);
+                    db.SaveChanges();
+
+                    if (!db.bookings_tbl.Any(b => b.clientID == clientID))
+                    {
+                        var existingClient = db.clients_tbl.FirstOrDefault(c => c.clientID == clientID);
+                        if (existingClient != null)
+                        {
+                            db.clients_tbl.Remove(existingClient);
+                        }
+                    }
+
+                    db.SaveChanges();
+                    transaction.Commit();
+
+                    if ((Session["currentBooking"]?.ToString() ?? string.Empty) == bookingID.ToString())
+                    {
+                        Session.Remove("currentBooking");
+                    }
+
+                    return Json(new { success = true, message = "Booking deleted successfully." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message });
             }
         }
 

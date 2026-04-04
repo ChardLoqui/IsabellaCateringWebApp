@@ -4,88 +4,196 @@
     ViewBag.Title = "System Logs";
 }
 
-<div class="container mx-auto h-screen p-10">
-    @* Header *@
-    <h1 class="text-2xl font-semibold text-black mb-6">System Logs</h1>
-
-    @* Search & Pagination Container *@
-    <div class="flex items-center justify-between mb-8 w-full">
-
-        @* Left: Search *@
-        <div class="flex items-center gap-2">
-            <input type="text"
-                   ng-model="searchText"
-                   ng-keydown="$event.keyCode === 13 && searchLogs()"
-                   placeholder="Search logs..."
-                   class="w-96 px-5 rounded bg-gray-100 p-2 focus:outline-none border border-transparent focus:border-pink-500 transition-all" />
-
-            <button type="button" ng-click="searchLogs()"
-                    class="px-5 rounded bg-pink-500 py-2 text-white font-semibold hover:bg-pink-600 shadow-md transition-colors">
-                Search
-            </button>
-        </div>
-
-        @* Right: Pagination Controls *@
-        <div class="flex items-center gap-3 text-gray-800 font-bold">
-            <div class="flex items-center gap-1">
-                <button ng-click="setPage(1)" ng-disabled="currentPage == 1"
-                        class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
-                    <span class="material-symbols-outlined text-xl">keyboard_double_arrow_left</span>
-                </button>
-
-                <button ng-click="setPage(currentPage - 1)" ng-disabled="currentPage == 1"
-                        class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
-                    <span class="material-symbols-outlined text-xl">chevron_left</span>
-                </button>
+<div class="relative z-10 h-full overflow-y-auto">
+    <div class="management-page-shell">
+        <div class="space-y-8">
+            <div class="management-page-header">
+                <h1 class="management-page-title">System Logs</h1>
             </div>
 
-            <div class="flex items-center border rounded-md bg-white px-4 py-1 shadow-sm min-w-[40px] justify-center">
-                <span class="text-sm">{{currentPage}}</span>
-            </div>
+            <div class="management-section-card">
+                <div ng-if="logsLoading" class="management-section-header management-toolbar-loading-shell" aria-hidden="true">
+                    <div class="management-section-header-row">
+                        <div class="management-section-toolbar">
+                            <span class="management-toolbar-loader-block management-toolbar-loader-title"></span>
 
-            <div class="flex items-center gap-1">
-                <button ng-click="setPage(currentPage + 1)" ng-disabled="currentPage >= numberOfPages()"
-                        class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
-                    <span class="material-symbols-outlined text-xl">chevron_right</span>
-                </button>
+                            <div class="management-section-actions">
+                                <span class="management-toolbar-loader-block management-toolbar-loader-input"></span>
+                                <span class="management-toolbar-loader-block management-toolbar-loader-button"></span>
+                            </div>
+                        </div>
 
-                <button ng-click="lastPage()" ng-disabled="currentPage >= numberOfPages()"
-                        class="hover:text-pink-500 disabled:opacity-30 transition-colors flex items-center">
-                    <span class="material-symbols-outlined text-xl">keyboard_double_arrow_right</span>
-                </button>
-            </div>
-        </div>
-    </div>
+                        <div class="management-toolbar-loader-pagination">
+                            <div class="management-toolbar-loader-icon-group">
+                                <span class="management-toolbar-loader-block management-toolbar-loader-icon"></span>
+                                <span class="management-toolbar-loader-block management-toolbar-loader-icon"></span>
+                            </div>
 
-    @* Table *@
-    <div class="overflow-x-auto shadow-sm rounded-lg">
-        <table class="w-full border-collapse bg-gray-100">
-            <thead>
-                <tr class="text-left text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 bg-white">
-                    <th class="p-4">Log ID</th>
-                    <th class="p-4">Action</th>
-                    <th class="p-4">Date Updated</th>
-                    <th class="p-4">User</th>
-                </tr>
-            </thead>
-            <tbody class="text-sm text-gray-700 font-bold bg-white">
-                <tr ng-repeat="log in (logsData | filter:appliedSearch) | limitTo:pageSize:(currentPage-1)*pageSize"
-                    class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td class="p-4">{{ log.logID }}</td>
-                    <td class="p-4">{{ log.action }}</td>
-                    <td class="p-4">{{ log.dateUpdated | date:'MM/dd/yyyy' }}</td>
-                    <td class="p-4">{{ log.userName }}</td>
-                </tr>
-                @* Placeholder if no data *@
-            <tr ng-if="(logsData | filter:appliedSearch).length === 0">
-                <td colspan="4" class="p-10 text-center text-gray-400">
-                    <div class="flex flex-col items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-4xl">search_off</span>
-                        <span class="font-bold">No logs found.</span>
+                            <div class="management-toolbar-loader-selects">
+                                <span class="management-toolbar-loader-block management-toolbar-loader-select"></span>
+                                <span class="management-toolbar-loader-block management-toolbar-loader-select"></span>
+                            </div>
+                        </div>
                     </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+                </div>
+
+                <div ng-if="!logsLoading" class="management-section-header management-content-fade">
+                    <div class="management-section-header-row">
+                        <div class="management-section-toolbar">
+                            <h2 class="management-section-title">Logs</h2>
+
+                            <div class="management-section-actions">
+                                <input type="text"
+                                       ng-model="logSearchText"
+                                       ng-keydown="$event.keyCode === 13 && searchLogs()"
+                                       placeholder="Search table data..."
+                                       class="management-toolbar-input management-section-search px-5" />
+
+                                <button type="button" ng-click="searchLogs()"
+                                        class="management-toolbar-button management-toolbar-button-secondary w-full px-5 py-2 font-semibold transition-colors sm:w-auto">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="management-section-pagination management-pagination-cluster">
+                            <div class="management-pagination-arrow-group">
+                                <button ng-click="logsPrevPage()"
+                                        ng-disabled="logsTable.currentPage === 1"
+                                        class="management-pagination-icon-button">
+                                    <span class="material-symbols-outlined text-xl leading-none">chevron_left</span>
+                                </button>
+                                <button ng-click="logsNextPage()"
+                                        ng-disabled="logsTable.currentPage === getLogsTotalPages()"
+                                        class="management-pagination-icon-button">
+                                    <span class="material-symbols-outlined text-xl leading-none">chevron_right</span>
+                                </button>
+                            </div>
+
+                            <div class="management-pagination-dropdowns">
+                                <div class="management-pagination-dropdown" ng-class="{'z-20': logsPageDropOpen}">
+                                    <button type="button"
+                                            ng-click="logsPageDropOpen = !logsPageDropOpen; logsSizeDropOpen = false"
+                                            class="management-pagination-trigger">
+                                        <span class="text-xs">Page {{ logsTable.currentPage }}/{{ getLogsTotalPages() }}</span>
+                                        <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                                    </button>
+
+                                    <div ng-if="logsPageDropOpen" class="management-pagination-menu">
+                                        <button type="button"
+                                                ng-repeat="page in getLogsPageNumbers()"
+                                                ng-click="logsGoToPage(page); logsPageDropOpen = false"
+                                                class="management-pagination-item"
+                                                ng-class="{'is-active': page === logsTable.currentPage}">
+                                            Page {{ page }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="management-pagination-dropdown" ng-class="{'z-20': logsSizeDropOpen}">
+                                    <button type="button"
+                                            ng-click="logsSizeDropOpen = !logsSizeDropOpen; logsPageDropOpen = false"
+                                            class="management-pagination-trigger">
+                                        <span class="text-xs">{{ logsTable.pageSize }} / page</span>
+                                        <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                                    </button>
+
+                                    <div ng-if="logsSizeDropOpen" class="management-pagination-menu">
+                                        <button type="button"
+                                                ng-repeat="size in logsTable.pageSizeOptions"
+                                                ng-click="setLogsPageSize(size); logsSizeDropOpen = false"
+                                                class="management-pagination-item"
+                                                ng-class="{'is-active': size === logsTable.pageSize}">
+                                            {{ size }} rows
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="management-table-scroll">
+                    <div ng-if="logsLoading" class="management-loader-shell">
+                        <div class="management-loader">
+                            <span class="management-loader-spinner" aria-hidden="true"></span>
+                            <span>Loading logs</span>
+                        </div>
+                    </div>
+
+                    <table ng-if="!logsLoading" class="management-content-fade w-full border-collapse bg-gray-100">
+                        <thead>
+                            <tr class="text-left text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 bg-white">
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': logsTable.sortField === 'logID'}"
+                                    ng-click="logsSortBy('logID')">
+                                    Log ID
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="logsTable.sortField === 'logID'">
+                                        {{ logsTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': logsTable.sortField === 'action'}"
+                                    ng-click="logsSortBy('action')">
+                                    Action
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="logsTable.sortField === 'action'">
+                                        {{ logsTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': logsTable.sortField === 'dateUpdated'}"
+                                    ng-click="logsSortBy('dateUpdated')">
+                                    Date Updated
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="logsTable.sortField === 'dateUpdated'">
+                                        {{ logsTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': logsTable.sortField === 'userName'}"
+                                    ng-click="logsSortBy('userName')">
+                                    User
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="logsTable.sortField === 'userName'">
+                                        {{ logsTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-gray-700 font-bold bg-white">
+                            <tr ng-repeat="log in getLogsPage()"
+                                class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                <td class="p-4">{{ log.logID }}</td>
+                                <td class="p-4">{{ log.action }}</td>
+                                <td class="p-4">{{ log.dateUpdated | date:'MM/dd/yyyy' }}</td>
+                                <td class="p-4">{{ log.userName }}</td>
+                            </tr>
+                            @* Placeholder if no data *@
+                            <tr ng-if="getLogsFiltered().length === 0">
+                                <td colspan="4" class="p-10 text-center text-gray-400">
+                                    <div class="flex flex-col items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined text-4xl">search_off</span>
+                                        <span class="font-bold">No logs found.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div ng-if="!logsLoading"
+                     class="px-4 py-2 border-t bg-gray-50 text-xs text-gray-400 flex flex-wrap items-center justify-between gap-3">
+                    <span ng-if="getLogsFiltered().length > 0">
+                        Showing {{ (logsTable.currentPage - 1) * logsTable.pageSize + 1 }}
+                        – {{ [logsTable.currentPage * logsTable.pageSize, getLogsFiltered().length] | limitTo: 1 }}
+                        of {{ getLogsFiltered().length }} records
+                    </span>
+                    <span ng-if="getLogsFiltered().length === 0">0 records</span>
+                    <span>Page {{ logsTable.currentPage }} of {{ getLogsTotalPages() }}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
