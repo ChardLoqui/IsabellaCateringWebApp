@@ -2626,6 +2626,42 @@
     //====================================================== PAYMENT REMINDER END ======================================================
 
     //====================================================== CREATE BOOKING START ======================================================
+
+    $scope.setStep = function (step) {
+        if (step === 1) {
+            if ($scope.order.progressOne === 1 && $scope.order.progressTwo === 0) {
+                $scope.order.progressOne = 0;
+                $scope.order.progressTwo = 0;
+                $scope.order.progressThree = 0;
+            } else {
+                $scope.order.progressOne = 1;
+                $scope.order.progressTwo = 0;
+                $scope.order.progressThree = 0;
+            }
+        }
+        else if (step === 2) {
+            if ($scope.order.progressTwo === 1 && $scope.order.progressThree === 0) {
+                $scope.order.progressOne = 1;
+                $scope.order.progressTwo = 0;
+                $scope.order.progressThree = 0;
+            } else {
+                $scope.order.progressOne = 1;
+                $scope.order.progressTwo = 1;
+                $scope.order.progressThree = 0;
+            }
+        }
+        else if (step === 3) {
+            if ($scope.order.progressThree === 1) {
+                $scope.order.progressOne = 1;
+                $scope.order.progressTwo = 1;
+                $scope.order.progressThree = 0;
+            } else {
+                $scope.order.progressOne = 1;
+                $scope.order.progressTwo = 1;
+                $scope.order.progressThree = 1;
+            }
+        }
+    };
     $scope.deleteBooking = function () {
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -3042,6 +3078,9 @@
                 eventSetTime: $scope.eventSetTime,
                 eventMealTime: $scope.eventMealTime,
                 bookingNote: $scope.bookingNote ?? null,
+                progressOne: $scope.order.progressOne,
+                progressTwo: $scope.order.progressTwo,
+                progressThree: $scope.order.progressThree,
                 paxCount: extractPaxCount($scope.priceType),
                 addAdult: parseInt($scope.addAdult, 10) || 0,
                 addKid: parseInt($scope.addKid, 10) || 0

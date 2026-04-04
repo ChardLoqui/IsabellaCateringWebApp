@@ -14,10 +14,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Transactions;
 using System.Web;
-using System.Web.Helpers;
 using System.Web.Mvc;
 using System.Web.Services.Description;
-using System.Xml.Linq;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace IsabellaCateringWebApp.Controllers
@@ -92,7 +90,7 @@ namespace IsabellaCateringWebApp.Controllers
                 {
                     if (isGuest == "True")
                     {
-                        
+
 
                         var verify = db.clients_tbl.Where(x => x.entryCode.Equals(clientInfo.entryCode)).FirstOrDefault();
                         if (verify == null)
@@ -146,9 +144,10 @@ namespace IsabellaCateringWebApp.Controllers
                                 Session["currentPerm"] = creds.permissionID.ToString();
                                 Session["isGuest"] = "True";
                                 Session["currentBooking"] = receipt.bookingID.ToString();
-                                return Json(new { success = true, data = creds, isGuest=true }, JsonRequestBehavior.AllowGet);
+                                return Json(new { success = true, data = creds, isGuest = true }, JsonRequestBehavior.AllowGet);
                             }
-                            else {
+                            else
+                            {
                                 return Json(new { success = false, message = "Receipt not found! Please contact us!" }, JsonRequestBehavior.AllowGet);
                             }
                         }
@@ -169,7 +168,9 @@ namespace IsabellaCateringWebApp.Controllers
                             int attemptsLeft = 3 - verify.attempts;
                             return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
                         }
-                    } else {
+                    }
+                    else
+                    {
 
                         var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
                         if (verify == null)
@@ -199,7 +200,7 @@ namespace IsabellaCateringWebApp.Controllers
                             Session["currentLog"] = creds.userID.ToString();
                             Session["currentPerm"] = creds.permissionID.ToString();
                             Session["isGuest"] = "False";
-                            return Json(new { success = true, data = creds, isGuest=false }, JsonRequestBehavior.AllowGet);
+                            return Json(new { success = true, data = creds, isGuest = false }, JsonRequestBehavior.AllowGet);
                         }
                         else
                         {
@@ -271,14 +272,17 @@ namespace IsabellaCateringWebApp.Controllers
 
             if (!string.IsNullOrEmpty(uID))
             {
-                if (isG == "True") {
+                if (isG == "True")
+                {
                     int id = int.Parse(uID);
                     using (var db = new IsabellaCateringContext())
                     {
                         var user = db.clients_tbl.FirstOrDefault(x => x.clientID == id);
                         if (user != null) uName = $"{user.cFName} {user.cLName}";
                     }
-                } else { 
+                }
+                else
+                {
                     int id = int.Parse(uID);
                     using (var db = new IsabellaCateringContext())
                     {
@@ -286,7 +290,7 @@ namespace IsabellaCateringWebApp.Controllers
                         if (user != null) uName = $"{user.firstName} {user.lastName}";
                     }
                 }
-                    
+
             }
             return Json(new
             {
@@ -745,74 +749,7 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        public JsonResult removeBooking(int bookingID)
-        {
-            try
-            {
-                if (Session["currentBooking"].ToString() == bookingID.ToString())
-                {
-                    using (var db = new IsabellaCateringContext())
-                    {
-                        var toRemoveBooking = db.bookings_tbl
-                            .Where(x => x.bookingID == bookingID)
-                            .FirstOrDefault();
-                        if (toRemoveBooking != null)
-                        {
-                            var toRemoveReceipt = db.bookingreceipts_tbl
-                                .Where(x => x.bookingID == toRemoveBooking.bookingID)
-                                .FirstOrDefault();
-                            if (toRemoveReceipt != null)
-                            {
-                                var toRemoveClient = db.clients_tbl
-                                    .Where(x => x.receiptID == toRemoveReceipt.receiptID)
-                                    .FirstOrDefault();
 
-                                if (toRemoveClient != null)
-                                {
-                                    var toRemovePayment = db.payments_tbl
-                                        .Where(x => x.bookingID == toRemoveBooking.bookingID)
-                                        .FirstOrDefault();
-                                    if (toRemovePayment != null)
-                                    {
-                                        var toRemovePaymentReminder = db.paymentreminders_tbl
-                                            .Where(x => x.paymentID == toRemovePayment.paymentID)
-                                            .ToList();
-                                        if (toRemovePaymentReminder.Any())
-                                        {
-                                            db.paymentreminders_tbl.RemoveRange(toRemovePaymentReminder);
-                                        }
-                                        db.payments_tbl.Remove(toRemovePayment);
-                                        db.clients_tbl.Remove(toRemoveClient);
-                                        db.bookingreceipts_tbl.Remove(toRemoveReceipt);
-                                        db.bookings_tbl.Remove(toRemoveBooking);
-                                        db.SaveChanges();
-
-                                        return Json(new { success = true, message = "Booking records, along with the client, receipt, payments and reminders has been deleted!" }, JsonRequestBehavior.AllowGet);
-                                    }
-                                    else
-                                        return Json(new { success = false, message = "Payment Not Found!" }, JsonRequestBehavior.AllowGet);
-                                }
-                                else
-                                    return Json(new { success = false, message = "Client Not Found!" }, JsonRequestBehavior.AllowGet);
-                            }
-                            else
-                                return Json(new { success = false, message = "Booking receipt Not Found!" }, JsonRequestBehavior.AllowGet);
-                        }
-                        else
-                            return Json(new { success = false, message = "Booking Not Found!" }, JsonRequestBehavior.AllowGet);
-                    }
-
-                }
-                else
-                {
-                    return Json(new { success = false, message = "Booking mismatch!" }, JsonRequestBehavior.AllowGet);
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
-            }
-        }
 
         public JsonResult addBooking(tblBookingsModel bookingData)
         {
@@ -885,11 +822,12 @@ namespace IsabellaCateringWebApp.Controllers
         {
             try
             {
-                if (formattedDate == null) {
+                if (formattedDate == null)
+                {
                     Session["bookingSelectedDate"] = formattedDate;
                     return Json(new { success = false, selectedDate = Session["bookingSelectedDate"], message = "Please select a date first!" }, JsonRequestBehavior.AllowGet);
                 }
-                    
+
 
                 DateTime csharpDate = DateTime.Parse(formattedDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
                 using (var db = new IsabellaCateringContext())
@@ -1103,93 +1041,81 @@ namespace IsabellaCateringWebApp.Controllers
 
                                     if (bookingEvent != null)
                                     {
-                                        var bookingPayment = db.payments_tbl
-                                            .Where(e => e.bookingID == bookingID)
-                                            .FirstOrDefault();
-
-                                        if(bookingPayment != null)
+                                        return Json(new
                                         {
-                                            return Json(new
-                                            {
-                                                packages = bookingPackage,
-                                                clients = bookingClient,
-                                                events = bookingEvent,
-                                                packageType = packageType,
-                                                payment = bookingPayment,
+                                            packages = bookingPackage,
+                                            clients = bookingClient,
+                                            events = bookingEvent,
+                                            packageType = packageType,
 
-                                                preMainCourse = preMainCourse,
+                                            preMainCourse = preMainCourse,
 
-                                                preSides1 = preSides1,
-                                                preSides2 = preSides2,
-                                                preSides3 = preSides3,
-                                                preSides4 = preSides4,
+                                            preSides1 = preSides1,
+                                            preSides2 = preSides2,
+                                            preSides3 = preSides3,
+                                            preSides4 = preSides4,
 
-                                                preCenterPiece = preCenterPiece,
+                                            preCenterPiece = preCenterPiece,
 
-                                                preSeating = preSeating,
+                                            preSeating = preSeating,
 
-                                                preSpecials1 = preSpecials1,
-                                                preSpecials2 = preSpecials2,
-                                                preSpecials3 = preSpecials3,
-                                                preSpecials4 = preSpecials4,
-                                                preSpecials5 = preSpecials5,
-                                                preSpecials6 = preSpecials6,
-                                                preSpecials7 = preSpecials7,
-                                                preSpecials8 = preSpecials8,
-                                                preSpecials9 = preSpecials9,
+                                            preSpecials1 = preSpecials1,
+                                            preSpecials2 = preSpecials2,
+                                            preSpecials3 = preSpecials3,
+                                            preSpecials4 = preSpecials4,
+                                            preSpecials5 = preSpecials5,
+                                            preSpecials6 = preSpecials6,
+                                            preSpecials7 = preSpecials7,
+                                            preSpecials8 = preSpecials8,
+                                            preSpecials9 = preSpecials9,
 
-                                                preStaff1 = preStaff1,
-                                                preStaff2 = preStaff2,
-                                                preStaff3 = preStaff3,
+                                            preStaff1 = preStaff1,
+                                            preStaff2 = preStaff2,
+                                            preStaff3 = preStaff3,
 
-                                                preBackdrop = preBackdrop,
+                                            preBackdrop = preBackdrop,
 
-                                                preEntrance = preEntrance,
+                                            preEntrance = preEntrance,
 
-                                                preCouch = preCouch,
+                                            preCouch = preCouch,
 
-                                                preEquip1 = preEquip1,
-                                                preEquip2 = preEquip2,
-                                                preEquip3 = preEquip3,
-                                                preEquip4 = preEquip4,
-                                                preEquip5 = preEquip5,
-                                                preEquip6 = preEquip6,
-                                                preEquip7 = preEquip7,
+                                            preEquip1 = preEquip1,
+                                            preEquip2 = preEquip2,
+                                            preEquip3 = preEquip3,
+                                            preEquip4 = preEquip4,
+                                            preEquip5 = preEquip5,
+                                            preEquip6 = preEquip6,
+                                            preEquip7 = preEquip7,
 
-                                                preEntertainment1 = preEntertainment1,
-                                                preEntertainment2 = preEntertainment2,
-                                                preEntertainment3 = preEntertainment3,
-                                                preEntertainment4 = preEntertainment4,
-                                                preEntertainment5 = preEntertainment5,
-                                                preEntertainment6 = preEntertainment6,
-                                                preEntertainment7 = preEntertainment7,
+                                            preEntertainment1 = preEntertainment1,
+                                            preEntertainment2 = preEntertainment2,
+                                            preEntertainment3 = preEntertainment3,
+                                            preEntertainment4 = preEntertainment4,
+                                            preEntertainment5 = preEntertainment5,
+                                            preEntertainment6 = preEntertainment6,
+                                            preEntertainment7 = preEntertainment7,
 
-                                                prePhoto1 = prePhoto1,
-                                                prePhoto2 = prePhoto2,
-                                                prePhoto3 = prePhoto3,
-                                                prePhoto4 = prePhoto4,
-                                                prePhoto5 = prePhoto5,
-                                                prePhoto6 = prePhoto6,
-                                                prePhoto7 = prePhoto7,
+                                            prePhoto1 = prePhoto1,
+                                            prePhoto2 = prePhoto2,
+                                            prePhoto3 = prePhoto3,
+                                            prePhoto4 = prePhoto4,
+                                            prePhoto5 = prePhoto5,
+                                            prePhoto6 = prePhoto6,
+                                            prePhoto7 = prePhoto7,
 
-                                                preKeepsakes1 = preKeepsakes1,
-                                                preKeepsakes2 = preKeepsakes2,
-                                                preKeepsakes3 = preKeepsakes3,
-                                                preKeepsakes4 = preKeepsakes4,
-                                                preKeepsakes5 = preKeepsakes5,
+                                            preKeepsakes1 = preKeepsakes1,
+                                            preKeepsakes2 = preKeepsakes2,
+                                            preKeepsakes3 = preKeepsakes3,
+                                            preKeepsakes4 = preKeepsakes4,
+                                            preKeepsakes5 = preKeepsakes5,
 
-                                                preDebut1 = preDebut1,
-                                                preDebut2 = preDebut2,
-                                                preDebut3 = preDebut3,
+                                            preDebut1 = preDebut1,
+                                            preDebut2 = preDebut2,
+                                            preDebut3 = preDebut3,
 
-                                                success = true,
-                                                message = "Package Fetched Successfully!"
-                                            }, JsonRequestBehavior.AllowGet);
-                                        }
-                                        else
-                                        {
-                                            return Json(new { success = false, message = "No Payment Found!" }, JsonRequestBehavior.AllowGet);
-                                        }
+                                            success = true,
+                                            message = "Package Fetched Successfully!"
+                                        }, JsonRequestBehavior.AllowGet);
                                     }
                                     else
                                     {
@@ -1395,375 +1321,100 @@ namespace IsabellaCateringWebApp.Controllers
                 {
                     var currPackageID = ResolvePackageId(db, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes);
 
-                            db.sidesgrptypes_tbl.Add(newSides);
-                            db.SaveChanges();
+                    string datePart = DateTime.Now.ToString("yyMMdd");
+                    string randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                    string receiptCode = $"BK-{datePart}-{randomPart}";
 
-                            grpSidesID = newSides.sidesGrpTypID;
-                        }
-
-                        var existingSpecials = db.specialsgrptypes_tbl.FirstOrDefault(x =>
-                            x.specialsGrpTyp1 == specialsGrpTypes.specialsGrpTyp1 &&
-                            x.specialsGrpTyp2 == specialsGrpTypes.specialsGrpTyp2 &&
-                            x.specialsGrpTyp3 == specialsGrpTypes.specialsGrpTyp3 &&
-                            x.specialsGrpTyp4 == specialsGrpTypes.specialsGrpTyp4 &&
-                            x.specialsGrpTyp5 == specialsGrpTypes.specialsGrpTyp5 &&
-                            x.specialsGrpTyp6 == specialsGrpTypes.specialsGrpTyp6 &&
-                            x.specialsGrpTyp7 == specialsGrpTypes.specialsGrpTyp7 &&
-                            x.specialsGrpTyp8 == specialsGrpTypes.specialsGrpTyp8 &&
-                            x.specialsGrpTyp9 == specialsGrpTypes.specialsGrpTyp9
-                        );
-                        if (existingSpecials != null)
-                        {
-                            grpSpecialsID = existingSpecials.specialsGrpTypID;
-                        }
-                        else
-                        {
-                            var newSpecials = new tblSpecialsGrpTypesModel()
-                            {
-                                specialsGrpTyp1 = specialsGrpTypes.specialsGrpTyp1,
-                                specialsGrpTyp2 = specialsGrpTypes.specialsGrpTyp2,
-                                specialsGrpTyp3 = specialsGrpTypes.specialsGrpTyp3,
-                                specialsGrpTyp4 = specialsGrpTypes.specialsGrpTyp4,
-                                specialsGrpTyp5 = specialsGrpTypes.specialsGrpTyp5,
-                                specialsGrpTyp6 = specialsGrpTypes.specialsGrpTyp6,
-                                specialsGrpTyp7 = specialsGrpTypes.specialsGrpTyp7,
-                                specialsGrpTyp8 = specialsGrpTypes.specialsGrpTyp8,
-                                specialsGrpTyp9 = specialsGrpTypes.specialsGrpTyp9,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.specialsgrptypes_tbl.Add(newSpecials);
-                            db.SaveChanges();
-
-                            grpSpecialsID = newSpecials.specialsGrpTypID;
-                        }
-
-                        var existingStaff = db.staffgrptypes_tbl.FirstOrDefault(x =>
-                            x.staffGrpTyp1 == staffGrpTypes.staffGrpTyp1 &&
-                            x.staffGrpTyp2 == staffGrpTypes.staffGrpTyp2 &&
-                            x.staffGrpTyp3 == staffGrpTypes.staffGrpTyp3
-                        );
-                        if (existingStaff != null)
-                        {
-                            grpStaffID = existingStaff.staffGrpTypID;
-                        }
-                        else
-                        {
-                            var newStaff = new tblStaffGrpTypesModel()
-                            {
-                                staffGrpTyp1 = staffGrpTypes.staffGrpTyp1,
-                                staffGrpTyp2 = staffGrpTypes.staffGrpTyp2,
-                                staffGrpTyp3 = staffGrpTypes.staffGrpTyp3,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.staffgrptypes_tbl.Add(newStaff);
-                            db.SaveChanges();
-
-                            grpStaffID = newStaff.staffGrpTypID;
-                        }
-
-                        var existingEquipment = db.equipgrptypes_tbl.FirstOrDefault(x =>
-                            x.equipGrpTyp1 == equipGrpTypes.equipGrpTyp1 &&
-                            x.equipGrpTyp2 == equipGrpTypes.equipGrpTyp2 &&
-                            x.equipGrpTyp3 == equipGrpTypes.equipGrpTyp3 &&
-                            x.equipGrpTyp4 == equipGrpTypes.equipGrpTyp4 &&
-                            x.equipGrpTyp5 == equipGrpTypes.equipGrpTyp5 &&
-                            x.equipGrpTyp6 == equipGrpTypes.equipGrpTyp6 &&
-                            x.equipGrpTyp7 == equipGrpTypes.equipGrpTyp7
-                        );
-                        if (existingEquipment != null)
-                        {
-                            grpEquipID = existingEquipment.equipGrpTypID;
-                        }
-                        else
-                        {
-                            var newEquip = new tblEquipGrpTypesModel()
-                            {
-                                equipGrpTyp1 = equipGrpTypes.equipGrpTyp1,
-                                equipGrpTyp2 = equipGrpTypes.equipGrpTyp2,
-                                equipGrpTyp3 = equipGrpTypes.equipGrpTyp3,
-                                equipGrpTyp4 = equipGrpTypes.equipGrpTyp4,
-                                equipGrpTyp5 = equipGrpTypes.equipGrpTyp5,
-                                equipGrpTyp6 = equipGrpTypes.equipGrpTyp6,
-                                equipGrpTyp7 = equipGrpTypes.equipGrpTyp7,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.equipgrptypes_tbl.Add(newEquip);
-                            db.SaveChanges();
-
-                            grpEquipID = newEquip.equipGrpTypID;
-                        }
-
-                        var existingEntertainment = db.entertainmentgrptypes_tbl.FirstOrDefault(x =>
-                            x.entertainmentGrpTyp1 == entertainmentGrpTypes.entertainmentGrpTyp1 &&
-                            x.entertainmentGrpTyp2 == entertainmentGrpTypes.entertainmentGrpTyp2 &&
-                            x.entertainmentGrpTyp3 == entertainmentGrpTypes.entertainmentGrpTyp3 &&
-                            x.entertainmentGrpTyp4 == entertainmentGrpTypes.entertainmentGrpTyp4 &&
-                            x.entertainmentGrpTyp5 == entertainmentGrpTypes.entertainmentGrpTyp5 &&
-                            x.entertainmentGrpTyp6 == entertainmentGrpTypes.entertainmentGrpTyp6 &&
-                            x.entertainmentGrpTyp7 == entertainmentGrpTypes.entertainmentGrpTyp7
-                        );
-                        if (existingEntertainment != null)
-                        {
-                            grpEntertainmentID = existingEntertainment.entertainmentGrpTypID;
-                        }
-                        else
-                        {
-                            var newEntertainment = new tblEntertainmentGrpTypesModel()
-                            {
-                                entertainmentGrpTyp1 = entertainmentGrpTypes.entertainmentGrpTyp1,
-                                entertainmentGrpTyp2 = entertainmentGrpTypes.entertainmentGrpTyp2,
-                                entertainmentGrpTyp3 = entertainmentGrpTypes.entertainmentGrpTyp3,
-                                entertainmentGrpTyp4 = entertainmentGrpTypes.entertainmentGrpTyp4,
-                                entertainmentGrpTyp5 = entertainmentGrpTypes.entertainmentGrpTyp5,
-                                entertainmentGrpTyp6 = entertainmentGrpTypes.entertainmentGrpTyp6,
-                                entertainmentGrpTyp7 = entertainmentGrpTypes.entertainmentGrpTyp7,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.entertainmentgrptypes_tbl.Add(newEntertainment);
-                            db.SaveChanges();
-
-                            grpEntertainmentID = newEntertainment.entertainmentGrpTypID;
-                        }
-
-                        var existingPhoto = db.photogrptypes_tbl.FirstOrDefault(x =>
-                            x.photoGrpTyp1 == photoGrpTypes.photoGrpTyp1 &&
-                            x.photoGrpTyp2 == photoGrpTypes.photoGrpTyp2 &&
-                            x.photoGrpTyp3 == photoGrpTypes.photoGrpTyp3 &&
-                            x.photoGrpTyp4 == photoGrpTypes.photoGrpTyp4 &&
-                            x.photoGrpTyp5 == photoGrpTypes.photoGrpTyp5 &&
-                            x.photoGrpTyp6 == photoGrpTypes.photoGrpTyp6 &&
-                            x.photoGrpTyp7 == photoGrpTypes.photoGrpTyp7
-                        );
-                        if (existingPhoto != null)
-                        {
-                            grpPhotoID = existingPhoto.photoGrpTypID;
-                        }
-                        else
-                        {
-                            var newPhoto = new tblPhotoGrpTypesModel()
-                            {
-                                photoGrpTyp1 = photoGrpTypes.photoGrpTyp1,
-                                photoGrpTyp2 = photoGrpTypes.photoGrpTyp2,
-                                photoGrpTyp3 = photoGrpTypes.photoGrpTyp3,
-                                photoGrpTyp4 = photoGrpTypes.photoGrpTyp4,
-                                photoGrpTyp5 = photoGrpTypes.photoGrpTyp5,
-                                photoGrpTyp6 = photoGrpTypes.photoGrpTyp6,
-                                photoGrpTyp7 = photoGrpTypes.photoGrpTyp7,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.photogrptypes_tbl.Add(newPhoto);
-                            db.SaveChanges();
-
-                            grpPhotoID = newPhoto.photoGrpTypID;
-                        }
-
-                        var existingKeepsakes = db.keepsakesgrptypes_tbl.FirstOrDefault(x =>
-                            x.keepsakesGrpTyp1 == keepsakesGrpTypes.keepsakesGrpTyp1 &&
-                            x.keepsakesGrpTyp2 == keepsakesGrpTypes.keepsakesGrpTyp2 &&
-                            x.keepsakesGrpTyp3 == keepsakesGrpTypes.keepsakesGrpTyp3 &&
-                            x.keepsakesGrpTyp4 == keepsakesGrpTypes.keepsakesGrpTyp4 &&
-                            x.keepsakesGrpTyp5 == keepsakesGrpTypes.keepsakesGrpTyp5
-                        );
-                        if (existingKeepsakes != null)
-                        {
-                            grpKeepsakesID = existingKeepsakes.keepsakesGrpTypID;
-                        }
-                        else
-                        {
-                            var newKeepsakes = new tblKeepsakesGrpTypesModel()
-                            {
-                                keepsakesGrpTyp1 = keepsakesGrpTypes.keepsakesGrpTyp1,
-                                keepsakesGrpTyp2 = keepsakesGrpTypes.keepsakesGrpTyp2,
-                                keepsakesGrpTyp3 = keepsakesGrpTypes.keepsakesGrpTyp3,
-                                keepsakesGrpTyp4 = keepsakesGrpTypes.keepsakesGrpTyp4,
-                                keepsakesGrpTyp5 = keepsakesGrpTypes.keepsakesGrpTyp5,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.keepsakesgrptypes_tbl.Add(newKeepsakes);
-                            db.SaveChanges();
-
-                            grpKeepsakesID = newKeepsakes.keepsakesGrpTypID;
-                        }
-
-                        var existingDebut = db.debutgrptypes_tbl.FirstOrDefault(x =>
-                            x.debutGrpTyp1 == debutGrpTypes.debutGrpTyp1 &&
-                            x.debutGrpTyp2 == debutGrpTypes.debutGrpTyp2 &&
-                            x.debutGrpTyp3 == debutGrpTypes.debutGrpTyp3
-                        );
-                        if (existingDebut != null)
-                        {
-                            grpDebutID = existingDebut.debutGrpTypID;
-                        }
-                        else
-                        {
-                            var newDebut = new tblDebutGrpTypesModel()
-                            {
-                                debutGrpTyp1 = debutGrpTypes.debutGrpTyp1,
-                                debutGrpTyp2 = debutGrpTypes.debutGrpTyp2,
-                                debutGrpTyp3 = debutGrpTypes.debutGrpTyp3,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.debutgrptypes_tbl.Add(newDebut);
-                            db.SaveChanges();
-
-                            grpDebutID = newDebut.debutGrpTypID;
-                        }
-
-                        var existingPackage = db.packages_tbl.FirstOrDefault(x =>
-                            x.mainCourseTypID == packages.mainCourseTypID &&
-                            x.sidesGrpTypID == grpSidesID &&
-                            x.centerPieceTypID == packages.centerPieceTypID &&
-                            x.seatingTypID == packages.seatingTypID &&
-                            x.specialsGrpTypID == grpSpecialsID &&
-                            x.staffGrpTypID == grpStaffID &&
-                            x.backdropTypID == packages.backdropTypID &&
-                            x.entranceTypID == packages.entranceTypID &&
-                            x.couchTypID == packages.couchTypID &&
-                            x.equipGrpTypID == grpEquipID &&
-                            x.entertainmentGrpTypID == grpEntertainmentID &&
-                            x.photoGrpTypID == grpPhotoID &&
-                            x.keepsakesGrptypID == grpKeepsakesID &&
-                            x.debutGrpTypID == grpDebutID &&
-                            x.incStaples == packages.incStaples &&
-                            x.incBftSet == packages.incBftSet &&
-                            x.incStyling == packages.incStyling &&
-                            x.incTableSet == packages.incTableSet &&
-                            x.incDnrWare == packages.incDnrWare
-                        );
-                        if (existingPackage != null)
-                        {
-                            currPackageID = existingPackage.packageID;
-                        }
-                        else
-                        {
-                            var newPackage = new tblPackagesModel()
-                            {
-                                packageTypID = packages.packageTypID,
-                                pricePaxID = packages.packageTypID,
-                                mainCourseTypID = packages.mainCourseTypID,
-                                sidesGrpTypID = grpSidesID,
-                                centerPieceTypID = packages.centerPieceTypID,
-                                seatingTypID = packages.seatingTypID,
-                                specialsGrpTypID = grpSpecialsID,
-                                staffGrpTypID = grpStaffID,
-                                backdropTypID = packages.backdropTypID,
-                                entranceTypID = packages.entranceTypID,
-                                couchTypID = packages.couchTypID,
-                                equipGrpTypID = grpEquipID,
-                                entertainmentGrpTypID = grpEntertainmentID,
-                                photoGrpTypID = grpPhotoID,
-                                keepsakesGrptypID = grpKeepsakesID,
-                                debutGrpTypID = grpDebutID,
-                                incStaples = packages.incStaples,
-                                incBftSet = packages.incBftSet,
-                                incStyling = packages.incStyling,
-                                incTableSet = packages.incTableSet,
-                                incDnrWare = packages.incDnrWare,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-
-                            db.packages_tbl.Add(newPackage);
-                            db.SaveChanges();
-
-                            currPackageID = newPackage.packageID;
-                        }
-                        int editBookingID = Convert.ToInt32(Session["currentBooking"]);
-
-                        var toEditBooking = db.bookings_tbl
-                            .Where(x => x.bookingID == editBookingID)
-                            .FirstOrDefault();
-                        if (toEditBooking != null)
-                        {
-                            toEditBooking.packageID = currPackageID;
-                            toEditBooking.eventID = bookingInfo.eventID;
-                            toEditBooking.dsgnTheme = bookingInfo.dsgnTheme;
-                            toEditBooking.dsgnMotif = bookingInfo.dsgnMotif;
-                            toEditBooking.prepVenue = bookingInfo.prepVenue;
-                            toEditBooking.bookingDate = bookingInfo.bookingDate;
-                            toEditBooking.ceremTime = bookingInfo.ceremTime;
-                            toEditBooking.eventTime = bookingInfo.eventTime;
-                            toEditBooking.venue = bookingInfo.venue;
-                            toEditBooking.eventSetTime = bookingInfo.eventSetTime;
-                            toEditBooking.eventMealTime = bookingInfo.eventMealTime;
-                            toEditBooking.dateUpdated = DateTime.Now;
-                            toEditBooking.bookingNote = bookingInfo.bookingNote;
-                            toEditBooking.progressOne = bookingInfo.progressOne;
-                            toEditBooking.progressTwo = bookingInfo.progressTwo;
-                            toEditBooking.progressThree = bookingInfo.progressThree;
-                            toEditBooking.paxCount = bookingInfo.paxCount;
-                            toEditBooking.addAdult = bookingInfo.addAdult;
-                            toEditBooking.addKid = bookingInfo.addKid;
-
-                            db.SaveChanges();
-
-                            var toEditClient = db.clients_tbl
-                                .Where(x => x.clientID == toEditBooking.clientID)
-                                .FirstOrDefault();
-
-                            if (toEditClient != null)
-                            {
-                                toEditClient.eventName = clientInfo.eventName;
-                                toEditClient.cFName = clientInfo.cFName;
-                                toEditClient.cLName = clientInfo.cLName;
-                                toEditClient.cEmail = clientInfo.cEmail;
-                                toEditClient.cContact = clientInfo.cContact;
-                                toEditClient.cCeleb1FName = clientInfo.cCeleb1FName;
-                                toEditClient.cCeleb1LName = clientInfo.cCeleb1LName;
-                                toEditClient.cCeleb2FName = clientInfo.cCeleb2FName;
-                                toEditClient.cCeleb2LName = clientInfo.cCeleb2LName;
-                                toEditClient.dateUpdated = DateTime.Now;
-
-                                db.SaveChanges();
-
-                                var toEditPayment = db.payments_tbl
-                                    .Where(x => x.bookingID == editBookingID)
-                                    .FirstOrDefault();
-
-                                if(toEditPayment != null)
-                                {
-                                    toEditPayment.amountDue = paymentInfo.amountDue;
-                                    toEditPayment.dueDate = bookingInfo.bookingDate;
-                                    toEditPayment.dateUpdated = DateTime.Now;
-
-                                    db.SaveChanges();
-
-                                    return Json(new { success = true, message = "Booking Updated Successfully!" }, JsonRequestBehavior.AllowGet);
-                                }
-                                else
-                                {
-                                    return Json(new { success = false, message = "Payment not found!" }, JsonRequestBehavior.AllowGet);
-                                }
-                            }
-                            else
-                            {
-                                return Json(new { success = false, message = "Client not found!" }, JsonRequestBehavior.AllowGet);
-                            }
-                        }
-                        else
-                        {
-                            return Json(new { success = false, message = "Booking not found!" }, JsonRequestBehavior.AllowGet);
-                        }
+                    var existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
+                    while (existingReceipt != null)
+                    {
+                        randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                        receiptCode = $"BK-{datePart}-{randomPart}";
+                        existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
                     }
+
+                    var newClient = new tblClientsModel()
+                    {
+                        permissionID = 3,
+                        receiptID = 0,
+                        eventName = clientInfo.eventName,
+                        cFName = clientInfo.cFName,
+                        cLName = clientInfo.cLName,
+                        cEmail = clientInfo.cEmail,
+                        cContact = clientInfo.cContact,
+                        cCeleb1FName = clientInfo.cCeleb1FName,
+                        cCeleb1LName = clientInfo.cCeleb1LName,
+                        cCeleb2FName = clientInfo.cCeleb2FName,
+                        cCeleb2LName = clientInfo.cCeleb2LName,
+                        entryCode = "0",
+                        password = "0",
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.clients_tbl.Add(newClient);
+                    db.SaveChanges();
+
+                    int id = Convert.ToInt32(Session["currentLog"] ?? 0);
+
+                    var newBooking = new tblBookingsModel()
+                    {
+                        createdBy = id,
+                        clientID = newClient.clientID,
+                        packageID = currPackageID,
+                        eventID = bookingInfo.eventID,
+                        dsgnTheme = bookingInfo.dsgnTheme,
+                        dsgnMotif = bookingInfo.dsgnMotif,
+                        prepVenue = bookingInfo.prepVenue,
+                        bookingDate = bookingInfo.bookingDate,
+                        ceremTime = bookingInfo.ceremTime,
+                        eventTime = bookingInfo.eventTime,
+                        venue = bookingInfo.venue,
+                        eventSetTime = bookingInfo.eventSetTime,
+                        eventMealTime = bookingInfo.eventMealTime,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now,
+                        bookingNote = bookingInfo.bookingNote,
+                        progressOne = 0,
+                        progressTwo = 0,
+                        progressThree = 0,
+                        paxCount = bookingInfo.paxCount,
+                        addAdult = bookingInfo.addAdult,
+                        addKid = bookingInfo.addKid,
+                    }
+                ;
+                    db.bookings_tbl.Add(newBooking);
+                    db.SaveChanges();
+
+                    var newReceipt = new tblBookingReceiptsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        receiptNum = receiptCode,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.bookingreceipts_tbl.Add(newReceipt);
+                    db.SaveChanges();
+
+                    newClient.receiptID = newReceipt.receiptID;
+                    newClient.entryCode = receiptCode;
+                    db.SaveChanges();
+
+                    var newPayment = new tblPaymentsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        amountDue = paymentInfo.amountDue,
+                        amountPaid = 0,
+                        paymentType = "-",
+                        paymentStatus = "incomplete",
+                        dueDate = bookingInfo.bookingDate,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.payments_tbl.Add(newPayment);
+                    db.SaveChanges();
                 }
-                else
-                {
-                    return Json(new { success = false, message = "Mode is not registered!" }, JsonRequestBehavior.AllowGet);
-                }
+                return Json(new { success = true, message = "Booking Completed Successfully!" }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -1816,6 +1467,9 @@ namespace IsabellaCateringWebApp.Controllers
                     existingBooking.eventSetTime = bookingInfo.eventSetTime;
                     existingBooking.eventMealTime = bookingInfo.eventMealTime;
                     existingBooking.bookingNote = bookingInfo.bookingNote;
+                    existingBooking.progressOne = bookingInfo.progressOne;
+                    existingBooking.progressTwo = bookingInfo.progressTwo;
+                    existingBooking.progressThree = bookingInfo.progressThree;
                     existingBooking.paxCount = bookingInfo.paxCount;
                     existingBooking.addAdult = bookingInfo.addAdult;
                     existingBooking.addKid = bookingInfo.addKid;
@@ -1941,7 +1595,7 @@ namespace IsabellaCateringWebApp.Controllers
                         var prePhoto = db.photogrptypes_tbl.Where(p => p.photoGrpTypID == prePackage.photoGrpTypID).FirstOrDefault();
                         var preKeepsakes = db.keepsakesgrptypes_tbl.Where(p => p.keepsakesGrpTypID == prePackage.keepsakesGrptypID).FirstOrDefault();
                         var preDebut = db.debutgrptypes_tbl.Where(p => p.debutGrpTypID == prePackage.debutGrpTypID).FirstOrDefault();
-                        
+
                         if (preMainCourse != null &&
                             preSides != null &&
                             preCenterPiece != null &&
@@ -2095,7 +1749,7 @@ namespace IsabellaCateringWebApp.Controllers
                     {
                         return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
                     }
-                }         
+                }
             }
             catch (Exception ex)
             {
@@ -2143,7 +1797,7 @@ namespace IsabellaCateringWebApp.Controllers
                         existingPayment.paymentType = paymentData.paymentType;
                         existingPayment.paymentStatus = paymentData.paymentStatus;
                         existingPayment.dueDate = paymentData.dueDate;
-                        existingPayment.dateUpdated = DateTime.Now; 
+                        existingPayment.dateUpdated = DateTime.Now;
                     }
                     else
                     {
@@ -2190,7 +1844,7 @@ namespace IsabellaCateringWebApp.Controllers
                     existing.amountPaid = paymentData.amountPaid;
                     existing.paymentStatus = paymentData.paymentStatus;
                     existing.dueDate = paymentData.dueDate;
-                    existing.dateUpdated = DateTime.Now; 
+                    existing.dateUpdated = DateTime.Now;
 
                     db.SaveChanges();
                 }
@@ -2256,90 +1910,6 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
-        public JsonResult GetClientEmailByBooking(int bookingID)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl
-                                    .FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                        return Json(new { success = false, message = "Booking not found. BookingID: " + bookingID },
-                                    JsonRequestBehavior.AllowGet);
-
-                    var client = db.clients_tbl
-                                   .FirstOrDefault(c => c.clientID == booking.clientID);
-                    if (client == null)
-                        return Json(new
-                        {
-                            success = false,
-                            message = "Client not found. BookingID: " + bookingID + " | ClientID from booking: " + booking.clientID
-                        }, JsonRequestBehavior.AllowGet);
-
-                    return Json(new
-                    {
-                        success = true,
-                        email = client.cEmail,
-                        firstName = client.cFName,
-                        lastName = client.cLName,
-                        bookingID = bookingID
-                    }, JsonRequestBehavior.AllowGet);
-                }
-            }
-            catch (Exception ex)
-            {
-                var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                return Json(new { success = false, message = innerMsg }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        [HttpPost]
-        public JsonResult LogPaymentReminder(tblPaymentRemindersModel model)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var now = DateTime.Now;
-                    var reminder = new tblPaymentRemindersModel
-                    {
-                        paymentID = model.paymentID,
-                        sentBy = model.sentBy,
-                        sentAt = model.sentAt,
-                        note = model.note,
-                        dateCreated = now,
-                        dateUpdated = now
-                    };
-                    db.paymentreminders_tbl.Add(reminder);
-                    db.SaveChanges();
-                }
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        public JsonResult GetLogs()
-        {
-            using (var db = new IsabellaCateringContext())
-            {
-                var data = (from log in db.activitylogs_tbl
-                            join user in db.users_tbl on log.userID equals user.userID
-                            select new
-                            {
-                                logID = log.logID,
-                                action = log.processDesc + ": " + log.activityDesc,
-                                dateUpdated = log.dateCreated,
-                                userName = user.firstName + " " + user.lastName
-                            }).ToList();
-                return Json(data, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-
     }
 }
+  
