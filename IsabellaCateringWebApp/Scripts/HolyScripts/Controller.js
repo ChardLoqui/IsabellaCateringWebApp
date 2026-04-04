@@ -1444,22 +1444,28 @@
     }
 
     function validatePaymentForm(data, isDueDate) {
-        var due = Number(data.amountDue) || 0;
-        var paid = Number(data.amountPaid) || 0;
-        if (!data.paymentType) return 'Please select a Payment Type.';
-        if (due <= 0) return 'Please enter an Amount Due greater than 0.';
-        if (!isDueDate) return 'Please select a Due Date.';
-        if (paid > due) return 'Amount Paid cannot exceed Amount Due.';
+        //var due = Number(data.amountDue) || 0;
+        //var paid = Number(data.amountPaid) || 0;
+        //if (!data.paymentType) return 'Please select a Payment Type.';
+        //if (due <= 0) return 'Please enter an Amount Due greater than 0.';
+        //if (!isDueDate) return 'Please select a Due Date.';
+        //if (paid > due) return 'Amount Paid cannot exceed Amount Due.';
         return null; 
     }
 
     //when amountPaid > amountDue, it forces amountPaid === amountDue
     $scope.clampAmountPaid = function (source) {
-        if (!source) return;
-        var due = Number(source.amountDue) || 0;
-        var paid = Number(source.amountPaid);
-        if (!isNaN(paid) && paid > due) {
-            source.amountPaid = due;
+        if ($scope.newPayment.paymentType == null) {
+            $scope.disableAddAmount = true;
+        } else if ($scope.newPayment.paymentType == "Payment") {
+            if (!source) return;
+            var due = Number(source.amountDue) || 0;
+            var paid = Number(source.amountPaid);
+            if (!isNaN(paid) && paid > due) {
+                source.amountPaid = due;
+            }
+        } else {
+
         }
     };
 
@@ -1564,6 +1570,8 @@
                         bookingID: payment.bookingID != null ? payment.bookingID : payment.BookingID,
                         amountDue: payment.amountDue != null ? payment.amountDue : payment.AmountDue,
                         amountPaid: payment.amountPaid != null ? payment.amountPaid : payment.AmountPaid,
+                        remainingBalance: payment.remainingBalance != null ? payment.remainingBalance : payment.remainingBalance,
+                        transactionNum: payment.transactionNum != null ? payment.remainingBalance : payment.transactionNum,
                         paymentType: payment.paymentType != null ? payment.paymentType : payment.PaymentType,
                         paymentStatus: payment.paymentStatus != null ? payment.paymentStatus : payment.PaymentStatus,
                         dueDate: toDateString(rawDue),
@@ -1769,15 +1777,18 @@
         var hasFull = existingTypes.indexOf('Full Payment') !== -1;
         var defaultType = !hasDown ? 'Down Payment' : !hasFull ? 'Full Payment' : 'Additional';
 
-        $scope.newPayment = {
-            bookingID: bookingID,
-            paymentType: defaultType,
-            amountDue: null,
-            amountPaid: null,
-            dueDate: '',
-        };
-        $scope.addPaymentRestrictions = { hasDownPayment: hasDown, hasFullPayment: hasFull };
-        $scope.showAddPaymentModal = true;
+        IsabellaCateringWebAppService.loadBookingPaymentBalanceService(bookingID).then(function (res){
+            $scope.newPayment = {
+                bookingID: bookingID,
+                paymentType: defaultType,
+                amountDue: Number(res.data.remainingBalance),
+                amountPaid: null,
+                paymentStatus: false,
+                dueDate: '',
+            };
+            $scope.addPaymentRestrictions = { hasDownPayment: hasDown, hasFullPayment: hasFull };
+            $scope.showAddPaymentModal = true;
+        });
     };
 
     $scope.closeAddPaymentModal = function () {
@@ -1817,9 +1828,8 @@
         IsabellaCateringWebAppService.addPaymentService({
             bookingID: $scope.newPayment.bookingID,
             paymentType: $scope.newPayment.paymentType,
-            amountDue: Number($scope.newPayment.amountDue),
             amountPaid: Number($scope.newPayment.amountPaid) || 0,
-            paymentStatus: $scope.computedPaymentStatus(),
+            paymentStatus: ($scope.newPayment.paymentStatus ? "complete": "incomplete"),
             dueDate: $scope.newPayment.dueDate
         }).then(function (res) {
             if (res.data.success) {
@@ -2691,7 +2701,7 @@
                         } else {
                             Swal.fire({
                                 title: 'Error!',
-                                text: "Failed to remove the booking permanently! "+returenedData.data.message,
+                                text: "Failed to remove the booking permanently! "+returnedData.data.message,
                                 icon: 'error',
                                 confirmButtonColor: '#ec4899',
                             });

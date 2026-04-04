@@ -4,7 +4,7 @@
     ViewBag.Title = "Payment Reminders";
 }
 
-<div class="relative z-10 h-full overflow-y-auto">
+<div class="relative z-10 h-full overflow-y-auto" ng-init="authenticateLoginCredentials()"">
     <div class="management-page-shell">
         <div ng-if="paymentLoading && (!paymentData || paymentData.length === 0)"
              class="management-surface management-loader-shell min-h-[24rem]">
@@ -286,12 +286,12 @@
                         <p class="text-xs font-semibold text-gray-500 uppercase">By Type</p>
 
                         <div class="payment-summary-card payment-summary-down-payment flex items-center justify-between px-4 py-3 rounded-lg">
-                            <span class="payment-summary-accent text-sm font-semibold">Down Payment</span>
+                            <span class="payment-summary-accent text-sm font-semibold">Inital</span>
                             <span class="payment-summary-accent text-lg font-bold">{{ getSummary()['Down Payment'] }}</span>
                         </div>
 
                         <div class="payment-summary-card payment-summary-full-payment flex items-center justify-between px-4 py-3 rounded-lg">
-                            <span class="payment-summary-accent text-sm font-semibold">Full Payment</span>
+                            <span class="payment-summary-accent text-sm font-semibold">Payment</span>
                             <span class="payment-summary-accent text-lg font-bold">{{ getSummary()['Full Payment'] }}</span>
                         </div>
 
@@ -564,17 +564,19 @@
                                                     For
                                                     <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
                                                           ng-class="{
-                                                              'bg-blue-100 text-blue-700':      payment.paymentType === 'Down Payment',
-                                                              'bg-purple-100 text-purple-700': payment.paymentType === 'Full Payment',
+                                                              'bg-blue-100 text-blue-700':      payment.paymentType === 'Initial',
+                                                              'bg-purple-100 text-purple-700': payment.paymentType === 'Payment',
                                                               'bg-orange-100 text-orange-700': payment.paymentType === 'Additional'
                                                           }">
                                                         {{ payment.paymentType }}
                                                     </span>
                                                 </td>
 
-                                                <td class="px-4 py-2.5">Due: <span class="font-bold">{{ payment.amountDue | currency:"₱" }}</span></td>
+                                                <td class="px-4 py-2.5">Amount: <span class="font-bold">{{ payment.amountDue | currency:"₱" }}</span></td>
 
-                                                <td class="px-4 py-2.5">Paid: <span class="font-bold">{{ payment.amountPaid | currency:"₱" }}</span></td>
+                                                <td class="px-4 py-2.5">{{payment.paymentType}}: <span class="font-bold">{{ payment.amountPaid | currency:"₱" }}</span></td>
+
+                                                <td class="px-4 py-2.5">Remaining: <span class="font-bold">{{ payment.remainingBalance | currency:"₱" }}</span></td>
 
                                                 <td class="px-4 py-2.5">
                                                     <div class="flex items-center gap-1.5 flex-wrap">
@@ -675,7 +677,7 @@
                     <option value="">— Select a Booking —</option>
                     <option ng-repeat="booking in availableBookings"
                             value="{{ booking.bookingID }}">
-                        Booking #{{ booking.bookingID }}
+                        Booking #{{ booking.bookingID }} 
                     </option>
                 </select>
                 <p ng-if="availableBookings.length === 0"
@@ -707,18 +709,19 @@
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Amount Due (₱)
+                    Remaining Balance (₱)
                 </label>
                 <input type="number"
                        ng-model="createPayment.amountDue"
                        ng-disabled="!createPayment.bookingID"
+                       readonly
                        min="0"
                        placeholder="0.00"
                        class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500 disabled:opacity-50" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Amount Paid (₱)
+                    Amount(₱)
                 </label>
                 <input type="number"
                        ng-model="createPayment.amountPaid"
@@ -798,75 +801,77 @@
 	                <span class="material-symbols-outlined text-[20px]">close</span>
 	            </button>
 	        </div>
-        <div class="management-modal-body space-y-4">
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Payment Type
-                </label>
-                <select ng-model="newPayment.paymentType"
-                        class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500">
-                    <option value="Down Payment"
-                            ng-disabled="addPaymentRestrictions.hasDownPayment">
-                        Down Payment{{ addPaymentRestrictions.hasDownPayment ? ' (already exists)' : '' }}
-                    </option>
-                    <option value="Full Payment"
-                            ng-disabled="addPaymentRestrictions.hasFullPayment">
-                        Full Payment{{ addPaymentRestrictions.hasFullPayment ? ' (already exists)' : '' }}
-                    </option>
-                    <option value="Additional">Additional</option>
-                </select>
+            <div class="management-modal-body space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                        Transaction Type
+                    </label>
+                    <select ng-model="newPayment.paymentType"
+                            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500">
+                        @*<option value="Down Payment"
+                        ng-disabled="addPaymentRestrictions.hasDownPayment">
+                    Down Payment{{ addPaymentRestrictions.hasDownPayment ? ' (already exists)' : '' }}
+                </option>
+                <option value="Full Payment"
+                        ng-disabled="addPaymentRestrictions.hasFullPayment">
+                    Full Payment{{ addPaymentRestrictions.hasFullPayment ? ' (already exists)' : '' }}
+                </option>*@
+                        <option value="Payment">Payment</option>
+                        <option value="Additional">Additional</option>
+                    </select>
 
-                <p ng-if="addPaymentRestrictions.hasDownPayment && addPaymentRestrictions.hasFullPayment"
-                   class="mt-1.5 text-xs text-orange-500 font-medium">
-                    Down & Full Payment already exist for this booking. Only Additional payments can be added.
-                </p>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Amount Due (₱)
-                </label>
-                <input type="number"
-                       ng-model="newPayment.amountDue"
-                       min="0"
-                       placeholder="0.00"
-                       class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Amount Paid (₱)
-                </label>
-                <input type="number"
-                       ng-model="newPayment.amountPaid"
-                       ng-change="clampAmountPaid(newPayment)"
-                       min="0"
-                       placeholder="0.00"
-                       class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Due Date
-                </label>
-                <input type="date"
-                       ng-model="newPayment.dueDate"
-                       class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Payment Status
-                </label>
-                <div class="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded text-xs font-bold"
-                          ng-class="{
+                    <p ng-if="addPaymentRestrictions.hasDownPayment && addPaymentRestrictions.hasFullPayment"
+                       class="mt-1.5 text-xs text-orange-500 font-medium">
+                        Down & Full Payment already exist for this booking. Only Additional payments can be added.
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                        Amount(₱)
+                    </label>
+                    <input type="number"
+                           ng-model="newPayment.amountPaid"
+                           ng-change="clampAmountPaid(newPayment)"
+                           ng-disabled="disableAddAmount"
+                           min="0"
+                           placeholder="0.00"
+                           class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
+                </div>
+
+                <div class="flex items-center">
+                    <label class="flex cursor-pointer items-center gap-3 text-sm font-medium text-gray-500">
+                        <input type="checkbox"
+                               ng-model="newPayment.paymentStatus"
+                               class="h-8 w-8 rounded border-pink-200 bg-white text-pink-500 accent-pink-500 focus:ring-pink-400" />
+                        <span>Completed</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                        Due Date
+                    </label>
+                    <input type="date"
+                           ng-model="newPayment.dueDate"
+                           class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                        Payment Status
+                    </label>
+                    <div class="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded text-xs font-bold"
+                              ng-class="{
                           'bg-red-600 text-white':          computedPaymentStatus() === 'Unpaid',
                           'bg-yellow-100 text-yellow-700':  computedPaymentStatus() === 'Partially Paid',
                           'bg-green-100 text-green-700':    computedPaymentStatus() === 'Paid'
                       }">
-                        {{ computedPaymentStatus() }}
-                    </span>
-                    <span class="text-gray-400 text-xs">Auto-computed from amounts</span>
+                            {{ computedPaymentStatus() }}
+                        </span>
+                        <span class="text-gray-400 text-xs">Auto-computed from amounts</span>
+                    </div>
                 </div>
             </div>
-        </div>
         <div class="management-modal-actions">
             <button ng-click="closeAddPaymentModal()"
                     class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">

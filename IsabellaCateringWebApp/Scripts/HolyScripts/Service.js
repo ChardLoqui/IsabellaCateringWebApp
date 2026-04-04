@@ -244,6 +244,12 @@
         return $http.post('/Main/LogPaymentReminder', data);
     };
 
+    this.loadBookingPaymentBalanceService = function (bookingID) {
+        return $http.get('/Main/loadBookingPaymentBalance', {
+            params: { bookingID: bookingID }
+        });
+    }
+
 
     //========================================================PAYMENT REMINDER END=======================================================
 });
