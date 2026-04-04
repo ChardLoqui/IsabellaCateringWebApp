@@ -2626,6 +2626,62 @@
     //====================================================== PAYMENT REMINDER END ======================================================
 
     //====================================================== CREATE BOOKING START ======================================================
+    $scope.deleteBooking = function () {
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'edit') {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to REMOVE this booking for Isabella Catering? Once data is PERMANENTLY REMOVED, it cannot be UNDONE!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ec4899',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, remove it!',
+                cancelButtonText: 'No, cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var deleteBookingID = parseInt(urlParams.get('id'));
+                    IsabellaCateringWebAppService.removeBookingService(deleteBookingID).then(function (returnedData) {
+                        if (returnedData.data.success) {
+                            Swal.fire({
+                                title: 'Booking Removed!',
+                                text: "Booking data has been deleted permanently! "+returnedData.data.message,
+                                icon: 'success',
+                                confirmButtonColor: '#ec4899',
+                            }).then((reuslt) => {
+                                $scope.redirectToBookingCalendarPage();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: "Failed to remove the booking permanently! "+returenedData.data.message,
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899',
+                            });
+                        }
+                    });
+                }
+                else {
+                    Swal.fire({
+                        title: 'Be Careful!',
+                        text: "Once done you cannot undo it!",
+                        icon: 'warning',
+                        confirmButtonColor: '#ec4899',
+                    });
+                }
+            });
+        }
+        else {
+            Swal.fire({
+                title: 'No Access!',
+                text: "",
+                icon: 'error',
+                confirmButtonColor: '#ec4899',
+            });
+        }
+
+    }
 
     $scope.initializeBookingFlow = function () {
         if ($scope.bookingFlowSteps && $scope.bookingFlowSteps.length) {
