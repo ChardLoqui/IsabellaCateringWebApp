@@ -12,6 +12,9 @@
     $scope.redirectToAddBookingPage = function () {
         window.location.href = "/Main/AddBookingPage";
     };
+    $scope.redirectToAddBookingPageEditMode = function (id) {
+        window.location.href = `/Main/AddBookingPage?mode=edit&id=${id}`;
+    };
     $scope.redirectToBookingCalendarPage = function () {
         window.location.href = "/Main/BookingCalendarPage";
     }
@@ -729,6 +732,7 @@
                     throw new Error('No booking ID found in the current session.');
                 }
 
+                $scope.editBookingID = bookingID;
                 return IsabellaCateringWebAppService.getBooking({ bookingID: bookingID })
                     .then(function (res) {
                         $scope.order = {
@@ -748,7 +752,10 @@
                             dateUpdated: convertDate(res.data.dateUpdated),
                             progressOne: res.data.progressOne,
                             progressTwo: res.data.progressTwo,
-                            progressThree: res.data.progressThree
+                            progressThree: res.data.progressThree,
+                            paxCount: res.data.paxCount,
+                            addAdult: res.data.addAdult,
+                            addKid: res.data.addKid,
                         };
 
                         $scope.steps = [
@@ -2381,6 +2388,125 @@
                 
             });
         });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'edit') {
+            $scope.isEditMode = true;
+            IsabellaCateringWebAppService.getBooking({ bookingID: parseInt(urlParams.get('id')) })
+                .then(function (res) {
+                    $scope.order = {
+                        bookingID: res.data.bookingID,
+                        clientID: res.data.clientID,
+                        packageID: res.data.packageID,
+                        bookingDate: convertDate(res.data.bookingDate),
+                        prepVenue: res.data.prepVenue,
+                        venue: res.data.venue,
+                        eventSetTime: convertTime(res.data.eventSetTime),
+                        eventTime: convertTime(res.data.eventTime),
+                        ceremTime: convertTime(res.data.ceremTime),
+                        eventMealTime: convertTime(res.data.eventMealTime),
+                        dsgnTheme: res.data.dsgnTheme,
+                        dsgnMotif: res.data.dsgnMotif,
+                        dateCreated: convertDate(res.data.dateCreated),
+                        dateUpdated: convertDate(res.data.dateUpdated),
+                        progressOne: res.data.progressOne,
+                        progressTwo: res.data.progressTwo,
+                        progressThree: res.data.progressThree,
+                        paxCount: res.data.paxCount,
+                        addAdult: res.data.addAdult,
+                        addKid: res.data.addKid,
+                    };
+
+                    $scope.steps = [
+                        { label: 'Planning', icon: '1', completed: $scope.order.progressOne == 1 },
+                        { label: 'Preparation', icon: '2', completed: $scope.order.progressTwo == 1 },
+                        { label: 'Event Day', icon: '3', completed: $scope.order.progressThree == 1 }
+                    ];
+                    $scope.selectPackageTypes(null, $scope.order.packageID);
+
+                    $scope.eventTheme = $scope.order.dsgnTheme;
+                    $scope.eventMotif = $scope.order.dsgnMotif;
+                    $scope.eventPrepVenue = $scope.order.prepVenue;
+                    $scope.eventCeremTime = $scope.order.ceremTime;
+                    $scope.eventEventTime = $scope.order.eventTime;
+                    $scope.eventVenue = $scope.order.venue;
+                    $scope.eventSetTime = $scope.order.eventSetTime;
+                    $scope.eventMealTime = $scope.order.eventMealTime;
+                    $scope.addAdult = $scope.order.addAdult == 0 ? '' : $scope.order.addAdult.toString();
+                    alert($scope.addAdult);
+                    $scope.addKid = $scope.order.addKid == 0 ? '' : $scope.order.addKid.toString() ;
+
+                    let [hour24, minute] = $scope.eventCeremTime.split(':');
+                    let hour = parseInt(hour24);
+                    let m = parseInt(minute) || 0;
+                    $scope.ceremMinute = m < 10 ? `0${m}` : `${m}`;
+                    if (hour >= 12) {
+                        $scope.ceremPeriod = "PM";
+                        $scope.ceremHour = (hour > 12) ? (hour - 12).toString() : "12";
+                    } else {
+                        $scope.ceremPeriod = "AM";
+                        $scope.ceremHour = (hour === 0) ? "12" : hour.toString();
+                    }
+                    $scope.ceremHour = $scope.ceremHour.padStart(2, "0");
+
+                    $scope.selectCeremHour($scope.ceremHour);
+                    $scope.selectCeremMinute($scope.ceremMinute);
+                    $scope.selectCeremPeriod($scope.ceremPeriod);
+
+                    [hour24, minute] = $scope.eventEventTime.split(':');
+                    hour = parseInt(hour24);
+                    m = parseInt(minute) || 0;
+                    $scope.eventMinute = m < 10 ? `0${m}` : `${m}`;
+                    if (hour >= 12) {
+                        $scope.eventPeriod = "PM";
+                        $scope.eventHour = (hour > 12) ? (hour - 12).toString() : "12";
+                    } else {
+                        $scope.eventPeriod = "AM";
+                        $scope.eventHour = (hour === 0) ? "12" : hour.toString();
+                    }
+                    $scope.eventHour = $scope.eventHour.padStart(2, "0");
+
+                    $scope.selectEventHour($scope.eventHour);
+                    $scope.selectEventMinute($scope.eventMinute);
+                    $scope.selectEventPeriod($scope.eventPeriod);
+
+                    [hour24, minute] = $scope.eventSetTime.split(':');
+                    hour = parseInt(hour24);
+                    m = parseInt(minute) || 0;
+                    $scope.setMinute = m < 10 ? `0${m}` : `${m}`;
+                    if (hour >= 12) {
+                        $scope.setPeriod = "PM";
+                        $scope.setHour = (hour > 12) ? (hour - 12).toString() : "12";
+                    } else {
+                        $scope.setPeriod = "AM";
+                        $scope.setHour = (hour === 0) ? "12" : hour.toString();
+                    }
+                    $scope.setHour = $scope.setHour.padStart(2, "0");
+
+                    $scope.selectSetHour($scope.setHour);
+                    $scope.selectSetMinute($scope.setMinute);
+                    $scope.selectSetPeriod($scope.setPeriod);
+
+                    [hour24, minute] = $scope.eventMealTime.split(':');
+                    hour = parseInt(hour24);
+                    m = parseInt(minute) || 0;
+                    $scope.mealMinute = m < 10 ? `0${m}` : `${m}`;
+                    if (hour >= 12) {
+                        $scope.mealPeriod = "PM";
+                        $scope.mealHour = (hour > 12) ? (hour - 12).toString() : "12";
+                    } else {
+                        $scope.mealPeriod = "AM";
+                        $scope.mealHour = (hour === 0) ? "12" : hour.toString();
+                    }
+                    $scope.mealHour = $scope.setHour.padStart(2, "0");
+
+                    $scope.selectMealHour($scope.mealHour);
+                    $scope.selectMealMinute($scope.mealMinute);
+                    $scope.selectMealPeriod($scope.mealPeriod);
+
+                    
+                });
+        }
     }
 
     $scope.createBooking = function () {
@@ -2407,7 +2533,10 @@
             venue: $scope.eventVenue,
             eventSetTime: $scope.eventSetTime,
             eventMealTime: $scope.eventMealTime,
-            bookingNote: $scope.bookingNote ?? null
+            bookingNote: $scope.bookingNote ?? null,
+            paxCount: parseInt($scope.priceType),
+            addAdult: parseInt($scope.addAdult) || 0,
+            addKid: parseInt($scope.addkid) || 0
         }
            
 
@@ -2523,32 +2652,45 @@
             paymentInfo.amountDue != null &&
             $scope.packageTypeID != null
         ) {
-            IsabellaCateringWebAppService.checkCalendarAvailabilityService($scope.dateOfEvent).then(function (response) {
-                if (response.data.success) {
-                    IsabellaCateringWebAppService.insertPackageService(clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes).then(function (returnedData) {
-                        if (returnedData.data.success) {
-                            Swal.fire({
-                                title: 'Success!',
-                                text: returnedData.data.message,
-                                icon: 'success',
-                                confirmButtonColor: '#ec4899',
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: returnedData.data.message,
-                                icon: 'error',
-                                confirmButtonColor: '#ec4899',
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to save this booking for Isabella Events?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ec4899',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, save it!',
+                cancelButtonText: 'No, cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    IsabellaCateringWebAppService.checkCalendarAvailabilityService($scope.dateOfEvent).then(function (response) {
+                        if (response.data.success) {
+                            IsabellaCateringWebAppService.insertPackageService(clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes).then(function (returnedData) {
+                                if (returnedData.data.success) {
+                                    Swal.fire({
+                                        title: 'Success!',
+                                        text: returnedData.data.message,
+                                        icon: 'success',
+                                        confirmButtonColor: '#ec4899',
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Error!',
+                                        text: returnedData.data.message,
+                                        icon: 'error',
+                                        confirmButtonColor: '#ec4899',
+                                    });
+                                }
                             });
                         }
-                    });
-                }
-                else {
-                    Swal.fire({
-                        title: "Error",
-                        text: response.data.message,
-                        icon: "error",
-                        confirmButtonColor: "#EC4899"
+                        else {
+                            Swal.fire({
+                                title: "Error",
+                                text: response.data.message,
+                                icon: "error",
+                                confirmButtonColor: "#EC4899"
+                            });
+                        }
                     });
                 }
             });

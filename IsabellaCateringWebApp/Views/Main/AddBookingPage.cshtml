@@ -18,7 +18,7 @@
             </p>
         </header>
 
-        <form name="eventForm" ng-submit="bookEvent()" novalidate>
+        <form name="eventForm" novalidate>
             <section class="panel-surface overflow-visible rounded-lg">
                 <div class="create-booking-form-grid grid w-full grid-cols-1 gap-6 px-4 py-5 sm:px-5 md:grid-cols-3 lg:px-6 lg:py-6" ng-init="loadPackageOptions()">
 
@@ -1017,8 +1017,16 @@
 
                     <!-- Button -->
                     <div class="col-span-full flex justify-end pt-2">
-                        <button type="button" ng-click="createBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
+                        <button type="button" ng-if="!isEditMode" ng-click="createBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px] ml-4">
                             Book Event
+                        </button>
+
+                        <button type="button" ng-if="isEditMode" ng-click="editBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px] ml-4">
+                            Update Event
+                        </button>
+
+                        <button type="button" ng-if="isEditMode" ng-click="deleteBooking()" class=" bg-gray-400 hover:bg-gray-500 border-gray-200 hover:border-gray-300 create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px] ml-4">
+                            Delete Event
                         </button>
                     </div>
 

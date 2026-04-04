@@ -754,6 +754,8 @@ namespace IsabellaCateringWebApp.Controllers
         {
             try
             {
+                Session.Remove("currentBooking");
+                Session.Remove("bookingSelectedDate");
                 if (month < 1 || month > 12)
                 {
                     return Json(new { success = false, message = "Invalid month." }, JsonRequestBehavior.AllowGet);
@@ -808,6 +810,7 @@ namespace IsabellaCateringWebApp.Controllers
                     }
                     else
                     {
+                        Session["bookingSelectedDate"] = bookings.bookingDate.ToString("yyyy-M-d");
                         var bookingPackage = db.packages_tbl
                                     .Where(p => p.packageID == bookings.packageID)
                                     .FirstOrDefault();
@@ -1449,8 +1452,12 @@ namespace IsabellaCateringWebApp.Controllers
                         bookingNote = bookingInfo.bookingNote,
                         progressOne = 0,
                         progressTwo = 0,
-                        progressThree = 0
-                    };
+                        progressThree = 0,
+                        paxCount = bookingInfo.paxCount,
+                        addAdult = bookingInfo.addAdult,
+                        addKid = bookingInfo.addKid,
+                    }
+                ;
                     db.bookings_tbl.Add(newBooking);
                     db.SaveChanges();
 

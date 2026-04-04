@@ -33,5 +33,8 @@ namespace IsabellaCateringWebApp.Models.Models
         public int progressOne { get; set; }
         public int progressTwo { get; set; }
         public int progressThree { get; set; }
+        public int paxCount { get; set; }
+        public int addAdult { get; set; }
+        public int addKid { get; set; }
     }
 }

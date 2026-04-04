@@ -69,10 +69,13 @@
                                 Package reference and style details for this booking.
                             </p>
                         </div>
-
+                        
                         <div class="rounded-lg bg-pink-50 px-3 py-2 text-sm font-medium text-pink-600">
                             Design and inclusion overview
                         </div>
+                        <button type="button" ng-click="redirectToAddBookingPageEditMode(editBookingID)" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
+                            Edit Event <i class="ml-2 material-icons">edit</i>
+                        </button>
                     </div>
 
                     <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
@@ -120,7 +123,7 @@
                     </div>
 
                     <dl class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:col-span-2 xl:col-span-1">
                             <dt class="text-sm font-medium text-gray-500">Date</dt>
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.bookingDate || 'Not set' }}</dd>
                         </div>
@@ -150,7 +153,7 @@
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.eventTime || 'Not set' }}</dd>
                         </div>
 
-                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:col-span-2 xl:col-span-1">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <dt class="text-sm font-medium text-gray-500">Meal Time</dt>
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.eventMealTime || 'Not set' }}</dd>
                         </div>
