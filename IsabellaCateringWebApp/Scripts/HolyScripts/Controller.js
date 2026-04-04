@@ -2354,6 +2354,62 @@
     //====================================================== PAYMENT REMINDER END ======================================================
 
     //====================================================== CREATE BOOKING START ======================================================
+    $scope.deleteBooking = function () {
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'edit') {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to REMOVE this booking for Isabella Catering? Once data is PERMANENTLY REMOVED, it cannot be UNDONE!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ec4899',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, remove it!',
+                cancelButtonText: 'No, cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var deleteBookingID = parseInt(urlParams.get('id'));
+                    IsabellaCateringWebAppService.removeBookingService(deleteBookingID).then(function (returnedData) {
+                        if (returnedData.data.success) {
+                            Swal.fire({
+                                title: 'Booking Removed!',
+                                text: "Booking data has been deleted permanently! "+returnedData.data.message,
+                                icon: 'success',
+                                confirmButtonColor: '#ec4899',
+                            }).then((reuslt) => {
+                                $scope.redirectToBookingCalendarPage();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: "Failed to remove the booking permanently! "+returenedData.data.message,
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899',
+                            });
+                        }
+                    });
+                }
+                else {
+                    Swal.fire({
+                        title: 'Be Careful!',
+                        text: "Once done you cannot undo it!",
+                        icon: 'warning',
+                        confirmButtonColor: '#ec4899',
+                    });
+                }
+            });
+        }
+        else {
+            Swal.fire({
+                title: 'No Access!',
+                text: "",
+                icon: 'error',
+                confirmButtonColor: '#ec4899',
+            });
+        }
+
+    }
 
     $scope.loadPackageOptions = function () {
         IsabellaCateringWebAppService.getPackageBookingOptionsService().then(function (returnedData) {
@@ -2409,6 +2465,7 @@
                         dsgnMotif: res.data.dsgnMotif,
                         dateCreated: convertDate(res.data.dateCreated),
                         dateUpdated: convertDate(res.data.dateUpdated),
+                        bookingNote: res.data.bookingNote,
                         progressOne: res.data.progressOne,
                         progressTwo: res.data.progressTwo,
                         progressThree: res.data.progressThree,
@@ -2433,8 +2490,9 @@
                     $scope.eventSetTime = $scope.order.eventSetTime;
                     $scope.eventMealTime = $scope.order.eventMealTime;
                     $scope.addAdult = $scope.order.addAdult == 0 ? '' : $scope.order.addAdult.toString();
-                    alert($scope.addAdult);
-                    $scope.addKid = $scope.order.addKid == 0 ? '' : $scope.order.addKid.toString() ;
+                    $scope.addKid = $scope.order.addKid == 0 ? '' : $scope.order.addKid.toString();
+                    $scope.priceType = `Pax ${$scope.order.paxCount}`;
+                    $scope.bookingNote = $scope.order.bookingNote;
 
                     let [hour24, minute] = $scope.eventCeremTime.split(':');
                     let hour = parseInt(hour24);
@@ -2504,12 +2562,39 @@
                     $scope.selectMealMinute($scope.mealMinute);
                     $scope.selectMealPeriod($scope.mealPeriod);
 
-                    
+                    var editBookingID = parseInt(urlParams.get('id'));
+                    IsabellaCateringWebAppService.getBookingDetailsService(editBookingID)
+                        .then(function (detailsRes) {
+                            if (!detailsRes || !detailsRes.data || !detailsRes.data.success) {
+                                return;
+                            }
+
+                            $scope.eventName = detailsRes.data.clients.eventName;
+                            $scope.cFirstName = detailsRes.data.clients.cFName;
+                            $scope.cLastName = detailsRes.data.clients.cLName;
+                            $scope.cEmail = detailsRes.data.clients.cEmail;
+                            $scope.cContactNum = detailsRes.data.clients.cContact;
+                            $scope.cCeleb1FirstName = detailsRes.data.clients.cCeleb1FName;
+                            $scope.cCeleb1LastName = detailsRes.data.clients.cCeleb1LName;
+                            $scope.cCeleb2FirstName = detailsRes.data.clients.cCeleb2FName;
+                            $scope.cCeleb2LastName = detailsRes.data.clients.cCeleb2LName;
+
+                            $scope.packageType = detailsRes.data.packageType.packageTypDesc;
+                            $scope.packageTypeID = detailsRes.data.packageType.packageTypID;
+                            $scope.eventType = detailsRes.data.events.eventDesc;
+                            $scope.eventTypeID = detailsRes.data.events.eventID;
+                            $scope.bookingFinalPrice = `Php ${detailsRes.data.payment.amountDue}`;
+
+                            disableBookingInput();
+                        });
                 });
         }
     }
 
     $scope.createBooking = function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        var mode = urlParams.get('mode') || 'create';
+
         var clientInfo = {
             eventName: $scope.eventName,
             cFName: $scope.cFirstName,
@@ -2534,9 +2619,12 @@
             eventSetTime: $scope.eventSetTime,
             eventMealTime: $scope.eventMealTime,
             bookingNote: $scope.bookingNote ?? null,
+            progressOne: $scope.bookingProgressOne == true ? 1 : 0,
+            progressTwo: $scope.bookingProgressOneTwo == true ? 1 : 0,
+            progressThree: $scope.bookingProgressThree == true ? 1 : 0,
             paxCount: parseInt($scope.priceType),
             addAdult: parseInt($scope.addAdult) || 0,
-            addKid: parseInt($scope.addkid) || 0
+            addKid: parseInt($scope.addKid) || 0
         }
            
 
@@ -2547,6 +2635,7 @@
         }
 
         var packages = {
+            packageTypID: $scope.packageTypeID,
             mainCourseTypID: $scope.mainCourseTypeID ?? null,
             incStaples: $scope.staplesType ?? null,
             incBftSet: $scope.buffetType ?? null,
@@ -2654,7 +2743,7 @@
         ) {
             Swal.fire({
                 title: 'Are you sure?',
-                text: "Do you want to save this booking for Isabella Events?",
+                text: "Do you want to save this booking for Isabella Catering?",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ec4899',
@@ -2665,7 +2754,7 @@
                 if (result.isConfirmed) {
                     IsabellaCateringWebAppService.checkCalendarAvailabilityService($scope.dateOfEvent).then(function (response) {
                         if (response.data.success) {
-                            IsabellaCateringWebAppService.insertPackageService(clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes).then(function (returnedData) {
+                            IsabellaCateringWebAppService.insertPackageService(mode, clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes).then(function (returnedData) {
                                 if (returnedData.data.success) {
                                     Swal.fire({
                                         title: 'Success!',
@@ -2726,6 +2815,9 @@
         $scope.packageType = type;
         $scope.packageTypeID = id;
         $scope.activeDropdown = null;
+
+        $scope.addAdult = '';
+        $scope.addKid = '';
 
         IsabellaCateringWebAppService.loadPackagePreOptionService($scope.packageTypeID).then(function (returnedData) {
             $scope.staplesType = returnedData.data.prePackage.incStaples;
@@ -2822,9 +2914,6 @@
 
             $scope.pricePaxAdMulti = returnedData.data.pricePax.pricePaxAd;
             $scope.pricePaxKdMulti = returnedData.data.pricePax.pricePaxKd;
-
-            $scope.addAdult = '';
-            $scope.addKid = '';
         });
 
         disableBookingInput();

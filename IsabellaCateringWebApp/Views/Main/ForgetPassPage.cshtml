@@ -67,7 +67,6 @@
                                    type="text"
                                    required
                                    maxlength="50"
-                                   ng-pattern="emailPattern"
                                    oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('forgetEmailCount').innerText = this.value.length + ' / 50';"
                                    ng-class="{'login-field-invalid': shouldShowFieldError(forgetPasswordForm, 'forgetEmail')}"
                                    class="login-field w-full bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 outline-none"
