@@ -159,7 +159,7 @@
                                         <span class="px-2 py-1 rounded-full text-xs font-bold"
                                               ng-class="{
                                           'bg-blue-100 text-blue-700':     payment.paymentType === 'Down Payment',
-                                          'bg-purple-100 text-purple-700': payment.paymentType === 'Full Payment',
+                                          'bg-purple-100 text-purple-700': payment.paymentType === 'Payment',
                                           'bg-orange-100 text-orange-700': payment.paymentType === 'Additional'
                                       }">
                                             {{ payment.paymentType }}
@@ -533,8 +533,8 @@
                                                     For
                                                     <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
                                                           ng-class="{
-                                                              'bg-blue-100 text-blue-700':      payment.paymentType === 'Down Payment',
-                                                              'bg-purple-100 text-purple-700': payment.paymentType === 'Full Payment',
+                                                              'bg-blue-100 text-blue-700':     payment.paymentType === 'Initial',
+                                                              'bg-purple-100 text-purple-700': payment.paymentType === 'Payment',
                                                               'bg-orange-100 text-orange-700': payment.paymentType === 'Additional'
                                                           }">
                                                         {{ payment.paymentType }}
@@ -544,6 +544,8 @@
                                                 <td class="px-4 py-2.5">Due: <span class="font-bold">{{ payment.amountDue | currency:"₱" }}</span></td>
 
                                                 <td class="px-4 py-2.5">Paid: <span class="font-bold">{{ payment.amountPaid | currency:"₱" }}</span></td>
+
+                                                <td class="px-4 py-2.5">Remaining: <span class="font-bold">{{ payment.remainingBalance | currency:"₱" }}</span></td>
 
                                                 <td class="px-4 py-2.5">
                                                     <div class="flex items-center gap-1.5 flex-wrap">
@@ -766,11 +768,11 @@
                         class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500">
                     <option value="Down Payment"
                             ng-disabled="addPaymentRestrictions.hasDownPayment">
-                        Down Payment{{ addPaymentRestrictions.hasDownPayment ? ' (already exists)' : '' }}
+                        Down Payment@*{{ addPaymentRestrictions.hasDownPayment ? ' (already exists)' : '' }}*@
                     </option>
-                    <option value="Full Payment"
+                    <option value="Payment"
                             ng-disabled="addPaymentRestrictions.hasFullPayment">
-                        Full Payment{{ addPaymentRestrictions.hasFullPayment ? ' (already exists)' : '' }}
+                        Payment@*{{ addPaymentRestrictions.hasFullPayment ? ' (already exists)' : '' }}*@
                     </option>
                     <option value="Additional">Additional</option>
                 </select>
@@ -782,9 +784,10 @@
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Amount Due (₱)
+                    Remaining Balance (₱)
                 </label>
                 <input type="number"
+                       
                        ng-model="newPayment.amountDue"
                        min="0"
                        placeholder="0.00"

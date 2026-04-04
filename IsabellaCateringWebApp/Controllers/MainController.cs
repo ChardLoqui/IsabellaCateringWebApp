@@ -656,6 +656,7 @@ namespace IsabellaCateringWebApp.Controllers
                                         var toRemovePaymentReminder = db.paymentreminders_tbl
                                             .Where(x => x.paymentID == toRemovePayment.paymentID)
                                             .ToList();
+
                                         if (toRemovePaymentReminder.Any())
                                         {
                                             db.paymentreminders_tbl.RemoveRange(toRemovePaymentReminder);
@@ -2186,6 +2187,8 @@ namespace IsabellaCateringWebApp.Controllers
                     bookingID = p.bookingID,
                     amountDue = p.amountDue,
                     amountPaid = p.amountPaid,
+                    remainingBalance = p.remainingBalance,
+                    transactionNum = p.transactionNum,
                     paymentType = p.paymentType,
                     paymentStatus = p.paymentStatus,
                     dueDate = p.dueDate,
@@ -2209,7 +2212,6 @@ namespace IsabellaCateringWebApp.Controllers
 
                     if (existingPayment != null)
                     {
-                        existingPayment.amountDue = paymentData.amountDue;
                         existingPayment.amountPaid = paymentData.amountPaid;
                         existingPayment.paymentType = paymentData.paymentType;
                         existingPayment.paymentStatus = paymentData.paymentStatus;
@@ -2218,20 +2220,50 @@ namespace IsabellaCateringWebApp.Controllers
                     }
                     else
                     {
-                        var newPayment = new tblPaymentsModel()
-                        {
-                            bookingID = paymentData.bookingID,
-                            amountDue = paymentData.amountDue,
-                            amountPaid = paymentData.amountPaid,
-                            paymentType = paymentData.paymentType,
-                            paymentStatus = paymentData.paymentStatus,
-                            dueDate = paymentData.dueDate,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-                        db.payments_tbl.Add(newPayment);
-                    }
+                        var latestPayment = db.payments_tbl
+                                .Where(x => x.bookingID == paymentData.bookingID)
+                                .OrderByDescending(x => x.transactionNum)
+                                .FirstOrDefault();
 
+                        if (paymentData.paymentType == "Payment")
+                        {
+                            var newPayment = new tblPaymentsModel()
+                            {
+                                bookingID = paymentData.bookingID,
+                                amountDue = latestPayment.remainingBalance,
+                                amountPaid = paymentData.amountPaid,
+                                paymentType = paymentData.paymentType,
+                                remainingBalance = (latestPayment.remainingBalance - paymentData.amountPaid),
+                                transactionNum = (latestPayment.transactionNum + 1),
+                                paymentStatus = paymentData.paymentStatus,
+                                dueDate = paymentData.dueDate,
+                                dateCreated = DateTime.Now,
+                                dateUpdated = DateTime.Now
+                            };
+                            db.payments_tbl.Add(newPayment);
+                        }
+                        else if(paymentData.paymentType == "Additional")
+                        {
+                            var newPayment = new tblPaymentsModel()
+                            {
+                                bookingID = paymentData.bookingID,
+                                amountDue = latestPayment.remainingBalance,
+                                amountPaid = paymentData.amountPaid,
+                                paymentType = paymentData.paymentType,
+                                remainingBalance = (latestPayment.remainingBalance + paymentData.amountPaid),
+                                transactionNum = (latestPayment.transactionNum + 1),
+                                paymentStatus = paymentData.paymentStatus,
+                                dueDate = paymentData.dueDate,
+                                dateCreated = DateTime.Now,
+                                dateUpdated = DateTime.Now
+                            };
+                            db.payments_tbl.Add(newPayment);
+                        }
+                        else
+                        {
+                            return Json(new { success = false, message = "Invalid payment type!" }, JsonRequestBehavior.AllowGet);
+                        }  
+                    }
                     db.SaveChanges();
                     return Json(new { success = true, message = "Saved successfully!" });
                 }

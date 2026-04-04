@@ -1308,6 +1308,8 @@
                     bookingID: payment.bookingID != null ? payment.bookingID : payment.BookingID,
                     amountDue: payment.amountDue != null ? payment.amountDue : payment.AmountDue,
                     amountPaid: payment.amountPaid != null ? payment.amountPaid : payment.AmountPaid,
+                    remainingBalance: payment.remainingBalance != null ? payment.remainingBalance : payment.remainingBalance,
+                    transactionNum: payment.transactionNum != null ? payment.remainingBalance : payment.transactionNum,
                     paymentType: payment.paymentType != null ? payment.paymentType : payment.PaymentType,
                     paymentStatus: payment.paymentStatus != null ? payment.paymentStatus : payment.PaymentStatus,
                     dueDate: toDateString(rawDue),
@@ -2383,7 +2385,7 @@
                         } else {
                             Swal.fire({
                                 title: 'Error!',
-                                text: "Failed to remove the booking permanently! "+returenedData.data.message,
+                                text: "Failed to remove the booking permanently! "+returnedData.data.message,
                                 icon: 'error',
                                 confirmButtonColor: '#ec4899',
                             });
