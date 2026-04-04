@@ -36,6 +36,16 @@
         return currentPath.indexOf(("/main/" + pageName).toLowerCase()) !== -1;
     }
 
+    var isAccountsPage = isCurrentPage("AccountsPage");
+    var isLogsPage = isCurrentPage("LogsPage");
+    var isPaymentReminderPage = isCurrentPage("PaymentReminderPage");
+
+    $scope.accountsLoading = isAccountsPage;
+    $scope.logsLoading = isLogsPage;
+    $scope.paymentLoading = isPaymentReminderPage;
+    $scope.orderLoading = false;
+    $scope.calendarLoading = false;
+
     $scope.authenticateLoginCredentials = function () {
         $scope.navStateResolved = false;
         IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
@@ -138,6 +148,30 @@
     $scope.guestCodePattern = /^\S{1,50}$/;
     $scope.emailPlaceholder = "Use Email";
     $scope.isGuest = false;
+    $scope.resetTokenState = { checked: false, valid: false };
+    $scope.bookingValidationAttempted = false;
+    $scope.bookingTouchedFields = {};
+
+    const bookingRequiredFields = [
+        { key: 'eventName', label: 'Event Name' },
+        { key: 'packageTypeID', label: 'Package' },
+        { key: 'eventTypeID', label: 'Event Type' },
+        { key: 'cFirstName', label: "Client's Firstname" },
+        { key: 'cLastName', label: "Client's Lastname" },
+        { key: 'cEmail', label: 'Email' },
+        { key: 'cContactNum', label: 'Contact Number' },
+        { key: 'cCeleb1FirstName', label: "Celebrant's Firstname" },
+        { key: 'cCeleb1LastName', label: "Celebrant's Lastname" },
+        { key: 'eventVenue', label: 'Venue' },
+        { key: 'eventPrepVenue', label: 'Preparation Venue' },
+        { key: 'eventMotif', label: 'Motif' },
+        { key: 'eventTheme', label: 'Theme' },
+        { key: 'dateOfEvent', label: 'Date of Event' },
+        { key: 'eventCeremTime', label: 'Ceremony Time' },
+        { key: 'eventEventTime', label: 'Event Time' },
+        { key: 'eventMealTime', label: 'Meal Time' },
+        { key: 'eventSetTime', label: 'Set Time' }
+    ];
 
     $scope.shouldShowFieldError = function (form, fieldName, errorKey) {
         if (!form || !form[fieldName]) {
@@ -172,6 +206,54 @@
             $scope.newPassword !== $scope.cNewPassword);
     };
 
+    $scope.markBookingFieldTouched = function (fieldKey) {
+        if (!fieldKey) {
+            return;
+        }
+
+        $scope.bookingTouchedFields[fieldKey] = true;
+    };
+
+    $scope.shouldShowBookingFieldError = function (fieldKey) {
+        if (!$scope.bookingValidationAttempted && !$scope.bookingTouchedFields[fieldKey]) {
+            return false;
+        }
+
+        return getMissingBookingFields().some(function (field) {
+            return field.key === fieldKey;
+        });
+    };
+
+    $scope.getBookingFieldErrorMessage = function (fieldKey) {
+        var fieldConfig = bookingRequiredFields.find(function (field) {
+            return field.key === fieldKey;
+        });
+
+        return (fieldConfig ? fieldConfig.label : 'This field') + ' is required.';
+    };
+
+    function getMissingBookingFields() {
+        return bookingRequiredFields.filter(function (field) {
+            return !hasBookingValue($scope[field.key]);
+        });
+    }
+
+    function fireBookingValidationAlert(missingFields) {
+        var alertHtml =
+            '<p>Please fill in these required fields before continuing:</p>' +
+            '<ul style="margin:0.75rem 0 0; padding-left:1.25rem; text-align:left;">' +
+            missingFields.map(function (field) {
+                return '<li>' + field.label + '</li>';
+            }).join('') +
+            '</ul>';
+
+        return fireAuthAlert({
+            title: 'Incomplete Details',
+            html: alertHtml,
+            icon: 'error'
+        });
+    }
+
     $scope.logInService = function () {
         if ($scope.loginForm.$invalid) {
             fireAuthAlert({
@@ -199,15 +281,12 @@
                 else
                     $scope.redirectToBookingCalendarPage();
             }
-            else if (!returnedData.data.success && returnedData.data.message === "Please change your password first!") {
-                Swal.fire({
+            else if (!returnedData.data.success && returnedData.data.requiresPasswordChange) {
+                fireAuthAlert({
                     title: "New Account Detected",
-                    text: returnedData.data.message,
-                    icon: "warning",
-                    confirmButtonColor: "#EC4899"
+                    text: returnedData.data.detail || "Please change your password first.",
+                    icon: "warning"
                 });
-
-
             }
             else if (!returnedData.data.success && returnedData.data.message === "Invalid Credentials") {
                 fireAuthAlert({
@@ -359,6 +438,47 @@
     //======================================================== NAVBAR END =======================================================
 
     //======================================================== ACCOUNT MANAGEMENT START=======================================================
+    $scope.showAddAccountModal = false;
+    $scope.showUpdateAccountModal = false;
+    $scope.accountSearchText = "";
+    $scope.accountAppliedSearch = "";
+    $scope.logSearchText = "";
+    $scope.logAppliedSearch = "";
+
+    function resetAddAccountForm() {
+        $scope.firstName = '';
+        $scope.lastName = '';
+        $scope.email = '';
+        $scope.password = '';
+        $scope.confirmPassword = '';
+        $scope.permissionID = '';
+        $scope.isActive = false;
+
+        if ($scope.addUserForm) {
+            $scope.addUserForm.$setPristine();
+            $scope.addUserForm.$setUntouched();
+        }
+
+        [
+            ['firstNameAddCount', '0 / 30'],
+            ['lastNameAddCount', '0 / 30'],
+            ['emailAddCount', '0 / 50'],
+            ['passAddCount', '0 / 20']
+        ].forEach(function (entry) {
+            var el = document.getElementById(entry[0]);
+            if (el) el.innerText = entry[1];
+        });
+    }
+
+    $scope.openAddAccountModal = function () {
+        resetAddAccountForm();
+        $scope.showAddAccountModal = true;
+    };
+
+    $scope.closeAddAccountModal = function () {
+        $scope.showAddAccountModal = false;
+    };
+
     //bago, to add user 
     $scope.addUsrSubmit = function () {
         // check inputs
@@ -405,14 +525,8 @@
                 Swal.fire({
                     title: "Success!", text: "Account created!", icon: "success",
                     confirmButtonColor: "#EC4899" });
-                // reset after passing
-                $scope.firstName = ''; $scope.lastName = ''; $scope.email = '';
-                $scope.password = ''; $scope.confirmPassword = ''; $scope.permissionID = '';
-                $scope.addUserForm.$setPristine();
-                document.getElementById('firstNameAddCount').innerText = '0 / 30';
-                document.getElementById('lastNameAddCount').innerText = '0 / 30';
-                document.getElementById('emailAddCount').innerText = '0 / 50';
-                document.getElementById('passAddCount').innerText = '0 / 20';
+                resetAddAccountForm();
+                $scope.closeAddAccountModal();
                 $scope.getUsersData(); //refresh table 
             } else {
                 Swal.fire({
@@ -424,17 +538,27 @@
 
     // for getting the data
     $scope.getUsersData = function () {
-        IsabellaCateringWebAppService.getUsersDataService().then(function (returnedData) {
-            $scope.usersData = returnedData.data.map(user => {
-                if (user.dateUpdated) {
-                    const milli = parseInt(user.dateUpdated.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
-                    user.dateUpdated = new Date(milli);
-                }
-                return user;
+        $scope.accountsLoading = true;
+
+        IsabellaCateringWebAppService.getUsersDataService()
+            .then(function (returnedData) {
+                $scope.usersData = returnedData.data.map(user => {
+                    if (user.dateUpdated) {
+                        const milli = parseInt(user.dateUpdated.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
+                        user.dateUpdated = new Date(milli);
+                    }
+                    return user;
+                });
+            })
+            .catch(function (error) {
+                console.error('Error loading accounts', error);
+                $scope.usersData = [];
+            })
+            .finally(function () {
+                $scope.accountsLoading = false;
             });
-        });
     };
-    if (isCurrentPage("AccountsPage")) {
+    if (isAccountsPage) {
         $scope.authenticateLoginCredentials();
         $scope.getUsersData();
     }
@@ -445,7 +569,7 @@
         $scope.selectedUser = angular.copy(user);
         //change active to inactive n vice versa 
         $scope.selectedUser.isActive = user.isActive === 1;
-        document.getElementById('updateModal').classList.remove('hidden');
+        $scope.showUpdateAccountModal = true;
     };
 
     // save changes 
@@ -517,80 +641,138 @@
     //MODAL ENDDDD
 
     $scope.closeUpdateModal = function () {
-        document.getElementById('updateModal').classList.add('hidden');
+        $scope.showUpdateAccountModal = false;
     };
 
-    $scope.searchText = "";
-    $scope.appliedSearch = "";
-    $scope.currentPage = 1;
-    $scope.pageSize = 8; // rows for table
+    var accountsPag = makePagination({ defaultSort: 'userID', defaultSize: 10 });
+    $scope.accountsTable = accountsPag.state;
 
     // search button
     $scope.searchUser = function () {
-        $scope.appliedSearch = $scope.searchText;
-        $scope.currentPage = 1; reset
+        $scope.accountAppliedSearch = $scope.accountSearchText;
+        accountsPag.resetPage();
+        $scope.accountsPageDropOpen = false;
+        $scope.accountsSizeDropOpen = false;
     };
 
-    // pagination
-    $scope.numberOfPages = function () {
-        if (!$scope.usersData) return 1;
-        const filtered = $scope.$eval("usersData | filter:searchText");
-        return Math.ceil(filtered.length / $scope.pageSize);
+    $scope.getAccountsFiltered = function () {
+        if (!$scope.usersData) return [];
+
+        var query = ($scope.accountAppliedSearch || '').toLowerCase().trim();
+
+        return $scope.usersData.filter(function (user) {
+            var role = user.permissionID == 1 ? 'admin' : user.permissionID == 2 ? 'staff' : 'user';
+            var status = user.isActive == 1 || user.isActive === true ? 'active' : 'inactive';
+
+            return (
+                String(user.userID || '').toLowerCase().indexOf(query) !== -1
+                || String(role).indexOf(query) !== -1
+                || String(user.firstName || '').toLowerCase().indexOf(query) !== -1
+                || String(user.lastName || '').toLowerCase().indexOf(query) !== -1
+                || String(user.email || '').toLowerCase().indexOf(query) !== -1
+                || String(status).indexOf(query) !== -1
+            );
+        });
     };
 
-    $scope.setPage = function (page) {
-        if (page >= 1 && page <= $scope.numberOfPages()) {
-            $scope.currentPage = page;
-        }
+    $scope.getAccountsPage = function () {
+        return accountsPag.getPage($scope.getAccountsFiltered());
+    };
+    $scope.getAccountsTotalPages = function () {
+        return accountsPag.getTotalPages($scope.getAccountsFiltered());
+    };
+    $scope.getAccountsPageNumbers = function () {
+        return accountsPag.getPageNumbers($scope.getAccountsFiltered());
+    };
+    $scope.accountsSortBy = function (field) {
+        accountsPag.sortBy(field);
+    };
+    $scope.accountsGoToPage = function (page) {
+        accountsPag.goToPage(page, $scope.getAccountsFiltered());
+    };
+    $scope.accountsPrevPage = function () {
+        $scope.accountsGoToPage($scope.accountsTable.currentPage - 1);
+    };
+    $scope.accountsNextPage = function () {
+        $scope.accountsGoToPage($scope.accountsTable.currentPage + 1);
+    };
+    $scope.setAccountsPageSize = function (size) {
+        accountsPag.setPageSize(size);
     };
 
-    // double arrow para sa last page
-    $scope.lastPage = function () {
-        $scope.currentPage = $scope.numberOfPages();
-    };
-
-    // func ng search and pagination 
     $scope.logsData = [];
-    $scope.searchText = "";
-    $scope.appliedSearch = "";
-    $scope.currentPage = 1;
-    $scope.pageSize = 8; 
+    var logsPag = makePagination({ defaultSort: 'logID', defaultSize: 10 });
+    $scope.logsTable = logsPag.state;
 
     // search
     $scope.searchLogs = function () {
-        $scope.appliedSearch = $scope.searchText;
-        $scope.currentPage = 1;
+        $scope.logAppliedSearch = $scope.logSearchText;
+        logsPag.resetPage();
+        $scope.logsPageDropOpen = false;
+        $scope.logsSizeDropOpen = false;
     };
 
-    // pagination
-    $scope.numberOfPages = function () {
-        if (!$scope.logsData) return 1;
-        const filtered = $scope.$eval("logsData | filter:appliedSearch");
-        return Math.ceil(filtered.length / $scope.pageSize) || 1;
+    $scope.getLogsFiltered = function () {
+        if (!$scope.logsData) return [];
+
+        var query = ($scope.logAppliedSearch || '').toLowerCase().trim();
+
+        return $scope.logsData.filter(function (log) {
+            return (
+                String(log.logID || '').toLowerCase().indexOf(query) !== -1
+                || String(log.action || '').toLowerCase().indexOf(query) !== -1
+                || String(log.userName || '').toLowerCase().indexOf(query) !== -1
+            );
+        });
     };
 
-    $scope.setPage = function (page) {
-        if (page >= 1 && page <= $scope.numberOfPages()) {
-            $scope.currentPage = page;
-        }
+    $scope.getLogsPage = function () {
+        return logsPag.getPage($scope.getLogsFiltered());
     };
-    // double arrow para sa last page
-    $scope.lastPage = function () {
-        $scope.currentPage = $scope.numberOfPages();
+    $scope.getLogsTotalPages = function () {
+        return logsPag.getTotalPages($scope.getLogsFiltered());
+    };
+    $scope.getLogsPageNumbers = function () {
+        return logsPag.getPageNumbers($scope.getLogsFiltered());
+    };
+    $scope.logsSortBy = function (field) {
+        logsPag.sortBy(field);
+    };
+    $scope.logsGoToPage = function (page) {
+        logsPag.goToPage(page, $scope.getLogsFiltered());
+    };
+    $scope.logsPrevPage = function () {
+        $scope.logsGoToPage($scope.logsTable.currentPage - 1);
+    };
+    $scope.logsNextPage = function () {
+        $scope.logsGoToPage($scope.logsTable.currentPage + 1);
+    };
+    $scope.setLogsPageSize = function (size) {
+        logsPag.setPageSize(size);
     };
     //get logs data
     $scope.getLogsData = function () {
-        IsabellaCateringWebAppService.getLogsDataService().then(function (returnedData) {
-            $scope.logsData = returnedData.data.map(log => {
-                if (log.dateUpdated) {
-                    const milli = parseInt(log.dateUpdated.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
-                    log.dateUpdated = new Date(milli);
-                }
-                return log;
+        $scope.logsLoading = true;
+
+        IsabellaCateringWebAppService.getLogsDataService()
+            .then(function (returnedData) {
+                $scope.logsData = returnedData.data.map(log => {
+                    if (log.dateUpdated) {
+                        const milli = parseInt(log.dateUpdated.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
+                        log.dateUpdated = new Date(milli);
+                    }
+                    return log;
+                });
+            })
+            .catch(function (error) {
+                console.error('Error loading logs', error);
+                $scope.logsData = [];
+            })
+            .finally(function () {
+                $scope.logsLoading = false;
             });
-        });
     };
-    if (isCurrentPage("LogsPage")) {
+    if (isLogsPage) {
         $scope.authenticateLoginCredentials();
         $scope.getLogsData();
     }
@@ -605,26 +787,43 @@
     //======================================================== PASSWORD RESET START =======================================================
 
     $scope.sendForgetRequest = function () {
-        if ($scope.forgetPasswordForm.$invalid) {
+        if (!$scope.fEmail || !$scope.fEmail.trim()) {
+            Swal.fire({
+                title: "Empty Input",
+                text: "Please enter your email address or customer entry code.",
+                icon: "warning",
+                confirmButtonColor: "#EC4899"
+            });
             return;
         }
 
-        IsabellaCateringWebAppService.verifyEmailCreds($scope.fEmail).then(function (returnedData) {
-            if (returnedData.data != '') {
-                fireAuthAlert({
+        $scope.fEmail = $scope.fEmail.trim();
+        var isEmailLookup = $scope.fEmail.includes('@');
+        var request = isEmailLookup
+            ? IsabellaCateringWebAppService.verifyEmailCreds($scope.fEmail)
+            : IsabellaCateringWebAppService.verifyClientCreds(null, $scope.fEmail);
+
+        request.then(function (returnedData) {
+            var result = returnedData.data || {};
+
+            if (result.success) {
+                Swal.fire({
                     title: "Email Sent!",
                     text: "Please check your e-mail for the Reset Password Link.",
                     icon: "success",
-                    confirmButtonText: "Back to login"
+                    confirmButtonColor: "#EC4899"
                 }).then(() => {
                     window.location.href = "/Main/LoginPage";
                 });
             }
             else {
-                fireAuthAlert({
-                    title: "User Not Found",
-                    text: "The email you entered is not registered in our system.",
-                    icon: "error"
+                Swal.fire({
+                    title: result.hasActiveToken ? "Reset Link Already Sent" : "User Not Found",
+                    text: result.message || (isEmailLookup
+                        ? "The email you entered is not registered in our system."
+                        : "The entry code you entered is not registered in our system."),
+                    icon: result.hasActiveToken ? "info" : "error",
+                    confirmButtonColor: "#EC4899"
                 });
 
                 resetAuthFields($scope.forgetPasswordForm, {
@@ -640,9 +839,36 @@
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
-    $scope.verifyToken = function () {
+    function redirectToForgetPasswordWithAlert(message) {
+        $scope.resetTokenState = { checked: true, valid: false };
+
+        fireAuthAlert({
+            title: "Reset Link Invalid",
+            text: message,
+            icon: "error",
+            confirmButtonText: "Back to forgot password"
+        }).then(() => {
+            window.location.href = "/Main/ForgetPassPage";
+        });
+    }
+
+    $scope.initializeChangePasswordPage = function () {
+        $scope.resetTokenState = { checked: false, valid: false };
+
+        if (!token) {
+            redirectToForgetPasswordWithAlert("The reset link is incomplete. Please request a new one.");
+            return;
+        }
+
         IsabellaCateringWebAppService.verifyToken(token).then(function (returnedData) {
-            return returnedData.data;
+            if (returnedData.data && returnedData.data.valid) {
+                $scope.resetTokenState = { checked: true, valid: true };
+                return;
+            }
+
+            redirectToForgetPasswordWithAlert("This reset link is invalid or has expired. Please request a new one.");
+        }).catch(function () {
+            redirectToForgetPasswordWithAlert("We could not verify the reset link. Please request a new one.");
         });
     };
 
@@ -652,8 +878,13 @@
             return;
         }
 
+        if (!$scope.resetTokenState.valid) {
+            redirectToForgetPasswordWithAlert("This reset link is invalid or has expired. Please request a new one.");
+            return;
+        }
+
         IsabellaCateringWebAppService.changeForgotPasswordService(token, $scope.newPassword).then(function (returnedData) {
-            if (returnedData.data == "True") {
+            if (returnedData.data && returnedData.data.success) {
                 fireAuthAlert({
                     title: "Success!",
                     text: "Password Changed. Please log in again with your new password.",
@@ -673,12 +904,20 @@
         });
     }
 
+    if (isCurrentPage("ChangePassPage")) {
+        $scope.initializeChangePasswordPage();
+    }
+
     const forgetPasswordToggle = document.getElementById('toggleForgetPassword')
     const forgetPassword = document.getElementById('forgetPWord')
     $scope.toggleShowForgetPassword = function () {
+        if (!forgetPassword || !forgetPasswordToggle) {
+            return;
+        }
+
         if (forgetPassword.type === "password") {
             forgetPassword.type = "text";
-            forgetPasswordToggle.innerHTML = "visibility_on";
+            forgetPasswordToggle.innerHTML = "visibility";
         } else {
             forgetPassword.type = "password";
             forgetPasswordToggle.innerHTML = "visibility_off";
@@ -688,9 +927,13 @@
     const forgetCPasswordToggle = document.getElementById('toggleCForgetPassword')
     const forgetCPassword = document.getElementById('cForgetPWord')
     $scope.toggleShowCForgetPassword = function () {
+        if (!forgetCPassword || !forgetCPasswordToggle) {
+            return;
+        }
+
         if (forgetCPassword.type === "password") {
             forgetCPassword.type = "text";
-            forgetCPasswordToggle.innerHTML = "visibility_on";
+            forgetCPasswordToggle.innerHTML = "visibility";
         } else {
             forgetCPassword.type = "password";
             forgetCPasswordToggle.innerHTML = "visibility_off";
@@ -702,6 +945,8 @@
     //======================================================== CUSTOMER VIEW START =======================================================
 
     $scope.getOrderInfo = function () {
+        $scope.orderLoading = true;
+
         IsabellaCateringWebAppService.getCurrentSessionService()
             .then(function (returnedData) {
                 if (returnedData.data.userID == '' && returnedData.data.permID == '') {
@@ -918,6 +1163,9 @@
                 $scope.order = null;
                 $scope.client = null;
                 $scope.package = null;
+            })
+            .finally(function () {
+                $scope.orderLoading = false;
             });
     };
 
@@ -992,6 +1240,7 @@
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         const requestId = ++activeCalendarRequestId;
+        $scope.calendarLoading = true;
 
         currentMonthElement.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -1006,7 +1255,7 @@
 
         // Add empty cells for days before the first day of the month
         for (let i = (daysInPrevMonth - firstDayOfMonth + 1); i <= daysInPrevMonth; i++) {
-            daysContainer.innerHTML += `<div class="toPrev border-gray-400 border"><div class="text-gray-400 flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-gray-400 hover:border-2">${i}</div></div>`;
+            daysContainer.innerHTML += `<div class="toPrev border-gray-400 border"><div class="text-gray-400 flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-transparent hover:border-gray-400 hover:border-2">${i}</div></div>`;
         }
 
         for (let i = 1; i <= daysInMonth; i++) {
@@ -1020,16 +1269,16 @@
                 parseInt(selectedDate.split('-')[2]) === year;
 
             const dayClass = isSelectedDay
-                ? "flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-[#D6418B] hover:bg-[#EC4899] hover:border-2 hover:border-[#D6418B] hover:text-white bg-[#EC4899] text-white"
-                : "flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
+                ? "flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-[#D6418B] hover:bg-[#EC4899] hover:border-2 hover:border-[#D6418B] hover:text-white bg-[#EC4899] text-white"
+                : "flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
 
             const dayString = `${year}-${month + 1}-${i}`;
             const selectedDayClass = isSelectedDay ? "selected-day" : "";
-            daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full bg-white rounded-lg border shadow-inner" data-date="${dayString}"></div></div>`;
+            daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full bg-white rounded-md border shadow-inner" data-date="${dayString}"></div></div>`;
         }
 
         for (let i = 1; i <= (42 - daysInMonth - firstDayOfMonth); i++) {
-            daysContainer.innerHTML += `<div class="toNext border-gray-400 border"><div class="text-gray-400 flex h-[38px] w-[38px] items-center justify-center rounded-[7px] border-2 border-transparent hover:border-gray-400 hover:border-2">${i}</div></div>`;
+            daysContainer.innerHTML += `<div class="toNext border-gray-400 border"><div class="text-gray-400 flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-transparent hover:border-gray-400 hover:border-2">${i}</div></div>`;
         }
 
         document.querySelectorAll('.toPrev').forEach(day => {
@@ -1050,6 +1299,7 @@
             }
 
             if (!bookingResponse.data.success) {
+                $scope.calendarLoading = false;
                 Swal.fire({
                     title: "Error",
                     text: bookingResponse.data.message || "Could not load calendar bookings.",
@@ -1072,7 +1322,7 @@
 
                 bookings.forEach(function (item) {
                     const eventCard = document.createElement("div");
-                    eventCard.className = "mb-1 mx-1 flex cursor-pointer items-center justify-left bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-xl w-100 placeholder-white text-xs";
+                    eventCard.className = "calendar-event-card mb-1 mx-1 flex cursor-pointer items-center justify-left bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-md w-100 placeholder-white text-xs";
                     eventCard.innerText = `${item.eventName || 'Untitled Event'}, ${convertTime(item.eventTime)}`;
                     eventCard.dataset.date = day.dataset.date;
 
@@ -1094,11 +1344,14 @@
                     day.appendChild(eventCard);
                 });
             });
+
+            $scope.calendarLoading = false;
         }).catch(function () {
             if (requestId !== activeCalendarRequestId) {
                 return;
             }
 
+            $scope.calendarLoading = false;
             Swal.fire({
                 title: "Error",
                 text: "Could not load calendar bookings.",
@@ -1143,7 +1396,9 @@
     //====================================================== PAYMENT REMINDER START ======================================================
 
     $scope.dueSearchQuery = '';
+    $scope.dueAppliedSearch = '';
     $scope.paymentsSearchQuery = '';
+    $scope.paymentsAppliedSearch = '';
 
     //date formatting
     function parseDate(dateStr) {
@@ -1298,30 +1553,39 @@
     };
 
     $scope.getPaymentData = function () {
+        $scope.paymentLoading = true;
 
-
-        IsabellaCateringWebAppService.getPaymentDataService().then(function (returnedData) {
-            $scope.paymentData = returnedData.data.map(function (payment) {
-                var rawDue = payment.dueDate != null ? payment.dueDate : payment.DueDate;
-                return {
-                    paymentID: payment.paymentID != null ? payment.paymentID : payment.PaymentID,
-                    bookingID: payment.bookingID != null ? payment.bookingID : payment.BookingID,
-                    amountDue: payment.amountDue != null ? payment.amountDue : payment.AmountDue,
-                    amountPaid: payment.amountPaid != null ? payment.amountPaid : payment.AmountPaid,
-                    paymentType: payment.paymentType != null ? payment.paymentType : payment.PaymentType,
-                    paymentStatus: payment.paymentStatus != null ? payment.paymentStatus : payment.PaymentStatus,
-                    dueDate: toDateString(rawDue),
-                    dateCreated: parseDate(payment.dateCreated != null ? payment.dateCreated : payment.DateCreated),
-                    dateUpdated: parseDate(payment.dateUpdated != null ? payment.dateUpdated : payment.DateUpdated),
-                };
+        IsabellaCateringWebAppService.getPaymentDataService()
+            .then(function (returnedData) {
+                $scope.paymentData = returnedData.data.map(function (payment) {
+                    var rawDue = payment.dueDate != null ? payment.dueDate : payment.DueDate;
+                    return {
+                        paymentID: payment.paymentID != null ? payment.paymentID : payment.PaymentID,
+                        bookingID: payment.bookingID != null ? payment.bookingID : payment.BookingID,
+                        amountDue: payment.amountDue != null ? payment.amountDue : payment.AmountDue,
+                        amountPaid: payment.amountPaid != null ? payment.amountPaid : payment.AmountPaid,
+                        paymentType: payment.paymentType != null ? payment.paymentType : payment.PaymentType,
+                        paymentStatus: payment.paymentStatus != null ? payment.paymentStatus : payment.PaymentStatus,
+                        dueDate: toDateString(rawDue),
+                        dateCreated: parseDate(payment.dateCreated != null ? payment.dateCreated : payment.DateCreated),
+                        dateUpdated: parseDate(payment.dateUpdated != null ? payment.dateUpdated : payment.DateUpdated),
+                    };
+                });
+                $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
+                $scope.getSummary();
+            })
+            .catch(function (error) {
+                console.error('Error loading payments', error);
+                $scope.paymentData = [];
+                $scope.groupedPayments = [];
+            })
+            .finally(function () {
+                $scope.paymentLoading = false;
             });
-            $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
-            $scope.getSummary();
-        });
     };
     $scope.showEditPaymentModal = false;  
     $scope.editData = {};               
-    if (isCurrentPage("PaymentReminderPage")) {
+    if (isPaymentReminderPage) {
         $scope.getPaymentData();
     }
 
@@ -1713,6 +1977,9 @@
             },
 
             getPage: function (filtered) {
+                var total = this.getTotalPages(filtered);
+                if (state.currentPage > total) state.currentPage = total;
+                if (state.currentPage < 1) state.currentPage = 1;
                 var sorted = sort(filtered);
                 var start = (state.currentPage - 1) * state.pageSize;
                 return sorted.slice(start, start + state.pageSize);
@@ -1746,11 +2013,18 @@
     var duePag = makePagination({ defaultSort: 'paymentID', defaultSize: 5 });
     $scope.duePayments = duePag.state;
 
+    $scope.searchDuePayments = function () {
+        $scope.dueAppliedSearch = $scope.dueSearchQuery;
+        duePag.resetPage();
+        $scope.duePageDropOpen = false;
+        $scope.dueSizeDropOpen = false;
+    };
+
     $scope.getDuePaymentsFiltered = function () {
         if (!$scope.paymentData) return [];
         return $scope.paymentData.filter($scope.isUpcomingDue).filter(function (p) {
-            if (!$scope.dueSearchQuery) return true;
-            var q = $scope.dueSearchQuery.toLowerCase();
+            if (!$scope.dueAppliedSearch) return true;
+            var q = String($scope.dueAppliedSearch).toLowerCase().trim();
             return String(p.paymentID).indexOf(q) !== -1
                 || String(p.paymentType).toLowerCase().indexOf(q) !== -1
                 || String(p.paymentStatus).toLowerCase().indexOf(q) !== -1;
@@ -1782,19 +2056,22 @@
         duePag.setPageSize(s);
     };
 
-    $scope.$watch('dueSearchQuery', function () {
-        duePag.resetPage();
-    });
-
     // for payments table pagination
     var groupsPag = makePagination({ defaultSort: 'bookingID', defaultSize: 10 });
     $scope.paymentsTable = groupsPag.state;
 
+    $scope.searchPayments = function () {
+        $scope.paymentsAppliedSearch = $scope.paymentsSearchQuery;
+        groupsPag.resetPage();
+        $scope.groupsPageDropOpen = false;
+        $scope.groupsSizeDropOpen = false;
+    };
+
     $scope.getGroupsFiltered = function () {
         if (!$scope.groupedPayments) return [];
         return $scope.groupedPayments.filter(function (g) {
-            if (!$scope.paymentsSearchQuery) return true;
-            return String(g.bookingID).indexOf($scope.paymentsSearchQuery) !== -1;
+            if (!$scope.paymentsAppliedSearch) return true;
+            return String(g.bookingID).indexOf($scope.paymentsAppliedSearch) !== -1;
         });
     };
 
@@ -1822,11 +2099,6 @@
     $scope.setGroupsPageSize = function (s) {
         groupsPag.setPageSize(s);
     };
-
-    $scope.$watch('paymentsSearchQuery', function () {
-        groupsPag.resetPage();
-    });
-
 
     //payment reminder in PAYMENTS table
     $scope.sendPaymentReminder = function (group) {
@@ -2411,7 +2683,455 @@
 
     }
 
+    $scope.initializeBookingFlow = function () {
+        if ($scope.bookingFlowSteps && $scope.bookingFlowSteps.length) {
+            return;
+        }
+
+        $scope.bookingFlowSteps = [
+            { id: 1, label: 'Event Details', description: 'Client, schedule, and package setup' },
+            { id: 2, label: 'Package Summary', description: 'Review the booking before pricing' },
+            { id: 3, label: 'Pricing & Confirm', description: 'Finalize guest count and submit' }
+        ];
+        $scope.bookingStep = 1;
+    };
+
+    $scope.getBookingProgressWidth = function () {
+        var totalSteps = ($scope.bookingFlowSteps || []).length;
+
+        if (totalSteps <= 1) {
+            return '0%';
+        }
+
+        var progress = (($scope.bookingStep || 1) - 1) / (totalSteps - 1);
+        return (progress * 100) + '%';
+    };
+
+    function hasBookingValue(value) {
+        if (value === null || value === undefined) {
+            return false;
+        }
+
+        if (typeof value === 'string') {
+            return value.trim() !== '';
+        }
+
+        return true;
+    }
+
+    $scope.validateBookingDetailsStep = function (showAlert, redirectToDetailsStep) {
+        var missingFields = getMissingBookingFields();
+        var isValid = missingFields.length === 0;
+
+        $scope.bookingValidationAttempted = true;
+
+        if (!isValid && redirectToDetailsStep) {
+            $scope.goToBookingStep(1);
+        }
+
+        if (!isValid && showAlert) {
+            fireBookingValidationAlert(missingFields);
+        }
+
+        return isValid;
+    };
+
+    $scope.goToBookingStep = function (step) {
+        if (!$scope.bookingFlowSteps || step < 1 || step > $scope.bookingFlowSteps.length) {
+            return;
+        }
+
+        $scope.bookingStep = step;
+        $scope.activeDropdown = null;
+    };
+
+    $scope.goToNextBookingStep = function () {
+        if ($scope.bookingStep === 1 && !$scope.validateBookingDetailsStep(true, false)) {
+            return;
+        }
+
+        $scope.goToBookingStep(Math.min(($scope.bookingStep || 1) + 1, ($scope.bookingFlowSteps || []).length || 1));
+    };
+
+    $scope.goToPreviousBookingStep = function () {
+        $scope.goToBookingStep(Math.max(($scope.bookingStep || 1) - 1, 1));
+    };
+
+    function getEditBookingId() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') !== 'edit') {
+            return null;
+        }
+
+        var bookingID = parseInt(urlParams.get('id'), 10);
+        return bookingID > 0 ? bookingID : null;
+    }
+
+    function parseDotNetDate(dateObj) {
+        if (!dateObj) {
+            return null;
+        }
+
+        var milliseconds = parseInt(String(dateObj).replace(/[^0-9-]/g, ''), 10);
+        if (isNaN(milliseconds)) {
+            return null;
+        }
+
+        var date = new Date(milliseconds);
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function formatServerTime(timeObj) {
+        if (!timeObj || timeObj.Hours === undefined) {
+            return '';
+        }
+
+        return String(timeObj.Hours).padStart(2, '0') + ':' + String(timeObj.Minutes || 0).padStart(2, '0');
+    }
+
+    function applyTimeSelection(timeValue, selectHour, selectMinute, selectPeriod) {
+        if (!timeValue) {
+            return;
+        }
+
+        var parts = timeValue.split(':');
+        var hour24 = parseInt(parts[0], 10);
+        var minute = parseInt(parts[1], 10) || 0;
+        var period = hour24 >= 12 ? 'PM' : 'AM';
+        var hour12 = hour24 % 12;
+        hour12 = hour12 ? hour12 : 12;
+
+        selectHour(String(hour12).padStart(2, '0'));
+        selectMinute(String(minute).padStart(2, '0'));
+        selectPeriod(period);
+    }
+
+    function summarizeSelectedValues(values) {
+        return (values || []).filter(function (val) {
+            return val !== null && val !== undefined && val !== '';
+        }).join(', ');
+    }
+
+    function applyMultiSelection(details, prefix, count, idTarget, textTarget, summaryTarget) {
+        $scope[idTarget] = [];
+        $scope[textTarget] = [];
+
+        for (var x = 0; x < count; x++) {
+            var item = details[prefix + (x + 1)];
+            if (!item) {
+                $scope[idTarget][x] = null;
+                $scope[textTarget][x] = null;
+                continue;
+            }
+
+            var idKey = Object.keys(item).find(function (key) { return /TypID$/.test(key); });
+            var descKey = Object.keys(item).find(function (key) { return /TypDesc$/.test(key); });
+
+            $scope[idTarget][x] = idKey ? item[idKey] : null;
+            $scope[textTarget][x] = descKey ? item[descKey] : null;
+        }
+
+        $scope[summaryTarget] = summarizeSelectedValues($scope[textTarget]);
+    }
+
+    function extractPaxCount(value) {
+        var match = String(value || '').match(/\d+/);
+        return match ? parseInt(match[0], 10) : 0;
+    }
+
+    function findMatchingPriceOption(paxCount) {
+        return ($scope.pricePaxOpt || []).find(function (option) {
+            return extractPaxCount(option.pricePaxDesc) === Number(paxCount);
+        });
+    }
+
+    function applyEditBookingData(bookingData, detailsData) {
+        var client = detailsData.clients || {};
+        var packageInfo = detailsData.packages || {};
+        var packageType = detailsData.packageType || {};
+        var eventInfo = detailsData.events || {};
+
+        $scope.isEditMode = true;
+        $scope.editBookingID = bookingData.bookingID;
+        $scope.order = {
+            bookingID: bookingData.bookingID,
+            clientID: bookingData.clientID,
+            packageID: bookingData.packageID,
+            bookingDate: convertDate(bookingData.bookingDate),
+            prepVenue: bookingData.prepVenue,
+            venue: bookingData.venue,
+            eventSetTime: convertTime(bookingData.eventSetTime),
+            eventTime: convertTime(bookingData.eventTime),
+            ceremTime: convertTime(bookingData.ceremTime),
+            eventMealTime: convertTime(bookingData.eventMealTime),
+            dsgnTheme: bookingData.dsgnTheme,
+            dsgnMotif: bookingData.dsgnMotif,
+            dateCreated: convertDate(bookingData.dateCreated),
+            dateUpdated: convertDate(bookingData.dateUpdated),
+            progressOne: bookingData.progressOne,
+            progressTwo: bookingData.progressTwo,
+            progressThree: bookingData.progressThree,
+            paxCount: bookingData.paxCount,
+            addAdult: bookingData.addAdult,
+            addKid: bookingData.addKid,
+            bookingNote: bookingData.bookingNote
+        };
+
+        $scope.eventName = client.eventName || '';
+        $scope.cFirstName = client.cFName || '';
+        $scope.cLastName = client.cLName || '';
+        $scope.cEmail = client.cEmail || '';
+        $scope.cContactNum = client.cContact || '';
+        $scope.cCeleb1FirstName = client.cCeleb1FName || '';
+        $scope.cCeleb1LastName = client.cCeleb1LName || '';
+        $scope.cCeleb2FirstName = client.cCeleb2FName || '';
+        $scope.cCeleb2LastName = client.cCeleb2LName || '';
+        $scope.eventTheme = bookingData.dsgnTheme || '';
+        $scope.eventMotif = bookingData.dsgnMotif || '';
+        $scope.eventPrepVenue = bookingData.prepVenue || '';
+        $scope.eventVenue = bookingData.venue || '';
+        $scope.bookingNote = bookingData.bookingNote || '';
+
+        var bookingDate = parseDotNetDate(bookingData.bookingDate);
+        if (bookingDate) {
+            $scope.dateOfEvent = bookingDate;
+            $scope.changeSummaryDateOutput();
+        }
+
+        var packageTypeID = packageType.packageTypID || packageInfo.packageTypID || null;
+        var packageTypeDesc = packageType.packageTypDesc || null;
+        var packagePromise = Promise.resolve();
+
+        if (packageTypeID) {
+            packagePromise = $scope.selectPackageTypes(packageTypeDesc, packageTypeID);
+        } else {
+            $scope.packageType = packageTypeDesc;
+            $scope.packageTypeID = packageTypeID;
+        }
+
+        return packagePromise.then(function () {
+            $scope.eventType = eventInfo.eventDesc || null;
+            $scope.eventTypeID = eventInfo.eventID || null;
+
+            $scope.staplesType = packageInfo.incStaples || null;
+            $scope.buffetType = packageInfo.incBftSet || null;
+            $scope.stylingType = packageInfo.incStyling || null;
+            $scope.tableType = packageInfo.incTableSet || null;
+            $scope.dinerwareType = packageInfo.incDnrWare || null;
+
+            if (detailsData.preMainCourse) {
+                $scope.mainCourseTypeID = detailsData.preMainCourse.mainCourseTypID;
+                $scope.mainCourseType = detailsData.preMainCourse.mainCourseTypDesc;
+            }
+            if (detailsData.preCenterPiece) {
+                $scope.centerPieceTypeID = detailsData.preCenterPiece.centerPieceTypID;
+                $scope.centerPieceType = detailsData.preCenterPiece.centerPieceTypDesc;
+            }
+            if (detailsData.preSeating) {
+                $scope.seatingTypeID = detailsData.preSeating.seatingTypID;
+                $scope.seatingType = detailsData.preSeating.seatingTypDesc;
+            }
+            if (detailsData.preBackdrop) {
+                $scope.backdropTypeID = detailsData.preBackdrop.backdropTypID;
+                $scope.backdropType = detailsData.preBackdrop.backdropTypDesc;
+            }
+            if (detailsData.preEntrance) {
+                $scope.entranceTypeID = detailsData.preEntrance.entranceTypID;
+                $scope.entranceType = detailsData.preEntrance.entranceTypDesc;
+            }
+            if (detailsData.preCouch) {
+                $scope.couchTypeID = detailsData.preCouch.couchTypID;
+                $scope.couchType = detailsData.preCouch.couchTypDesc;
+            }
+
+            applyMultiSelection(detailsData, 'preSides', 4, 'selectedSidesTypesID', 'selectedSidesTypes', 'sidesType');
+            applyMultiSelection(detailsData, 'preSpecials', 9, 'selectedSpecialsTypesID', 'selectedSpecialsTypes', 'specialsType');
+            applyMultiSelection(detailsData, 'preStaff', 3, 'selectedStaffTypesID', 'selectedStaffTypes', 'staffType');
+            applyMultiSelection(detailsData, 'preEquip', 7, 'selectedEquipTypesID', 'selectedEquipTypes', 'equipType');
+            applyMultiSelection(detailsData, 'preEntertainment', 7, 'selectedEntertainmentTypesID', 'selectedEntertainmentTypes', 'entertainmentType');
+            applyMultiSelection(detailsData, 'prePhoto', 7, 'selectedPhotoTypesID', 'selectedPhotoTypes', 'photoType');
+            applyMultiSelection(detailsData, 'preKeepsakes', 5, 'selectedKeepsakesTypesID', 'selectedKeepsakesTypes', 'keepsakesType');
+            applyMultiSelection(detailsData, 'preDebut', 3, 'selectedDebutTypesID', 'selectedDebutTypes', 'debutType');
+
+            $scope.eventCeremTime = formatServerTime(bookingData.ceremTime);
+            $scope.eventEventTime = formatServerTime(bookingData.eventTime);
+            $scope.eventSetTime = formatServerTime(bookingData.eventSetTime);
+            $scope.eventMealTime = formatServerTime(bookingData.eventMealTime);
+
+            applyTimeSelection($scope.eventCeremTime, $scope.selectCeremHour, $scope.selectCeremMinute, $scope.selectCeremPeriod);
+            applyTimeSelection($scope.eventEventTime, $scope.selectEventHour, $scope.selectEventMinute, $scope.selectEventPeriod);
+            applyTimeSelection($scope.eventSetTime, $scope.selectSetHour, $scope.selectSetMinute, $scope.selectSetPeriod);
+            applyTimeSelection($scope.eventMealTime, $scope.selectMealHour, $scope.selectMealMinute, $scope.selectMealPeriod);
+
+            var matchingPrice = findMatchingPriceOption(bookingData.paxCount);
+            if (matchingPrice) {
+                $scope.selectPricePaxType(matchingPrice.pricePaxID, matchingPrice.pricePaxDesc, matchingPrice.pricePaxPrice);
+            }
+
+            $scope.addAdult = bookingData.addAdult ? bookingData.addAdult.toString() : '';
+            $scope.addKid = bookingData.addKid ? bookingData.addKid.toString() : '';
+            $scope.computeFinalPrice();
+        });
+    }
+
+    function loadBookingForEdit(bookingID) {
+        if (!bookingID) {
+            Swal.fire({
+                title: 'Invalid Booking',
+                text: 'No booking was selected for editing.',
+                icon: 'error',
+                confirmButtonColor: '#EC4899'
+            }).then(function () {
+                $scope.redirectToBookingCalendarPage();
+            });
+            return;
+        }
+
+        $scope.isEditMode = true;
+        $scope.editBookingID = bookingID;
+
+        IsabellaCateringWebAppService.getBooking({ bookingID: bookingID }).then(function (bookingRes) {
+            if (!bookingRes.data || !bookingRes.data.bookingID) {
+                throw new Error('Booking not found.');
+            }
+
+            return IsabellaCateringWebAppService.getBookingDetailsService(bookingID).then(function (detailsRes) {
+                if (!detailsRes.data || !detailsRes.data.success) {
+                    throw new Error(detailsRes.data && detailsRes.data.message ? detailsRes.data.message : 'Booking details not found.');
+                }
+
+                return applyEditBookingData(bookingRes.data, detailsRes.data);
+            });
+        }).catch(function (error) {
+            Swal.fire({
+                title: 'Error',
+                text: error && error.message ? error.message : 'Could not load the selected booking.',
+                icon: 'error',
+                confirmButtonColor: '#EC4899'
+            }).then(function () {
+                $scope.redirectToBookingCalendarPage();
+            });
+        });
+    }
+
+    function buildBookingSubmission() {
+        var cleanAmount = ($scope.bookingFinalPrice || '0').toString().replace(/[^0-9]/g, '');
+
+        return {
+            clientInfo: {
+                eventName: $scope.eventName,
+                cFName: $scope.cFirstName,
+                cLName: $scope.cLastName,
+                cEmail: $scope.cEmail,
+                cContact: $scope.cContactNum,
+                cCeleb1FName: $scope.cCeleb1FirstName,
+                cCeleb1LName: $scope.cCeleb1LastName,
+                cCeleb2FName: $scope.cCeleb2FirstName ?? null,
+                cCeleb2LName: $scope.cCeleb2LastName ?? null
+            },
+            bookingInfo: {
+                bookingID: $scope.editBookingID || 0,
+                eventID: $scope.eventTypeID,
+                dsgnTheme: $scope.eventTheme,
+                dsgnMotif: $scope.eventMotif,
+                prepVenue: $scope.eventPrepVenue,
+                bookingDate: $scope.dateOfEvent,
+                ceremTime: $scope.eventCeremTime,
+                eventTime: $scope.eventEventTime,
+                venue: $scope.eventVenue,
+                eventSetTime: $scope.eventSetTime,
+                eventMealTime: $scope.eventMealTime,
+                bookingNote: $scope.bookingNote ?? null,
+                paxCount: extractPaxCount($scope.priceType),
+                addAdult: parseInt($scope.addAdult, 10) || 0,
+                addKid: parseInt($scope.addKid, 10) || 0
+            },
+            paymentInfo: {
+                amountDue: parseFloat(cleanAmount) || 0
+            },
+            packages: {
+                packageTypID: $scope.packageTypeID || 0,
+                pricePaxID: $scope.priceTypeID || 0,
+                mainCourseTypID: $scope.mainCourseTypeID ?? null,
+                incStaples: $scope.staplesType ?? null,
+                incBftSet: $scope.buffetType ?? null,
+                incStyling: $scope.stylingType ?? null,
+                incTableSet: $scope.tableType ?? null,
+                centerPieceTypID: $scope.centerPieceTypeID ?? null,
+                seatingTypID: $scope.seatingTypeID ?? null,
+                incDnrWare: $scope.dinerwareType ?? null,
+                backdropTypID: $scope.backdropTypeID ?? null,
+                entranceTypID: $scope.entranceTypeID ?? null,
+                couchTypID: $scope.couchTypeID ?? null
+            },
+            sidesGrpTypes: {
+                sidesGrpTyp1: $scope.selectedSidesTypesID[0] ?? null,
+                sidesGrpTyp2: $scope.selectedSidesTypesID[1] ?? null,
+                sidesGrpTyp3: $scope.selectedSidesTypesID[2] ?? null,
+                sidesGrpTyp4: $scope.selectedSidesTypesID[3] ?? null
+            },
+            specialsGrpTypes: {
+                specialsGrpTyp1: $scope.selectedSpecialsTypesID[0] ?? null,
+                specialsGrpTyp2: $scope.selectedSpecialsTypesID[1] ?? null,
+                specialsGrpTyp3: $scope.selectedSpecialsTypesID[2] ?? null,
+                specialsGrpTyp4: $scope.selectedSpecialsTypesID[3] ?? null,
+                specialsGrpTyp5: $scope.selectedSpecialsTypesID[4] ?? null,
+                specialsGrpTyp6: $scope.selectedSpecialsTypesID[5] ?? null,
+                specialsGrpTyp7: $scope.selectedSpecialsTypesID[6] ?? null,
+                specialsGrpTyp8: $scope.selectedSpecialsTypesID[7] ?? null,
+                specialsGrpTyp9: $scope.selectedSpecialsTypesID[8] ?? null
+            },
+            staffGrpTypes: {
+                staffGrpTyp1: $scope.selectedStaffTypesID[0] ?? null,
+                staffGrpTyp2: $scope.selectedStaffTypesID[1] ?? null,
+                staffGrpTyp3: $scope.selectedStaffTypesID[2] ?? null
+            },
+            equipGrpTypes: {
+                equipGrpTyp1: $scope.selectedEquipTypesID[0] ?? null,
+                equipGrpTyp2: $scope.selectedEquipTypesID[1] ?? null,
+                equipGrpTyp3: $scope.selectedEquipTypesID[2] ?? null,
+                equipGrpTyp4: $scope.selectedEquipTypesID[3] ?? null,
+                equipGrpTyp5: $scope.selectedEquipTypesID[4] ?? null,
+                equipGrpTyp6: $scope.selectedEquipTypesID[5] ?? null,
+                equipGrpTyp7: $scope.selectedEquipTypesID[6] ?? null
+            },
+            entertainmentGrpTypes: {
+                entertainmentGrpTyp1: $scope.selectedEntertainmentTypesID[0] ?? null,
+                entertainmentGrpTyp2: $scope.selectedEntertainmentTypesID[1] ?? null,
+                entertainmentGrpTyp3: $scope.selectedEntertainmentTypesID[2] ?? null,
+                entertainmentGrpTyp4: $scope.selectedEntertainmentTypesID[3] ?? null,
+                entertainmentGrpTyp5: $scope.selectedEntertainmentTypesID[4] ?? null,
+                entertainmentGrpTyp6: $scope.selectedEntertainmentTypesID[5] ?? null,
+                entertainmentGrpTyp7: $scope.selectedEntertainmentTypesID[6] ?? null
+            },
+            photoGrpTypes: {
+                photoGrpTyp1: $scope.selectedPhotoTypesID[0] ?? null,
+                photoGrpTyp2: $scope.selectedPhotoTypesID[1] ?? null,
+                photoGrpTyp3: $scope.selectedPhotoTypesID[2] ?? null,
+                photoGrpTyp4: $scope.selectedPhotoTypesID[3] ?? null,
+                photoGrpTyp5: $scope.selectedPhotoTypesID[4] ?? null,
+                photoGrpTyp6: $scope.selectedPhotoTypesID[5] ?? null,
+                photoGrpTyp7: $scope.selectedPhotoTypesID[6] ?? null
+            },
+            keepsakesGrpTypes: {
+                keepsakesGrpTyp1: $scope.selectedKeepsakesTypesID[0] ?? null,
+                keepsakesGrpTyp2: $scope.selectedKeepsakesTypesID[1] ?? null,
+                keepsakesGrpTyp3: $scope.selectedKeepsakesTypesID[2] ?? null,
+                keepsakesGrpTyp4: $scope.selectedKeepsakesTypesID[3] ?? null,
+                keepsakesGrpTyp5: $scope.selectedKeepsakesTypesID[4] ?? null
+            },
+            debutGrpTypes: {
+                debutGrpTyp1: $scope.selectedDebutTypesID[0] ?? null,
+                debutGrpTyp2: $scope.selectedDebutTypesID[1] ?? null,
+                debutGrpTyp3: $scope.selectedDebutTypesID[2] ?? null
+            }
+        };
+    }
+
     $scope.loadPackageOptions = function () {
+        var editBookingID = getEditBookingId();
+        $scope.isEditMode = !!editBookingID;
+
         IsabellaCateringWebAppService.getPackageBookingOptionsService().then(function (returnedData) {
             if (returnedData.data.success) {
                 $scope.backdropTypesOpt = returnedData.data.backdropTypes;
@@ -2429,369 +3149,189 @@
                 $scope.specialsTypesOpt = returnedData.data.specialsTypes;
                 $scope.staffTypesOpt = returnedData.data.staffTypes;
 
-                $scope.eventsOpt = returnedData.data.eventTypes
+                $scope.eventsOpt = returnedData.data.eventTypes;
                 $scope.packageTypesOpt = returnedData.data.packageTypes;
             }
-            IsabellaCateringWebAppService.getCurrentSessionService().then(function (returnedData) {
+            IsabellaCateringWebAppService.getCurrentSessionService().then(function (sessionData) {
 
-                if (returnedData.data.selectedDate) {
-                    var dateParts = returnedData.data.selectedDate.split("-");
+                if (sessionData.data.selectedDate) {
+                    var dateParts = sessionData.data.selectedDate.split("-");
                     $scope.dateOfEvent = new Date(dateParts[0], (dateParts[1] - 1), dateParts[2]);
                     $scope.changeSummaryDateOutput();
-                } else {
+                } else if (!$scope.isEditMode) {
                     $scope.redirectToBookingCalendarPage();
                 }
-                
-            });
-        });
 
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('mode') === 'edit') {
-            $scope.isEditMode = true;
-            IsabellaCateringWebAppService.getBooking({ bookingID: parseInt(urlParams.get('id')) })
-                .then(function (res) {
-                    $scope.order = {
-                        bookingID: res.data.bookingID,
-                        clientID: res.data.clientID,
-                        packageID: res.data.packageID,
-                        bookingDate: convertDate(res.data.bookingDate),
-                        prepVenue: res.data.prepVenue,
-                        venue: res.data.venue,
-                        eventSetTime: convertTime(res.data.eventSetTime),
-                        eventTime: convertTime(res.data.eventTime),
-                        ceremTime: convertTime(res.data.ceremTime),
-                        eventMealTime: convertTime(res.data.eventMealTime),
-                        dsgnTheme: res.data.dsgnTheme,
-                        dsgnMotif: res.data.dsgnMotif,
-                        dateCreated: convertDate(res.data.dateCreated),
-                        dateUpdated: convertDate(res.data.dateUpdated),
-                        bookingNote: res.data.bookingNote,
-                        progressOne: res.data.progressOne,
-                        progressTwo: res.data.progressTwo,
-                        progressThree: res.data.progressThree,
-                        paxCount: res.data.paxCount,
-                        addAdult: res.data.addAdult,
-                        addKid: res.data.addKid,
-                    };
-
-                    $scope.steps = [
-                        { label: 'Planning', icon: '1', completed: $scope.order.progressOne == 1 },
-                        { label: 'Preparation', icon: '2', completed: $scope.order.progressTwo == 1 },
-                        { label: 'Event Day', icon: '3', completed: $scope.order.progressThree == 1 }
-                    ];
-                    $scope.selectPackageTypes(null, $scope.order.packageID);
-
-                    $scope.eventTheme = $scope.order.dsgnTheme;
-                    $scope.eventMotif = $scope.order.dsgnMotif;
-                    $scope.eventPrepVenue = $scope.order.prepVenue;
-                    $scope.eventCeremTime = $scope.order.ceremTime;
-                    $scope.eventEventTime = $scope.order.eventTime;
-                    $scope.eventVenue = $scope.order.venue;
-                    $scope.eventSetTime = $scope.order.eventSetTime;
-                    $scope.eventMealTime = $scope.order.eventMealTime;
-                    $scope.addAdult = $scope.order.addAdult == 0 ? '' : $scope.order.addAdult.toString();
-                    $scope.addKid = $scope.order.addKid == 0 ? '' : $scope.order.addKid.toString();
-                    $scope.priceType = `Pax ${$scope.order.paxCount}`;
-                    $scope.bookingNote = $scope.order.bookingNote;
-
-                    let [hour24, minute] = $scope.eventCeremTime.split(':');
-                    let hour = parseInt(hour24);
-                    let m = parseInt(minute) || 0;
-                    $scope.ceremMinute = m < 10 ? `0${m}` : `${m}`;
-                    if (hour >= 12) {
-                        $scope.ceremPeriod = "PM";
-                        $scope.ceremHour = (hour > 12) ? (hour - 12).toString() : "12";
-                    } else {
-                        $scope.ceremPeriod = "AM";
-                        $scope.ceremHour = (hour === 0) ? "12" : hour.toString();
-                    }
-                    $scope.ceremHour = $scope.ceremHour.padStart(2, "0");
-
-                    $scope.selectCeremHour($scope.ceremHour);
-                    $scope.selectCeremMinute($scope.ceremMinute);
-                    $scope.selectCeremPeriod($scope.ceremPeriod);
-
-                    [hour24, minute] = $scope.eventEventTime.split(':');
-                    hour = parseInt(hour24);
-                    m = parseInt(minute) || 0;
-                    $scope.eventMinute = m < 10 ? `0${m}` : `${m}`;
-                    if (hour >= 12) {
-                        $scope.eventPeriod = "PM";
-                        $scope.eventHour = (hour > 12) ? (hour - 12).toString() : "12";
-                    } else {
-                        $scope.eventPeriod = "AM";
-                        $scope.eventHour = (hour === 0) ? "12" : hour.toString();
-                    }
-                    $scope.eventHour = $scope.eventHour.padStart(2, "0");
-
-                    $scope.selectEventHour($scope.eventHour);
-                    $scope.selectEventMinute($scope.eventMinute);
-                    $scope.selectEventPeriod($scope.eventPeriod);
-
-                    [hour24, minute] = $scope.eventSetTime.split(':');
-                    hour = parseInt(hour24);
-                    m = parseInt(minute) || 0;
-                    $scope.setMinute = m < 10 ? `0${m}` : `${m}`;
-                    if (hour >= 12) {
-                        $scope.setPeriod = "PM";
-                        $scope.setHour = (hour > 12) ? (hour - 12).toString() : "12";
-                    } else {
-                        $scope.setPeriod = "AM";
-                        $scope.setHour = (hour === 0) ? "12" : hour.toString();
-                    }
-                    $scope.setHour = $scope.setHour.padStart(2, "0");
-
-                    $scope.selectSetHour($scope.setHour);
-                    $scope.selectSetMinute($scope.setMinute);
-                    $scope.selectSetPeriod($scope.setPeriod);
-
-                    [hour24, minute] = $scope.eventMealTime.split(':');
-                    hour = parseInt(hour24);
-                    m = parseInt(minute) || 0;
-                    $scope.mealMinute = m < 10 ? `0${m}` : `${m}`;
-                    if (hour >= 12) {
-                        $scope.mealPeriod = "PM";
-                        $scope.mealHour = (hour > 12) ? (hour - 12).toString() : "12";
-                    } else {
-                        $scope.mealPeriod = "AM";
-                        $scope.mealHour = (hour === 0) ? "12" : hour.toString();
-                    }
-                    $scope.mealHour = $scope.setHour.padStart(2, "0");
-
-                    $scope.selectMealHour($scope.mealHour);
-                    $scope.selectMealMinute($scope.mealMinute);
-                    $scope.selectMealPeriod($scope.mealPeriod);
-
-                    var editBookingID = parseInt(urlParams.get('id'));
-                    IsabellaCateringWebAppService.getBookingDetailsService(editBookingID)
-                        .then(function (detailsRes) {
-                            if (!detailsRes || !detailsRes.data || !detailsRes.data.success) {
-                                return;
-                            }
-
-                            $scope.eventName = detailsRes.data.clients.eventName;
-                            $scope.cFirstName = detailsRes.data.clients.cFName;
-                            $scope.cLastName = detailsRes.data.clients.cLName;
-                            $scope.cEmail = detailsRes.data.clients.cEmail;
-                            $scope.cContactNum = detailsRes.data.clients.cContact;
-                            $scope.cCeleb1FirstName = detailsRes.data.clients.cCeleb1FName;
-                            $scope.cCeleb1LastName = detailsRes.data.clients.cCeleb1LName;
-                            $scope.cCeleb2FirstName = detailsRes.data.clients.cCeleb2FName;
-                            $scope.cCeleb2LastName = detailsRes.data.clients.cCeleb2LName;
-
-                            $scope.packageType = detailsRes.data.packageType.packageTypDesc;
-                            $scope.packageTypeID = detailsRes.data.packageType.packageTypID;
-                            $scope.eventType = detailsRes.data.events.eventDesc;
-                            $scope.eventTypeID = detailsRes.data.events.eventID;
-                            $scope.bookingFinalPrice = `Php ${detailsRes.data.payment.amountDue}`;
-
-                            disableBookingInput();
-                        });
-                });
-        }
-    }
-
-    $scope.createBooking = function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        var mode = urlParams.get('mode') || 'create';
-
-        var clientInfo = {
-            eventName: $scope.eventName,
-            cFName: $scope.cFirstName,
-            cLName: $scope.cLastName,
-            cEmail: $scope.cEmail,
-            cContact: $scope.cContactNum,
-            cCeleb1FName: $scope.cCeleb1FirstName,
-            cCeleb1LName: $scope.cCeleb1LastName,
-            cCeleb2FName: $scope.cCeleb2FirstName ?? null,
-            cCeleb2LName: $scope.cCeleb2LastName ?? null
-        }
-
-        var bookingInfo = {
-            eventID: $scope.eventTypeID,
-            dsgnTheme: $scope.eventTheme,
-            dsgnMotif: $scope.eventMotif,
-            prepVenue: $scope.eventPrepVenue,
-            bookingDate: $scope.dateOfEvent,
-            ceremTime: $scope.eventCeremTime,
-            eventTime: $scope.eventEventTime,
-            venue: $scope.eventVenue,
-            eventSetTime: $scope.eventSetTime,
-            eventMealTime: $scope.eventMealTime,
-            bookingNote: $scope.bookingNote ?? null,
-            progressOne: $scope.bookingProgressOne == true ? 1 : 0,
-            progressTwo: $scope.bookingProgressOneTwo == true ? 1 : 0,
-            progressThree: $scope.bookingProgressThree == true ? 1 : 0,
-            paxCount: parseInt($scope.priceType),
-            addAdult: parseInt($scope.addAdult) || 0,
-            addKid: parseInt($scope.addKid) || 0
-        }
-           
-
-        const cleanAmount = ($scope.bookingFinalPrice || "0").toString().replace(/[^0-9]/g, '');
-        const amountDue = parseFloat(cleanAmount)
-        var paymentInfo = {
-            amountDue: amountDue
-        }
-
-        var packages = {
-            packageTypID: $scope.packageTypeID,
-            mainCourseTypID: $scope.mainCourseTypeID ?? null,
-            incStaples: $scope.staplesType ?? null,
-            incBftSet: $scope.buffetType ?? null,
-            incStyling: $scope.stylingType ?? null,
-            incTableSet: $scope.tableType ?? null,
-            centerPieceTypID: $scope.centerPieceTypeID ?? null,
-            seatingTypID: $scope.seatingTypeID ?? null,
-            incDnrWare: $scope.dinerwareType ?? null,
-            backdropTypID: $scope.backdropTypeID ?? null,
-            entranceTypID: $scope.entranceTypeID ?? null,
-            couchTypID: $scope.couchTypeID ?? null
-        };
-        var sidesGrpTypes = {
-            sidesGrpTyp1: $scope.selectedSidesTypesID[0] ?? null,
-            sidesGrpTyp2: $scope.selectedSidesTypesID[1] ?? null,
-            sidesGrpTyp3: $scope.selectedSidesTypesID[2] ?? null,
-            sidesGrpTyp4: $scope.selectedSidesTypesID[3] ?? null
-        };
-        var specialsGrpTypes = {
-            specialsGrpTyp1: $scope.selectedSpecialsTypesID[0] ?? null,
-            specialsGrpTyp2: $scope.selectedSpecialsTypesID[1] ?? null,
-            specialsGrpTyp3: $scope.selectedSpecialsTypesID[2] ?? null,
-            specialsGrpTyp4: $scope.selectedSpecialsTypesID[3] ?? null,
-            specialsGrpTyp5: $scope.selectedSpecialsTypesID[4] ?? null,
-            specialsGrpTyp6: $scope.selectedSpecialsTypesID[5] ?? null,
-            specialsGrpTyp7: $scope.selectedSpecialsTypesID[6] ?? null,
-            specialsGrpTyp8: $scope.selectedSpecialsTypesID[7] ?? null,
-            specialsGrpTyp9: $scope.selectedSpecialsTypesID[8] ?? null
-        };
-        var staffGrpTypes = {
-            staffGrpTyp1: $scope.selectedStaffTypesID[0] ?? null,
-            staffGrpTyp2: $scope.selectedStaffTypesID[1] ?? null,
-            staffGrpTyp3: $scope.selectedStaffTypesID[2] ?? null
-        };
-        var equipGrpTypes = {
-            equipGrpTyp1: $scope.selectedEquipTypesID[0] ?? null,
-            equipGrpTyp2: $scope.selectedEquipTypesID[1] ?? null,
-            equipGrpTyp3: $scope.selectedEquipTypesID[2] ?? null,
-            equipGrpTyp4: $scope.selectedEquipTypesID[3] ?? null,
-            equipGrpTyp5: $scope.selectedEquipTypesID[4] ?? null,
-            equipGrpTyp6: $scope.selectedEquipTypesID[5] ?? null,
-            equipGrpTyp7: $scope.selectedEquipTypesID[6] ?? null
-        };
-        var entertainmentGrpTypes = {
-            entertainmentGrpTyp1: $scope.selectedEntertainmentTypesID[0] ?? null,
-            entertainmentGrpTyp2: $scope.selectedEntertainmentTypesID[1] ?? null,
-            entertainmentGrpTyp3: $scope.selectedEntertainmentTypesID[2] ?? null,
-            entertainmentGrpTyp4: $scope.selectedEntertainmentTypesID[3] ?? null,
-            entertainmentGrpTyp5: $scope.selectedEntertainmentTypesID[4] ?? null,
-            entertainmentGrpTyp6: $scope.selectedEntertainmentTypesID[5] ?? null,
-            entertainmentGrpTyp7: $scope.selectedEntertainmentTypesID[6] ?? null
-        };
-        var photoGrpTypes = {
-            photoGrpTyp1: $scope.selectedPhotoTypesID[0] ?? null,
-            photoGrpTyp2: $scope.selectedPhotoTypesID[1] ?? null,
-            photoGrpTyp3: $scope.selectedPhotoTypesID[2] ?? null,
-            photoGrpTyp4: $scope.selectedPhotoTypesID[3] ?? null,
-            photoGrpTyp5: $scope.selectedPhotoTypesID[4] ?? null,
-            photoGrpTyp6: $scope.selectedPhotoTypesID[5] ?? null,
-            photoGrpTyp7: $scope.selectedPhotoTypesID[6] ?? null
-        };
-        var keepsakesGrpTypes = {
-            keepsakesGrpTyp1: $scope.selectedKeepsakesTypesID[0] ?? null,
-            keepsakesGrpTyp2: $scope.selectedKeepsakesTypesID[1] ?? null,
-            keepsakesGrpTyp3: $scope.selectedKeepsakesTypesID[2] ?? null,
-            keepsakesGrpTyp4: $scope.selectedKeepsakesTypesID[3] ?? null,
-            keepsakesGrpTyp5: $scope.selectedKeepsakesTypesID[4] ?? null
-        };
-        var debutGrpTypes = {
-            debutGrpTyp1: $scope.selectedDebutTypesID[0] ?? null,
-            debutGrpTyp2: $scope.selectedDebutTypesID[1] ?? null,
-            debutGrpTyp3: $scope.selectedDebutTypesID[2] ?? null
-        };
-
-        if (clientInfo.eventName != null &&
-            clientInfo.eventName != '' && 
-            clientInfo.cFName != null &&
-            clientInfo.cFName != '' &&
-            clientInfo.cLName != null &&
-            clientInfo.cLName != '' &&
-            clientInfo.cEmail != null &&
-            clientInfo.cEmail != '' &&
-            clientInfo.cContact != null &&
-            clientInfo.cContact != '' &&
-            clientInfo.cCeleb1FName != null &&
-            clientInfo.cCeleb1FName != '' &&
-            clientInfo.cCeleb1LName != null &&
-            clientInfo.cCeleb1LName != '' &&
-            bookingInfo.eventID != null &&
-            bookingInfo.dsgnTheme != null &&
-            bookingInfo.dsgnTheme != null &&
-            bookingInfo.dsgnMotif != null &&
-            bookingInfo.dsgnMotif != null &&
-            bookingInfo.prepVenue != null &&
-            bookingInfo.prepVenue != null &&
-            bookingInfo.bookingDate != null &&
-            bookingInfo.ceremTime != null &&
-            bookingInfo.eventTime != null &&
-            bookingInfo.venue != null &&
-            bookingInfo.venue != null &&
-            bookingInfo.eventSetTime != null &&
-            bookingInfo.eventMealTime != null &&
-            paymentInfo.amountDue != null &&
-            $scope.packageTypeID != null
-        ) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "Do you want to save this booking for Isabella Catering?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ec4899',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, save it!',
-                cancelButtonText: 'No, cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    IsabellaCateringWebAppService.checkCalendarAvailabilityService($scope.dateOfEvent).then(function (response) {
-                        if (response.data.success) {
-                            IsabellaCateringWebAppService.insertPackageService(mode, clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes).then(function (returnedData) {
-                                if (returnedData.data.success) {
-                                    Swal.fire({
-                                        title: 'Success!',
-                                        text: returnedData.data.message,
-                                        icon: 'success',
-                                        confirmButtonColor: '#ec4899',
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        title: 'Error!',
-                                        text: returnedData.data.message,
-                                        icon: 'error',
-                                        confirmButtonColor: '#ec4899',
-                                    });
-                                }
-                            });
-                        }
-                        else {
-                            Swal.fire({
-                                title: "Error",
-                                text: response.data.message,
-                                icon: "error",
-                                confirmButtonColor: "#EC4899"
-                            });
-                        }
-                    });
+                if (editBookingID) {
+                    loadBookingForEdit(editBookingID);
                 }
             });
-        } else {
-            Swal.fire({
-                title: "Error",
-                text: "Please check for required entries to be filled up!",
-                icon: "error",
-                confirmButtonColor: "#EC4899"
-            });
+        });
+    };
+
+    $scope.createBooking = function () {
+        if (!$scope.validateBookingDetailsStep(true, true)) {
+            return;
         }
-    }
+
+        var payload = buildBookingSubmission();
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you want to save this booking for Isabella Events?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ec4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, save it!',
+            cancelButtonText: 'No, cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.checkCalendarAvailabilityService($scope.dateOfEvent).then(function (response) {
+                    if (response.data.success) {
+                        IsabellaCateringWebAppService.insertPackageService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
+                            if (returnedData.data.success) {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: returnedData.data.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#ec4899',
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: returnedData.data.message,
+                                    icon: 'error',
+                                    confirmButtonColor: '#ec4899',
+                                });
+                            }
+                        });
+                    }
+                    else {
+                        Swal.fire({
+                            title: "Error",
+                            text: response.data.message,
+                            icon: "error",
+                            confirmButtonColor: "#EC4899"
+                        });
+                    }
+                });
+            }
+        });
+    };
+
+    $scope.editBooking = function () {
+        if (!$scope.validateBookingDetailsStep(true, true)) {
+            return;
+        }
+
+        var payload = buildBookingSubmission();
+        if (!payload.bookingInfo.bookingID) {
+            Swal.fire({
+                title: 'Missing Booking',
+                text: 'No booking is loaded for editing.',
+                icon: 'error',
+                confirmButtonColor: '#EC4899'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Save changes?',
+            text: 'This will update the existing booking.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ec4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, update it',
+            cancelButtonText: 'No, cancel'
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            IsabellaCateringWebAppService.updateBookingService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
+                if (returnedData.data.success) {
+                    Swal.fire({
+                        title: 'Updated!',
+                        text: returnedData.data.message,
+                        icon: 'success',
+                        confirmButtonColor: '#ec4899'
+                    }).then(function () {
+                        $scope.redirectToAdminViewPage();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: returnedData.data.message,
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+            }).catch(function () {
+                Swal.fire({
+                    title: 'Server Error',
+                    text: 'Could not update the booking.',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+            });
+        });
+    };
+
+    $scope.deleteBooking = function () {
+        if (!$scope.editBookingID) {
+            Swal.fire({
+                title: 'Missing Booking',
+                text: 'No booking is loaded for deletion.',
+                icon: 'error',
+                confirmButtonColor: '#EC4899'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Delete booking?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ec4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete it',
+            cancelButtonText: 'No, cancel'
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            IsabellaCateringWebAppService.deleteBookingService($scope.editBookingID).then(function (returnedData) {
+                if (returnedData.data.success) {
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: returnedData.data.message,
+                        icon: 'success',
+                        confirmButtonColor: '#ec4899'
+                    }).then(function () {
+                        $scope.redirectToBookingCalendarPage();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: returnedData.data.message,
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                }
+            }).catch(function () {
+                Swal.fire({
+                    title: 'Server Error',
+                    text: 'Could not delete the booking.',
+                    icon: 'error',
+                    confirmButtonColor: '#ec4899'
+                });
+            });
+        });
+    };
     function disableBookingInput() {
         if ($scope.packageTypeID < 3 || $scope.packageTypeID > 4) 
             $scope.addKdInput = true;
@@ -2806,6 +3346,11 @@
     }
 
     $scope.changeSummaryDateOutput = function () {
+        if (!$scope.dateOfEvent) {
+            $scope.formattedDateOfEvent = '';
+            return;
+        }
+
         var base = $scope.dateOfEvent.toString().substring(0, 15);
         var parts = base.split(" ");
         $scope.formattedDateOfEvent = `${parts[0]} ${parts[1]} ${parts[2]}, ${parts[3]}`;
@@ -2816,10 +3361,7 @@
         $scope.packageTypeID = id;
         $scope.activeDropdown = null;
 
-        $scope.addAdult = '';
-        $scope.addKid = '';
-
-        IsabellaCateringWebAppService.loadPackagePreOptionService($scope.packageTypeID).then(function (returnedData) {
+        var request = IsabellaCateringWebAppService.loadPackagePreOptionService($scope.packageTypeID).then(function (returnedData) {
             $scope.staplesType = returnedData.data.prePackage.incStaples;
             $scope.buffetType = returnedData.data.prePackage.incBftSet;
             $scope.stylingType = returnedData.data.prePackage.incStyling;
@@ -2914,9 +3456,14 @@
 
             $scope.pricePaxAdMulti = returnedData.data.pricePax.pricePaxAd;
             $scope.pricePaxKdMulti = returnedData.data.pricePax.pricePaxKd;
+
+            $scope.addAdult = '';
+            $scope.addKid = '';
+            $scope.computeFinalPrice();
         });
 
         disableBookingInput();
+        return request;
     };
 
     $scope.selectPricePaxType = function (id, type, price) {
@@ -2924,6 +3471,7 @@
         $scope.priceTypeID = id;
         $scope.bookingBasePrice = `Php ${price}`;
         $scope.activeDropdown = null;
+        $scope.computeFinalPrice();
     };
 
     $scope.getPricePaxDisplayText = function () {

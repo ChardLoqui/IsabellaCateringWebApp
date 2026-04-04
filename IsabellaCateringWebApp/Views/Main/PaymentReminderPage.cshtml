@@ -5,7 +5,27 @@
 }
 
 <div class="relative z-10 h-full overflow-y-auto">
-    <div class="p-8 mb-5">
+    <div class="management-page-shell">
+        <div ng-if="paymentLoading && (!paymentData || paymentData.length === 0)"
+             class="management-surface management-loader-shell min-h-[24rem]">
+            <div class="management-loader">
+                <span class="management-loader-spinner" aria-hidden="true"></span>
+                <span>Loading payments</span>
+            </div>
+        </div>
+
+        <div ng-if="!paymentLoading || (paymentData && paymentData.length > 0)"
+             class="relative">
+            <div ng-if="paymentLoading && paymentData && paymentData.length > 0"
+                 class="management-loader-overlay">
+                <div class="management-loader">
+                    <span class="management-loader-spinner" aria-hidden="true"></span>
+                    <span>Loading payments</span>
+                </div>
+            </div>
+
+            <div class="space-y-8"
+                 ng-class="{'management-content-muted': paymentLoading && paymentData && paymentData.length > 0}">
         <h1 class="mb-6 text-2xl font-semibold text-black">Payment Reminder</h1>
         @*First Row*@
         <div class="flex flex-wrap lg:flex-nowrap items-stretch gap-6 mb-8">
@@ -19,9 +39,14 @@
                             <div class="flex items-center gap-2">
                                 <input type="text"
                                        ng-model="dueSearchQuery"
+                                       ng-keydown="$event.keyCode === 13 && searchDuePayments()"
                                        placeholder="Search table data..."
                                        class="w-64 rounded border border-gray-200 bg-gray-50 p-2 px-4 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
-
+                                <button type="button"
+                                        ng-click="searchDuePayments()"
+                                        class="management-toolbar-button management-toolbar-button-secondary px-5 py-2 font-semibold transition-colors">
+                                    Search
+                                </button>
                             </div>
                         </div>
 
@@ -288,8 +313,14 @@
                     <div class="flex items-center gap-2">
                         <input type="text"
                                ng-model="paymentsSearchQuery"
+                               ng-keydown="$event.keyCode === 13 && searchPayments()"
                                placeholder="Search by Booking ID"
                                class="w-64 rounded border border-gray-200 bg-gray-50 p-2 px-4 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
+                        <button type="button"
+                                ng-click="searchPayments()"
+                                class="management-toolbar-button management-toolbar-button-secondary px-5 py-2 text-sm font-semibold transition-colors">
+                            Search
+                        </button>
                         <button type="button"
                                 ng-click="openCreatePaymentModal()"
                                 class="rounded bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-600 transition-colors">
@@ -605,30 +636,35 @@
             </div>
         </div>
     </div>
-
-
+        </div>
+    </div>
 </div>
 
 @*CREATE payment modal*@
 <div ng-cloak
      ng-if="showCreatePaymentModal"
-     class="fixed inset-0 z-50 flex items-center justify-center">
+     class="management-modal-frame">
     <div class="absolute inset-0 bg-black/40"
          ng-click="closeCreatePaymentModal()"></div>
-    <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 bg-pink-500">
-            <div>
-                <h2 class="text-white font-bold text-lg leading-tight">Create Payment</h2>
-                <p class="text-pink-100 text-xs mt-0.5">
-                    Select a booking and fill in payment details
-                </p>
-            </div>
-            <button ng-click="closeCreatePaymentModal()"
-                    class="text-white hover:text-pink-200 transition-colors">
-                <span class="material-symbols-outlined text-[28px]">close</span>
-            </button>
-        </div>
-        <div class="px-6 py-5 space-y-4">
+	    <div class="management-modal-panel">
+	        <div class="flex items-center justify-between px-6 py-4 bg-pink-500">
+	            <div class="flex items-center gap-3">
+	                <div class="management-modal-symbol">
+	                    <span class="material-symbols-outlined text-[20px]">credit_card</span>
+	                </div>
+	                <div>
+	                    <h2 class="text-white font-bold text-lg leading-tight">Create Payment</h2>
+	                    <p class="text-pink-100 text-xs mt-0.5">
+	                        Select a booking and fill in payment details
+	                    </p>
+	                </div>
+	            </div>
+	            <button ng-click="closeCreatePaymentModal()"
+	                    class="management-modal-close">
+	                <span class="material-symbols-outlined text-[20px]">close</span>
+	            </button>
+	        </div>
+        <div class="management-modal-body space-y-4">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Booking ID
@@ -718,46 +754,51 @@
                 </div>
             </div>
         </div>
-        <div class="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+        <div class="management-modal-actions">
             <button ng-click="closeCreatePaymentModal()"
                     class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">
                 Cancel
             </button>
-            <button ng-click="submitCreatePayment()"
-                    ng-disabled="createPaymentLoading || !createPayment.bookingID"
-                    class="flex items-center gap-2 px-5 py-2 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
-                <span ng-if="createPaymentLoading"
-                      class="material-symbols-outlined text-[16px] animate-spin">
-                    progress_activity
-                </span>
-                <span ng-if="!createPaymentLoading"
-                      class="material-symbols-outlined text-[16px]">
-                    save
-                </span>
-                {{ createPaymentLoading ? 'Saving...' : 'Create Payment' }}
-            </button>
-        </div>
-    </div>
+	            <button ng-click="submitCreatePayment()"
+	                    ng-disabled="createPaymentLoading || !createPayment.bookingID"
+	                    class="flex items-center gap-2 px-5 py-2 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+	                <span ng-if="createPaymentLoading"
+	                      class="material-symbols-outlined text-[16px] animate-spin">
+	                    progress_activity
+	                </span>
+	                <span ng-if="!createPaymentLoading"
+	                      class="material-symbols-outlined text-[18px]">
+	                    add_card
+	                </span>
+	                {{ createPaymentLoading ? 'Saving...' : 'Create Payment' }}
+	            </button>
+	        </div>
+	    </div>
 </div>
 
 @*ADD payment modal*@
 <div ng-cloak
      ng-if="showAddPaymentModal"
-     class="fixed inset-0 z-50 flex items-center justify-center">
+     class="management-modal-frame">
     <div class="absolute inset-0 bg-black/40"
          ng-click="closeAddPaymentModal()"></div>
-    <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 bg-pink-500">
-            <div>
-                <h2 class="text-white font-bold text-lg leading-tight">Add Payment</h2>
-                <p class="text-pink-100 text-xs mt-0.5">Booking #{{ newPayment.bookingID }}</p>
-            </div>
-            <button ng-click="closeAddPaymentModal()"
-                    class="text-white hover:text-pink-200 transition-colors">
-                <span class="material-symbols-outlined text-[28px]">close</span>
-            </button>
-        </div>
-        <div class="px-6 py-5 space-y-4">
+	    <div class="management-modal-panel">
+	        <div class="flex items-center justify-between px-6 py-4 bg-pink-500">
+	            <div class="flex items-center gap-3">
+	                <div class="management-modal-symbol">
+	                    <span class="material-symbols-outlined text-[20px]">payments</span>
+	                </div>
+	                <div>
+	                    <h2 class="text-white font-bold text-lg leading-tight">Add Payment</h2>
+	                    <p class="text-pink-100 text-xs mt-0.5">Booking #{{ newPayment.bookingID }}</p>
+	                </div>
+	            </div>
+	            <button ng-click="closeAddPaymentModal()"
+	                    class="management-modal-close">
+	                <span class="material-symbols-outlined text-[20px]">close</span>
+	            </button>
+	        </div>
+        <div class="management-modal-body space-y-4">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Payment Type
@@ -826,42 +867,47 @@
                 </div>
             </div>
         </div>
-        <div class="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+        <div class="management-modal-actions">
             <button ng-click="closeAddPaymentModal()"
                     class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">
                 Cancel
             </button>
-            <button ng-click="submitAddPayment()"
-                    ng-disabled="addPaymentLoading"
-                    class="flex items-center gap-2 px-5 py-2 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
-                <span ng-if="addPaymentLoading" class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-                <span ng-if="!addPaymentLoading" class="material-symbols-outlined text-[16px]">save</span>
-                {{ addPaymentLoading ? 'Saving...' : 'Save Payment' }}
-            </button>
-        </div>
-    </div>
+	            <button ng-click="submitAddPayment()"
+	                    ng-disabled="addPaymentLoading"
+	                    class="flex items-center gap-2 px-5 py-2 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+	                <span ng-if="addPaymentLoading" class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+	                <span ng-if="!addPaymentLoading" class="material-symbols-outlined text-[18px]">add_card</span>
+	                {{ addPaymentLoading ? 'Saving...' : 'Save Payment' }}
+	            </button>
+	        </div>
+	    </div>
 </div>
 
 @*EDIT payment modal*@
 <div ng-cloak
      ng-if="showEditPaymentModal"
-     class="fixed inset-0 z-50 flex items-center justify-center">
+     class="management-modal-frame">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
          ng-click="closeEditPaymentModal()"></div>
-    <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 bg-blue-500">
-            <div>
-                <h2 class="text-white font-bold text-lg leading-tight">Edit Payment</h2>
-                <p class="text-blue-100 text-xs mt-0.5">
-                    Payment #{{ editData.paymentID }} — Booking #{{ editData.bookingID }}
-                </p>
-            </div>
-            <button ng-click="closeEditPaymentModal()"
-                    class="text-white hover:text-blue-200 transition-colors">
-                <span class="material-symbols-outlined text-[28px]">close</span>
-            </button>
-        </div>
-        <div class="px-6 py-5 space-y-4">
+	    <div class="management-modal-panel">
+	        <div class="flex items-center justify-between px-6 py-4 bg-blue-500">
+	            <div class="flex items-center gap-3">
+	                <div class="management-modal-symbol">
+	                    <span class="material-symbols-outlined text-[20px]">edit_note</span>
+	                </div>
+	                <div>
+	                    <h2 class="text-white font-bold text-lg leading-tight">Edit Payment</h2>
+	                    <p class="text-blue-100 text-xs mt-0.5">
+	                        Payment #{{ editData.paymentID }} — Booking #{{ editData.bookingID }}
+	                    </p>
+	                </div>
+	            </div>
+	            <button ng-click="closeEditPaymentModal()"
+	                    class="management-modal-close">
+	                <span class="material-symbols-outlined text-[20px]">close</span>
+	            </button>
+	        </div>
+        <div class="management-modal-body space-y-4">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Payment Type
@@ -919,26 +965,26 @@
                 </div>
             </div>
         </div>
-        <div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100">
-            <button ng-click="deletePayment(editData)"
-                    ng-disabled="editPaymentLoading"
-                    class="flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold rounded-lg transition-colors">
-                <span class="material-symbols-outlined text-[16px]">delete</span>
-                Delete
-            </button>
-            <div class="flex items-center gap-3">
+	        <div class="management-modal-actions management-modal-actions-split">
+	            <button ng-click="deletePayment(editData)"
+	                    ng-disabled="editPaymentLoading"
+	                    class="flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold rounded-lg transition-colors">
+	                <span class="material-symbols-outlined text-[18px]">delete_outline</span>
+	                Delete
+	            </button>
+	            <div class="flex flex-wrap items-center gap-3">
                 <button ng-click="closeEditPaymentModal()"
                         class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">
                     Cancel
                 </button>
-                <button ng-click="submitEditPayment()"
-                        ng-disabled="editPaymentLoading"
-                        class="flex items-center gap-2 px-5 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
-                    <span ng-if="editPaymentLoading" class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-                    <span ng-if="!editPaymentLoading" class="material-symbols-outlined text-[16px]">save</span>
-                    {{ editPaymentLoading ? 'Saving...' : 'Save Changes' }}
-                </button>
-            </div>
+	                <button ng-click="submitEditPayment()"
+	                        ng-disabled="editPaymentLoading"
+	                        class="flex items-center gap-2 px-5 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+	                    <span ng-if="editPaymentLoading" class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+	                    <span ng-if="!editPaymentLoading" class="material-symbols-outlined text-[18px]">check_circle</span>
+	                    {{ editPaymentLoading ? 'Saving...' : 'Save Changes' }}
+	                </button>
+	            </div>
         </div>
 
     </div>

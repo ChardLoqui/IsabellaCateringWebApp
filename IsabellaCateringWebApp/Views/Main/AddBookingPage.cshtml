@@ -3,28 +3,72 @@
     ViewBag.Title = "Create Booking";
 }
 
-<section class="create-booking-page min-h-screen px-3 py-5 lg:px-6" ng-init="authenticateLoginCredentials()" ng-click="handleDocumentClick($event)">
-    <div class="mx-auto w-full max-w-[1440px]">
-        <header class="mb-6 flex flex-col gap-3 border-b border-rose-100 pb-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-                <h1 class="text-3xl font-semibold text-zinc-950 sm:text-4xl">Book Your Event</h1>
-                <p class="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
-                    Enter client details, event schedule, package inclusions, and final pricing in the same management layout used across the booking pages.
-                </p>
-            </div>
+<section class="create-booking-page min-h-screen bg-gray-50 text-gray-900 antialiased"
+         ng-init="authenticateLoginCredentials(); initializeBookingFlow()"
+         ng-click="handleDocumentClick($event)">
+    <div class="relative z-10 h-full overflow-y-auto">
+        <div class="management-page-shell">
+            <div class="space-y-4">
+                <div class="management-page-header">
+                    <h1 class="management-page-title">Create Booking</h1>
+                </div>
 
-            <p class="text-sm font-medium text-rose-700">
-                Complete the form, review the summary, then confirm the booking.
-            </p>
-        </header>
+                <form name="eventForm" novalidate>
+                    <section class="management-surface rounded-lg p-5" aria-label="Booking progress">
+                <div class="flex flex-col gap-2 border-b border-rose-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-zinc-950">Progress</h2>
+                        <p class="mt-1 text-sm text-zinc-500">
+                            Follow each booking stage from details to final confirmation.
+                        </p>
+                    </div>
 
-        <form name="eventForm" novalidate>
-            <section class="panel-surface overflow-visible rounded-lg">
-                <div class="create-booking-form-grid grid w-full grid-cols-1 gap-6 px-4 py-5 sm:px-5 md:grid-cols-3 lg:px-6 lg:py-6" ng-init="loadPackageOptions()">
+                    <p class="text-sm font-medium text-pink-600">
+                        Step {{ bookingStep }} of {{ bookingFlowSteps.length }}
+                    </p>
+                </div>
 
+                <div class="mt-4">
+                    <div class="booking-progress-track flex items-center">
+                        <div ng-repeat="step in bookingFlowSteps" class="relative flex w-full items-center">
+                            <div ng-if="!$first"
+                                 class="booking-progress-segment h-1.5 flex-1"
+                                 ng-class="bookingStep >= step.id ? 'is-complete' : ''">
+                            </div>
+
+                            <div class="booking-progress-node z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
+                                 ng-class="{'is-complete': bookingStep > step.id, 'is-active': bookingStep === step.id}">
+                                <span ng-if="bookingStep > step.id">&#10003;</span>
+                                <span ng-if="bookingStep <= step.id">{{ step.icon }}</span>
+                            </div>
+
+                            <div ng-if="!$last"
+                                 class="booking-progress-segment h-1.5 flex-1"
+                                 ng-class="bookingStep > step.id ? 'is-complete' : ''">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 flex justify-between text-sm text-zinc-500">
+                        <span ng-repeat="step in bookingFlowSteps"
+                              class="booking-progress-label flex-1 px-1 text-center"
+                              ng-class="{'is-active': bookingStep === step.id, 'is-complete': bookingStep > step.id}">
+                            {{ step.label }}
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+                    <section class="management-surface overflow-visible rounded-lg">
+                        <div class="create-booking-form-grid grid w-full grid-cols-1 gap-6 p-5 md:grid-cols-3" ng-init="loadPackageOptions()">
+
+                    <div class="contents" ng-show="bookingStep === 1">
 
                     <div class="create-booking-section col-span-3">
                         <h2 class="text-xl font-semibold text-zinc-950 sm:text-2xl">Event Details</h2>
+                        <p class="mt-2 text-sm leading-6 text-zinc-500">
+                            Capture the event schedule, client information, and package inclusions before review.
+                        </p>
                     </div>
 
 
@@ -36,7 +80,11 @@
                                placeholder="e.g Isabella's Debut"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="eventName"
-                               ng-model="eventName">
+                               ng-model="eventName"
+                               required
+                               ng-blur="markBookingFieldTouched('eventName')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventName')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventName')">{{ getBookingFieldErrorMessage('eventName') }}</p>
                     </div>
 
 
@@ -48,7 +96,8 @@
                             <input type="text"
                                    class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                                    readonly
-                                   ng-click="toggleDropdown('packageTypesOpt', $event)"
+                                   ng-click="markBookingFieldTouched('packageTypeID'); toggleDropdown('packageTypesOpt', $event)"
+                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('packageTypeID')}"
                                    ng-value="getPackageDisplayText()" />
                             <div ng-if="activeDropdown ==='packageTypesOpt'" ng-click="$event.stopPropagation()"
                                  class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -60,17 +109,19 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('packageTypeID')">{{ getBookingFieldErrorMessage('packageTypeID') }}</p>
                     </div>
 
                     <div class="col-span-3 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                            Event Type
+                            Event Type <i class="font-label text-red-500">*</i>
                         </label>
                         <div class="relative dropdown-container">
                             <input type="text"
                                    class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                                    readonly
-                                   ng-click="toggleDropdown('eventsOpt', $event)"
+                                   ng-click="markBookingFieldTouched('eventTypeID'); toggleDropdown('eventsOpt', $event)"
+                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventTypeID')}"
                                    ng-value="getEventDisplayText()" />
                             <div ng-if="activeDropdown ==='eventsOpt'" ng-click="$event.stopPropagation()"
                                  class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -82,6 +133,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventTypeID')">{{ getBookingFieldErrorMessage('eventTypeID') }}</p>
                     </div>
 
                     <div class="col-span-2 flex flex-col md:col-span-1">
@@ -92,7 +144,11 @@
                                placeholder="Firstname"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="cFirstName"
-                               ng-model="cFirstName">
+                               ng-model="cFirstName"
+                               required
+                               ng-blur="markBookingFieldTouched('cFirstName')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cFirstName')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('cFirstName')">{{ getBookingFieldErrorMessage('cFirstName') }}</p>
                     </div>
 
                     <div class="col-span-2 flex flex-col md:col-span-1">
@@ -103,7 +159,11 @@
                                placeholder="Lastname"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="cLastName"
-                               ng-model="cLastName">
+                               ng-model="cLastName"
+                               required
+                               ng-blur="markBookingFieldTouched('cLastName')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cLastName')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('cLastName')">{{ getBookingFieldErrorMessage('cLastName') }}</p>
                     </div>
 
                     <br>
@@ -116,7 +176,11 @@
                                placeholder="E-mail"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="cEmail"
-                               ng-model="cEmail">
+                               ng-model="cEmail"
+                               required
+                               ng-blur="markBookingFieldTouched('cEmail')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cEmail')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('cEmail')">{{ getBookingFieldErrorMessage('cEmail') }}</p>
                     </div>
 
                     <div class="col-span-2 flex flex-col md:col-span-1">
@@ -127,7 +191,11 @@
                                placeholder="Contact Number e.g 09*********"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="cContactNum"
-                               ng-model="cContactNum">
+                               ng-model="cContactNum"
+                               required
+                               ng-blur="markBookingFieldTouched('cContactNum')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cContactNum')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('cContactNum')">{{ getBookingFieldErrorMessage('cContactNum') }}</p>
                     </div>
 
                     <br>
@@ -140,7 +208,11 @@
                                placeholder="Firstname"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="cCeleb1FirstName"
-                               ng-model="cCeleb1FirstName">
+                               ng-model="cCeleb1FirstName"
+                               required
+                               ng-blur="markBookingFieldTouched('cCeleb1FirstName')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCeleb1FirstName')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('cCeleb1FirstName')">{{ getBookingFieldErrorMessage('cCeleb1FirstName') }}</p>
                     </div>
 
                     <div class="col-span-2 flex flex-col md:col-span-1">
@@ -151,7 +223,11 @@
                                placeholder="Lastname"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="cCeleb1LastName"
-                               ng-model="cCeleb1LastName">
+                               ng-model="cCeleb1LastName"
+                               required
+                               ng-blur="markBookingFieldTouched('cCeleb1LastName')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCeleb1LastName')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('cCeleb1LastName')">{{ getBookingFieldErrorMessage('cCeleb1LastName') }}</p>
                     </div>
 
                     <br>
@@ -188,7 +264,11 @@
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="venue"
                                placeholder="Venue Address"
-                               ng-model="eventVenue">
+                               ng-model="eventVenue"
+                               required
+                               ng-blur="markBookingFieldTouched('eventVenue')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventVenue')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventVenue')">{{ getBookingFieldErrorMessage('eventVenue') }}</p>
                     </div>
 
                     <div class="col-span-3 flex flex-col md:col-span-3">
@@ -199,7 +279,11 @@
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                name="prepVenue"
                                placeholder="Preparation Venue Address"
-                               ng-model="eventPrepVenue">
+                               ng-model="eventPrepVenue"
+                               required
+                               ng-blur="markBookingFieldTouched('eventPrepVenue')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventPrepVenue')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventPrepVenue')">{{ getBookingFieldErrorMessage('eventPrepVenue') }}</p>
                     </div>
 
 
@@ -211,7 +295,11 @@
                                placeholder="e.g Disney"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                ng-model="eventMotif"
-                               name="motif">
+                               name="motif"
+                               required
+                               ng-blur="markBookingFieldTouched('eventMotif')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventMotif')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventMotif')">{{ getBookingFieldErrorMessage('eventMotif') }}</p>
                     </div>
 
 
@@ -223,7 +311,11 @@
                                placeholder="e.g Disney"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                ng-model="eventTheme"
-                               name="theme">
+                               name="theme"
+                               required
+                               ng-blur="markBookingFieldTouched('eventTheme')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventTheme')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventTheme')">{{ getBookingFieldErrorMessage('eventTheme') }}</p>
                     </div>
 
                     <br>
@@ -235,7 +327,12 @@
                         <input type="date"
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                ng-change="changeSummaryDateOutput()"
-                               ng-model="dateOfEvent" name="dateOfEvent">
+                               ng-model="dateOfEvent"
+                               name="dateOfEvent"
+                               required
+                               ng-blur="markBookingFieldTouched('dateOfEvent')"
+                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('dateOfEvent')}">
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('dateOfEvent')">{{ getBookingFieldErrorMessage('dateOfEvent') }}</p>
                     </div>
 
                     <div class="col-span-3 flex flex-col md:col-span-1">
@@ -246,7 +343,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('ceremHour', $event)">
+                                        ng-click="markBookingFieldTouched('eventCeremTime'); toggleDropdown('ceremHour', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventCeremTime')}">
                                     {{ceremHour || 'Hour'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='ceremHour'" ng-click="$event.stopPropagation()"
@@ -262,7 +360,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('ceremMin', $event)">
+                                        ng-click="markBookingFieldTouched('eventCeremTime'); toggleDropdown('ceremMin', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventCeremTime')}">
                                     {{ceremMinute || 'Min'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='ceremMin'" ng-click="$event.stopPropagation()"
@@ -278,7 +377,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('ceremPer', $event)">
+                                        ng-click="markBookingFieldTouched('eventCeremTime'); toggleDropdown('ceremPer', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventCeremTime')}">
                                     {{ceremPeriod || 'AM/PM'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='ceremPer'" ng-click="$event.stopPropagation()"
@@ -292,6 +392,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventCeremTime')">{{ getBookingFieldErrorMessage('eventCeremTime') }}</p>
                     </div>
 
                     <div class="col-span-3 flex flex-col md:col-span-1">
@@ -302,7 +403,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('eventHour', $event)">
+                                        ng-click="markBookingFieldTouched('eventEventTime'); toggleDropdown('eventHour', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventEventTime')}">
                                     {{eventHour || 'Hour'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='eventHour'" ng-click="$event.stopPropagation()"
@@ -318,7 +420,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('eventMin', $event)">
+                                        ng-click="markBookingFieldTouched('eventEventTime'); toggleDropdown('eventMin', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventEventTime')}">
                                     {{eventMinute || 'Min'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='eventMin'" ng-click="$event.stopPropagation()"
@@ -334,7 +437,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('eventPer', $event)">
+                                        ng-click="markBookingFieldTouched('eventEventTime'); toggleDropdown('eventPer', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventEventTime')}">
                                     {{eventPeriod || 'AM/PM'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='eventPer'" ng-click="$event.stopPropagation()"
@@ -349,6 +453,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventEventTime')">{{ getBookingFieldErrorMessage('eventEventTime') }}</p>
                     </div>
 
                     <div class="col-span-3 flex flex-col md:col-span-1">
@@ -359,7 +464,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('mealHour', $event)">
+                                        ng-click="markBookingFieldTouched('eventMealTime'); toggleDropdown('mealHour', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventMealTime')}">
                                     {{mealHour || 'Hour'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='mealHour'" ng-click="$event.stopPropagation()"
@@ -375,7 +481,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('mealMin', $event)">
+                                        ng-click="markBookingFieldTouched('eventMealTime'); toggleDropdown('mealMin', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventMealTime')}">
                                     {{mealMinute || 'Min'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='mealMin'" ng-click="$event.stopPropagation()"
@@ -391,7 +498,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('mealPer', $event)">
+                                        ng-click="markBookingFieldTouched('eventMealTime'); toggleDropdown('mealPer', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventMealTime')}">
                                     {{mealPeriod || 'AM/PM'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='mealPer'" ng-click="$event.stopPropagation()"
@@ -406,6 +514,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventMealTime')">{{ getBookingFieldErrorMessage('eventMealTime') }}</p>
                     </div>
 
                     <div class="col-span-3 flex flex-col md:col-span-1">
@@ -416,7 +525,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('setHour', $event)">
+                                        ng-click="markBookingFieldTouched('eventSetTime'); toggleDropdown('setHour', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventSetTime')}">
                                     {{setHour || 'Hour'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='setHour'" ng-click="$event.stopPropagation()"
@@ -432,7 +542,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('setMin', $event)">
+                                        ng-click="markBookingFieldTouched('eventSetTime'); toggleDropdown('setMin', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventSetTime')}">
                                     {{setMinute || 'Min'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='setMin'" ng-click="$event.stopPropagation()"
@@ -448,7 +559,8 @@
                             <div class="relative dropdown-container">
                                 <button type="button"
                                         class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                        ng-click="toggleDropdown('setPer', $event)">
+                                        ng-click="markBookingFieldTouched('eventSetTime'); toggleDropdown('setPer', $event)"
+                                        ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventSetTime')}">
                                     {{setPeriod || 'AM/PM'}}
                                 </button>
                                 <div ng-if="activeDropdown ==='setPer'" ng-click="$event.stopPropagation()"
@@ -463,6 +575,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="booking-error" ng-if="shouldShowBookingFieldError('eventSetTime')">{{ getBookingFieldErrorMessage('eventSetTime') }}</p>
                     </div>
 
                     <br>
@@ -884,11 +997,27 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-span-full create-booking-actions pt-2">
+                        <div class="create-booking-actions__meta">
+                            Step 1 of 3
+                        </div>
+                        <button type="button"
+                                ng-click="goToNextBookingStep()"
+                                class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
+                            Continue to Summary
+                        </button>
+                    </div>
+                    </div>
+
+                    <div class="contents" ng-show="bookingStep === 2">
+                    <div class="create-booking-section col-span-3">
+                        <h2 class="text-xl font-semibold text-zinc-950 sm:text-2xl">Package Summary</h2>
+                        <p class="mt-2 text-sm leading-6 text-zinc-500">
+                            Review the booking details here. If anything looks off, return to the previous step and update it there.
+                        </p>
+                    </div>
 
                     <div class="col-span-3 flex flex-col md:col-span-3">
-                        <label class="font-label mb-1 text-l font-bold text-pink-500 md:text-base">
-                            Package Summary
-                        </label>
                         <div class="create-booking-summary relative">
                             <label class="font-label mb-1 text-sm font-bold text-gray-400 md:text-base">
                                 Client Information
@@ -909,7 +1038,7 @@
                                 <li><b>Package Type:</b> {{packageType || "-"}}</li>
                                 <li><b>Event Type:</b> {{eventType || "-"}}</li>
                                 <li><b>Venue:</b> {{eventVenue || "-"}}</li>
-                                <li><b>Pereparation Venue:</b> {{eventPrepVenue || "-"}}</li>
+                                <li><b>Preparation Venue:</b> {{eventPrepVenue || "-"}}</li>
                                 <li><b>Motif:</b> {{eventMotif || "-"}}</li>
                                 <li><b>Theme:</b> {{eventTheme || "-"}}</li>
                                 <li><b>Date of Event:</b> {{formattedDateOfEvent || "No Date"}}</li>
@@ -940,12 +1069,35 @@
                                 <li><b>Equipments & Decor:</b> {{equipType || "-"}}</li>
                                 <li><b>Entertainment:</b> {{entertainmentType || "-"}}</li>
                                 <li><b>Photo Operations:</b> {{photoType || "-"}}</li>
-                                <li><b>Keppsakes:</b> {{keepsakesType || "-"}}</li>
+                                <li><b>Keepsakes:</b> {{keepsakesType || "-"}}</li>
                                 <li><b>Debut Additionals:</b> {{debutType || "-"}}</li>
                             </ul>
                         </div>
                     </div>
+                    <div class="col-span-full create-booking-actions pt-2">
+                        <button type="button"
+                                ng-click="goToPreviousBookingStep()"
+                                class="create-booking-secondary inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
+                            Back to Details
+                        </button>
+                        <div class="create-booking-actions__meta">
+                            Step 2 of 3
+                        </div>
+                        <button type="button"
+                                ng-click="goToNextBookingStep()"
+                                class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
+                            Continue to Pricing
+                        </button>
+                    </div>
+                    </div>
 
+                    <div class="contents" ng-show="bookingStep === 3">
+                    <div class="create-booking-section col-span-3">
+                        <h2 class="text-xl font-semibold text-zinc-950 sm:text-2xl">Pricing &amp; Confirmation</h2>
+                        <p class="mt-2 text-sm leading-6 text-zinc-500">
+                            Finalize guest count, adjust add-ons, and confirm the booking amount before submission.
+                        </p>
+                    </div>
                     <div class="col-span-3 flex flex-col md:col-span-1">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                             Guest Count <i class="font-label text-red-500">*</i>
@@ -977,6 +1129,7 @@
                                 <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3"
                                        placeholder="Adult Count"
                                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                       ng-change="computeFinalPrice()"
                                        ng-model="addAdult"
                                        name="adult">
                             </div>
@@ -987,6 +1140,7 @@
                                 <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3" ng-disabled="addKdInput"
                                        placeholder="Kid Count"
                                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                       ng-change="computeFinalPrice()"
                                        ng-model="addKid"
                                        name="kid">
                             </div>
@@ -1016,22 +1170,35 @@
                     </div>
 
                     <!-- Button -->
-                    <div class="col-span-full flex justify-end pt-2">
-                        <button type="button" ng-if="!isEditMode" ng-click="createBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px] ml-4">
+                    <div class="col-span-full create-booking-actions pt-2">
+                        <button type="button"
+                                ng-click="goToPreviousBookingStep()"
+                                class="create-booking-secondary inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
+                            Back to Summary
+                        </button>
+
+                        <div class="create-booking-actions__meta">
+                            Step 3 of 3
+                        </div>
+
+                        <button type="button" ng-if="!isEditMode" ng-click="createBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
                             Book Event
                         </button>
 
-                        <button type="button" ng-if="isEditMode" ng-click="createBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px] ml-4">
+                        <button type="button" ng-if="isEditMode" ng-click="editBooking()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
                             Update Event
                         </button>
 
-                        <button type="button" ng-if="isEditMode" ng-click="deleteBooking()" class=" bg-gray-400 hover:bg-gray-500 border-gray-200 hover:border-gray-300 create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px] ml-4">
+                        <button type="button" ng-if="isEditMode" ng-click="deleteBooking()" class=" bg-gray-400 hover:bg-gray-500 border-gray-200 hover:border-gray-300 create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
                             Delete Event
                         </button>
                     </div>
+                    </div>
 
                 </div>
-            </section>
-        </form>
+                    </section>
+                </form>
+            </div>
+        </div>
     </div>
 </section>

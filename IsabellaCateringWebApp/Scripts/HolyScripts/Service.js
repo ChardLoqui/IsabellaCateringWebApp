@@ -73,7 +73,13 @@
 
     this.verifyClientCreds = function (userEmail, entryCode) {
         return $http.get("/Main/ForgetVerifyEmailClient", {
-            params: { userEmail: userEmail, entryCode: entryCode }
+            params: { userEmail: userEmail, entryCode: entryCode || userEmail }
+        });
+    }
+
+    this.verifyToken = function (token) {
+        return $http.get("/Main/VerifyForgetToken", {
+            params: { token: token }
         });
     }
 
@@ -125,6 +131,29 @@
             photoGrpTypes: photoGrpTypes,
             keepsakesGrpTypes: keepsakesGrpTypes,
             debutGrpTypes: debutGrpTypes
+        });
+    }
+
+    this.updateBookingService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+        return $http.post("/Main/UpdateBooking", {
+            clientInfo: clientInfo,
+            bookingInfo: bookingInfo,
+            paymentInfo: paymentInfo,
+            packages: packages,
+            sidesGrpTypes: sidesGrpTypes,
+            specialsGrpTypes: specialsGrpTypes,
+            staffGrpTypes: staffGrpTypes,
+            equipGrpTypes: equipGrpTypes,
+            entertainmentGrpTypes: entertainmentGrpTypes,
+            photoGrpTypes: photoGrpTypes,
+            keepsakesGrpTypes: keepsakesGrpTypes,
+            debutGrpTypes: debutGrpTypes
+        });
+    }
+
+    this.deleteBookingService = function (bookingID) {
+        return $http.post("/Main/DeleteBooking", {
+            bookingID: bookingID
         });
     }
 

@@ -48,6 +48,9 @@
                     </div>
                     <h2 class="mt-2 text-4xl font-semibold tracking-tight text-zinc-950">Set a New Password</h2>
                     <p class="mt-8 text-sm text-pink-700/70">Choose a new password for your account, then sign in again.</p>
+                    <p class="mt-3 text-xs uppercase tracking-[0.2em] text-pink-500/80" ng-if="!resetTokenState.checked">
+                        Verifying reset link...
+                    </p>
                 </div>
 
                 <form class="mt-8 space-y-5" name="changePasswordForm" ng-submit="changeForgotPassword()" novalidate>
@@ -66,16 +69,18 @@
                                    ng-model="newPassword"
                                    type="password"
                                    required
+                                   ng-minlength="8"
+                                   ng-maxlength="20"
                                    minlength="8"
                                    maxlength="20"
-                                   oninput="this.value = this.value.replace(/\s/g, '');"
+                                   oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('toggleForgetPassword').style.display = this.value.length ? 'block' : 'none';"
                                    ng-class="{'login-field-invalid': shouldShowFieldError(changePasswordForm, 'newPasswordField')}"
                                    class="login-field w-full bg-white px-4 py-3 pr-14 text-zinc-900 placeholder-zinc-400 outline-none"
                                    placeholder="Enter your new password" />
 
                             <span id="toggleForgetPassword"
                                   ng-click="toggleShowForgetPassword()"
-                                  class="material-icons absolute right-4 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center cursor-pointer select-none text-[20px] text-zinc-400 transition-colors duration-200 hover:text-zinc-700">
+                                  class="material-icons absolute w-7 right-3 top-1/2 hidden -translate-y-1/2 cursor-pointer text-gray-500 select-none">
                                 visibility_off
                             </span>
                         </div>
@@ -86,6 +91,10 @@
                         <p class="login-error"
                            ng-if="shouldShowFieldError(changePasswordForm, 'newPasswordField', 'minlength')">
                             Use at least 8 characters.
+                        </p>
+                        <p class="login-error"
+                           ng-if="shouldShowFieldError(changePasswordForm, 'newPasswordField', 'maxlength') || shouldShowFieldError(changePasswordForm, 'newPasswordField', 'ngMaxlength')">
+                            Use no more than 20 characters.
                         </p>
                     </div>
 
@@ -104,16 +113,18 @@
                                    ng-model="cNewPassword"
                                    type="password"
                                    required
+                                   ng-minlength="8"
+                                   ng-maxlength="20"
                                    minlength="8"
                                    maxlength="20"
-                                   oninput="this.value = this.value.replace(/\s/g, '');"
+                                   oninput="this.value = this.value.replace(/\s/g, ''); document.getElementById('toggleCForgetPassword').style.display = this.value.length ? 'block' : 'none';"
                                    ng-class="{'login-field-invalid': shouldShowFieldError(changePasswordForm, 'confirmPasswordField') || isPasswordMismatch(changePasswordForm)}"
                                    class="login-field w-full bg-white px-4 py-3 pr-14 text-zinc-900 placeholder-zinc-400 outline-none"
                                    placeholder="Re-enter your new password" />
 
                             <span id="toggleCForgetPassword"
                                   ng-click="toggleShowCForgetPassword()"
-                                  class="material-icons absolute right-4 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center cursor-pointer select-none text-[20px] text-zinc-400 transition-colors duration-200 hover:text-zinc-700">
+                                  class="material-icons absolute w-7 right-3 top-1/2 hidden -translate-y-1/2 cursor-pointer text-gray-500 select-none">
                                 visibility_off
                             </span>
                         </div>
@@ -126,12 +137,18 @@
                             Use at least 8 characters.
                         </p>
                         <p class="login-error"
+                           ng-if="!shouldShowFieldError(changePasswordForm, 'confirmPasswordField', 'required') && (shouldShowFieldError(changePasswordForm, 'confirmPasswordField', 'maxlength') || shouldShowFieldError(changePasswordForm, 'confirmPasswordField', 'ngMaxlength'))">
+                            Use no more than 20 characters.
+                        </p>
+                        <p class="login-error"
                            ng-if="isPasswordMismatch(changePasswordForm)">
                             Passwords must match.
                         </p>
                     </div>
 
                     <button type="submit"
+                            ng-disabled="!resetTokenState.valid"
+                            ng-class="{'cursor-not-allowed opacity-60': !resetTokenState.valid}"
                             class="login-submit login-fade-delayed w-full rounded-lg bg-pink-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-900/10 hover:bg-pink-600">
                         Reset Password
                     </button>
