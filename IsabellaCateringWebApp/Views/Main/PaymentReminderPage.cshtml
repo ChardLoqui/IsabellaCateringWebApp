@@ -808,22 +808,9 @@
                     </label>
                     <select ng-model="newPayment.paymentType"
                             class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500">
-                        @*<option value="Down Payment"
-                        ng-disabled="addPaymentRestrictions.hasDownPayment">
-                    Down Payment{{ addPaymentRestrictions.hasDownPayment ? ' (already exists)' : '' }}
-                </option>
-                <option value="Full Payment"
-                        ng-disabled="addPaymentRestrictions.hasFullPayment">
-                    Full Payment{{ addPaymentRestrictions.hasFullPayment ? ' (already exists)' : '' }}
-                </option>*@
                         <option value="Payment">Payment</option>
                         <option value="Additional">Additional</option>
                     </select>
-
-                    <p ng-if="addPaymentRestrictions.hasDownPayment && addPaymentRestrictions.hasFullPayment"
-                       class="mt-1.5 text-xs text-orange-500 font-medium">
-                        Down & Full Payment already exist for this booking. Only Additional payments can be added.
-                    </p>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">

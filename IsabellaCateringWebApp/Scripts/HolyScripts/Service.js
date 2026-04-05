@@ -116,9 +116,8 @@
         return $http.get("/Main/getPackageBookingOptions");
     }
 
-    this.insertPackageService = function (mode, clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
         return $http.post("/Main/insertPackage", {
-            mode: mode,
             clientInfo: clientInfo,
             bookingInfo: bookingInfo,
             paymentInfo: paymentInfo,

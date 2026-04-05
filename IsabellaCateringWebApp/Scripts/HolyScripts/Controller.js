@@ -2636,17 +2636,25 @@
     //====================================================== PAYMENT REMINDER END ======================================================
 
     //====================================================== CREATE BOOKING START ======================================================
-
+    $scope.progressOne = 0;
+    $scope.progressTwo = 0;
+    $scope.progressThree = 0;
     $scope.setStep = function (step) {
         if (step === 1) {
             if ($scope.order.progressOne === 1 && $scope.order.progressTwo === 0) {
                 $scope.order.progressOne = 0;
                 $scope.order.progressTwo = 0;
                 $scope.order.progressThree = 0;
+                $scope.progressOne = 0;
+                $scope.progressTwo = 0;
+                $scope.progressThree = 0;
             } else {
                 $scope.order.progressOne = 1;
                 $scope.order.progressTwo = 0;
                 $scope.order.progressThree = 0;
+                $scope.progressOne = 1;
+                $scope.progressTwo = 0;
+                $scope.progressThree = 0;
             }
         }
         else if (step === 2) {
@@ -2654,10 +2662,16 @@
                 $scope.order.progressOne = 1;
                 $scope.order.progressTwo = 0;
                 $scope.order.progressThree = 0;
+                $scope.progressOne = 1;
+                $scope.progressTwo = 0;
+                $scope.progressThree = 0;
             } else {
                 $scope.order.progressOne = 1;
                 $scope.order.progressTwo = 1;
                 $scope.order.progressThree = 0;
+                $scope.progressOne = 1;
+                $scope.progressTwo = 1;
+                $scope.progressThree = 0;
             }
         }
         else if (step === 3) {
@@ -2665,10 +2679,16 @@
                 $scope.order.progressOne = 1;
                 $scope.order.progressTwo = 1;
                 $scope.order.progressThree = 0;
+                $scope.progressOne = 1;
+                $scope.progressTwo = 1;
+                $scope.progressThree = 0;
             } else {
                 $scope.order.progressOne = 1;
                 $scope.order.progressTwo = 1;
                 $scope.order.progressThree = 1;
+                $scope.progressOne = 1;
+                $scope.progressTwo = 1;
+                $scope.progressThree = 1;
             }
         }
     };
@@ -3088,9 +3108,9 @@
                 eventSetTime: $scope.eventSetTime,
                 eventMealTime: $scope.eventMealTime,
                 bookingNote: $scope.bookingNote ?? null,
-                progressOne: $scope.order.progressOne,
-                progressTwo: $scope.order.progressTwo,
-                progressThree: $scope.order.progressThree,
+                progressOne: $scope.progressOne ?? null,
+                progressTwo: $scope.progressTwo ?? null,
+                progressThree: $scope.progressThree ?? null,
                 paxCount: extractPaxCount($scope.priceType),
                 addAdult: parseInt($scope.addAdult, 10) || 0,
                 addKid: parseInt($scope.addKid, 10) || 0
@@ -3245,7 +3265,8 @@
                                     text: returnedData.data.message,
                                     icon: 'success',
                                     confirmButtonColor: '#ec4899',
-                                });
+                                }).then(function () {
+                                    $scope.redirectToBookingCalendarPage()});
                             } else {
                                 Swal.fire({
                                     title: 'Error!',
