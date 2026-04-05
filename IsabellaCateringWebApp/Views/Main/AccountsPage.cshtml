@@ -3,7 +3,7 @@
     ViewBag.Title = "Account Management";
 }
 
-<div class="relative z-10 h-full overflow-y-auto"  ng-init="authenticateLoginCredentials()">
+<div class="relative z-10 h-full overflow-y-auto" ng-init="authenticateLoginCredentials( )">
     <div class="management-page-shell">
         <div class="space-y-8">
             <div class="management-page-header">
@@ -247,7 +247,7 @@
                                        ng-class="{
                                            'focus:border-pink-500 focus:ring-pink-500': password === confirmPassword,
                                            'border-red-400 focus:border-red-500 focus:ring-red-500': password !== confirmPassword && confirmPassword.length > 0
-                                       }" />
+                                            }" />
 
                                 <span onclick="togglePassVisibility('confirmPWord', this)"
                                       class="material-symbols-outlined absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center cursor-pointer select-none text-sm text-gray-500">
