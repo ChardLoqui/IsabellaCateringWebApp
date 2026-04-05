@@ -9,6 +9,7 @@ namespace IsabellaCateringWebApp.Models.Models
     {
         public int logID { get; set; }
         public int userID { get; set; }
+        public string permission { get; set; }
         public string userEmail { get; set; }
         public string level { get; set; }
         public string processService { get; set; }
