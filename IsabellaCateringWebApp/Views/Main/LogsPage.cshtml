@@ -43,16 +43,14 @@
                             <h2 class="management-section-title">Logs</h2>
 
                             <div class="management-section-actions">
-                                <input type="text"
-                                       ng-model="logSearchText"
-                                       ng-keydown="$event.keyCode === 13 && searchLogs()"
-                                       placeholder="Search table data..."
-                                       class="management-toolbar-input management-section-search px-5" />
-
-                                <button type="button" ng-click="searchLogs()"
-                                        class="management-toolbar-button management-toolbar-button-secondary w-full px-5 py-2 font-semibold transition-colors sm:w-auto">
-                                    Search
-                                </button>
+                                <div class="relative w-full sm:w-auto">
+                                    <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-gray-400">search</span>
+                                    <input type="text"
+                                           ng-model="searchState.log"
+                                           ng-change="searchLogs()"
+                                           placeholder="Search table data..."
+                                           class="management-toolbar-input management-section-search w-full pl-12 pr-4" />
+                                </div>
                             </div>
                         </div>
 
