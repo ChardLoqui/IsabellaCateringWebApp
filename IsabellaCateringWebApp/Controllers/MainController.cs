@@ -1,9 +1,13 @@
 ﻿using IsabellaCateringWebApp.Models.Context;
 using IsabellaCateringWebApp.Models.Models;
+using Microsoft.Ajax.Utilities;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.EnterpriseServices;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -14,6 +18,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Transactions;
 using System.Web;
+using System.Web.Helpers;
 using System.Web.Mvc;
 using System.Web.Services.Description;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
@@ -79,6 +84,106 @@ namespace IsabellaCateringWebApp.Controllers
         public ActionResult AdminViewPage()
         {
             return View();
+        }
+        public JsonResult Logs(string level, string processService, string processDesc)
+        {
+            try
+            {
+                string traceId = Guid.NewGuid().ToString();
+                string email = "";
+                if (Session["currentLog"].ToString() != "")
+                {
+                    int uID = int.Parse(Session["currentLog"].ToString());
+                    int pID = int.Parse(Session["currentPerm"].ToString());
+                    using (var db = new IsabellaCateringContext())
+                    {
+                        
+                        var permission = db.permissions_tbl.Where(x => x.permissionID == pID).FirstOrDefault();
+                        if (Session["currentPerm"].ToString() == "3")
+                        {
+                            var client = db.clients_tbl.Where(x => x.clientID == uID).FirstOrDefault();
+                            if (client != null)
+                            {
+                                email = client.cEmail;
+
+                                return Json(new { succes = setLog(uID, email, level, processService, processDesc, traceId), message = "Logs has been added!" }, JsonRequestBehavior.AllowGet);
+                            }
+                            else
+                            {
+                                uID = 0;
+                                email = "blank";
+                                level = "WARN";
+                                processDesc = "Accessed without credentials!";
+
+                                return Json(new { succes = setLog(uID, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                        else
+                        {
+                            var user = db.users_tbl.Where(x => x.userID == uID).FirstOrDefault();
+                            if (user != null)
+                            {
+                                email = user.email;
+
+                                return Json(new { succes = !setLog(uID, email, level, processService, processDesc, traceId), message = "Logs has been added!" }, JsonRequestBehavior.AllowGet);
+                            }
+                            else
+                            {
+                                uID = 0;
+                                email = "blank";
+                                level = "WARN";
+                                processDesc = "Accessed without credentials!";
+
+                                return Json(new { succes = !setLog(uID, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    int uID = 0;
+                    email = "blank";
+                    level = "WARN";
+                    processDesc = "Accessed without credentials!";
+
+                    return Json(new { succes = !setLog(uID, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { succes = false, message = "Logs failed!"+ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public Boolean setLog(int uID, string uEmail, string level, string procServ, string procDesc, string trace)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+
+
+                    var newLog = new tblActivityLogsModel()
+                    {
+                        userID = uID,
+                        userEmail = uEmail,
+                        level = level,
+                        processService = procServ,
+                        processDesc = procDesc,
+                        traceID = trace,
+                        dateCreated = DateTime.UtcNow
+                    };
+
+                    db.activitylogs_tbl.Add(newLog);
+                    db.SaveChanges();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // get creds for login
@@ -468,6 +573,7 @@ namespace IsabellaCateringWebApp.Controllers
                     Message = "No account was found for password reset."
                 };
             }
+            
 
             if (string.IsNullOrWhiteSpace(recipientEmail))
             {
@@ -709,13 +815,22 @@ namespace IsabellaCateringWebApp.Controllers
                     {
                         db.users_tbl.Remove(user);
                         db.SaveChanges();
+
                         return Json(new { success = true });
                     }
+                    Logs(
+                    "WARN",
+                    "Account Management:",
+                    "Tried to delete user details. Message : \"User not found.\"");
                     return Json(new { success = false, message = "User not found." });
                 }
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Account Management:",
+                "Tried to delete user details. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -740,58 +855,22 @@ namespace IsabellaCateringWebApp.Controllers
                         db.SaveChanges();
                         return Json(new { success = true });
                     }
+                    Logs(
+                    "WARN",
+                    "Account Management:",
+                    "Tried to update user details. Message : \"User not found.\"");
                     return Json(new { success = false, message = "User not found." });
                 }
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Account Management:",
+                "Tried to update user details. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
-
-
-        public JsonResult addBooking(tblBookingsModel bookingData)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var newBooking = new tblBookingsModel()
-                    {
-                        packageID = bookingData.packageID,
-                        dsgnTheme = bookingData.dsgnTheme,
-                        dsgnMotif = bookingData.dsgnMotif,
-                        venue = bookingData.venue,
-                        bookingDate = DateTime.Now,
-                        eventSetTime = bookingData.eventSetTime,
-                        eventTime = bookingData.eventTime,
-                        ceremTime = bookingData.ceremTime,
-                        eventMealTime = bookingData.eventMealTime,
-                        progressOne = 1,
-                        progressTwo = 1,
-                        progressThree = 1,
-                        dateCreated = DateTime.Now,
-                        dateUpdated = DateTime.Now,
-                        createdBy = 1,
-                        clientID = 1001,
-                        prepVenue = "yes",
-
-                    };
-
-                    // Add to DbSet and save
-                    db.bookings_tbl.Add(newBooking);
-                    db.SaveChanges();
-                }
-
-                return Json(new { success = true, message = "Booking Successfully Added" }, JsonRequestBehavior.AllowGet);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
         public JsonResult getBooking(tblBookingsModel booking)
         {
             try
@@ -814,6 +893,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking View:",
+                "Tried to get booking details. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message, bookingID = booking.bookingID }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -846,11 +929,13 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking Calendar:",
+                "Tried to get booking availability. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
-
         public JsonResult getCalendarBooking(string formattedDate)
         {
             try
@@ -874,6 +959,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking Calendar:",
+                "Tried to get booking details. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -919,6 +1008,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking Calendar:",
+                "Tried to get booking details. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1119,21 +1212,37 @@ namespace IsabellaCateringWebApp.Controllers
                                     }
                                     else
                                     {
+                                        Logs(
+                                        "WARN",
+                                        "Booking Management:",
+                                        "Tried to get booking details. Message : \"No Event Found!\"");
                                         return Json(new { success = false, message = "No Event Found!" }, JsonRequestBehavior.AllowGet);
                                     }
                                 }
                                 else
                                 {
+                                    Logs(
+                                        "WARN",
+                                        "Booking Management:",
+                                        "Tried to get booking details. Message : \"No Package Found!\"");
                                     return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
                                 }
                             }
                             else
                             {
+                                Logs(
+                                    "WARN",
+                                    "Booking Management:",
+                                    "Tried to get booking details. Message : \"No Client Found!\"");
                                 return Json(new { success = false, message = "No Client Found!" }, JsonRequestBehavior.AllowGet);
                             }
                         }
                         else
                         {
+                            Logs(
+                                    "WARN",
+                                    "Booking Management:",
+                                    "Tried to get booking details. Message : \"No Package Found!\"");
                             return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
                         }
                     }
@@ -1141,6 +1250,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking View:",
+                "Tried to get booking details. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1194,6 +1307,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking Management:",
+                "Tried to get package option. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1420,6 +1537,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking Management:",
+                "Tried to create bookings. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1486,6 +1607,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking Management:",
+                "Tried to update bookings. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message });
             }
         }
@@ -1568,6 +1693,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Bookings Management:",
+                "Tried to delete bookings. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message });
             }
         }
@@ -1744,17 +1873,29 @@ namespace IsabellaCateringWebApp.Controllers
                         }
                         else
                         {
+                            Logs(
+                                "WARN",
+                                "Booking Management:",
+                                "Tried to get booking details. Message : \"No Package Found!\"");
                             return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
                         }
                     }
                     else
                     {
+                        Logs(
+                            "WARN",
+                            "Booking Management:",
+                            "Tried to get booking details. Message : \"No Package Found!\"");
                         return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
                     }
                 }
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Booking Management:",
+                "Tried to get packages. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1763,26 +1904,37 @@ namespace IsabellaCateringWebApp.Controllers
         //start for payments
         public JsonResult GetPayments()
         {
-            using (var db = new IsabellaCateringContext())
+            try
             {
-                var data = db.payments_tbl.Select(p => new
+                using (var db = new IsabellaCateringContext())
                 {
-                    paymentID = p.paymentID,
-                    bookingID = p.bookingID,
-                    amountDue = p.amountDue,
-                    amountPaid = p.amountPaid,
-                    remainingBalance = p.remainingBalance,
-                    transactionNum = p.transactionNum,
-                    paymentType = p.paymentType,
-                    paymentStatus = p.paymentStatus,
-                    dueDate = p.dueDate,
-                    dateCreated = p.dateCreated,
-                    dateUpdated = p.dateUpdated
-                }).ToList();
+                    var data = db.payments_tbl.Select(p => new
+                    {
+                        paymentID = p.paymentID,
+                        bookingID = p.bookingID,
+                        amountDue = p.amountDue,
+                        amountPaid = p.amountPaid,
+                        remainingBalance = p.remainingBalance,
+                        transactionNum = p.transactionNum,
+                        paymentType = p.paymentType,
+                        paymentStatus = p.paymentStatus,
+                        dueDate = p.dueDate,
+                        dateCreated = p.dateCreated,
+                        dateUpdated = p.dateUpdated
+                    }).ToList();
 
-                var jsonResult = Json(data, JsonRequestBehavior.AllowGet);
-                jsonResult.MaxJsonLength = int.MaxValue;
-                return jsonResult;
+                    var jsonResult = Json(data, JsonRequestBehavior.AllowGet);
+                    jsonResult.MaxJsonLength = int.MaxValue;
+                    return jsonResult;
+                }
+            }
+            catch(Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Bookings Payment:",
+                "Tried to get payment. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -1802,6 +1954,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Bookings Payment:",
+                "Tried to get payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -1876,6 +2032,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Bookings Payment:",
+                "Tried to get payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -1891,7 +2051,14 @@ namespace IsabellaCateringWebApp.Controllers
                                      .FirstOrDefault(p => p.paymentID == paymentData.paymentID);
 
                     if (existing == null)
+                    {
+                        Logs(
+                            "WARN",
+                            "Payment Management:",
+                            "Tried to update payment details. Message : \"Payment not found.\"");
                         return Json(new { success = false, message = "Payment not found." });
+                    }
+                        
 
                     existing.bookingID = paymentData.bookingID;
                     existing.paymentType = paymentData.paymentType;
@@ -1914,6 +2081,10 @@ namespace IsabellaCateringWebApp.Controllers
                     if (ex.InnerException.InnerException != null)
                         realError = ex.InnerException.InnerException.Message;
                 }
+                Logs(
+                "LETHAL",
+                "Bookings Payment:",
+                "Tried to update payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = realError });
             }
         }
@@ -1935,7 +2106,12 @@ namespace IsabellaCateringWebApp.Controllers
                     return Json(new { success = false });
                 }
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) {
+                Logs(
+                "LETHAL",
+                "Bookings Payment:",
+                "Tried to delete payment. "+ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = ex.Message }); }
         }
 
         public JsonResult GetBookingsWithoutPayments()
@@ -1962,6 +2138,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Bookings Payment:",
+                "Tried to get payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
