@@ -144,7 +144,7 @@ namespace IsabellaCateringWebApp.Controllers
                     int uID = 0;
                     email = "blank";
                     level = "WARN";
-                    processDesc = "Accessed without credentials!";
+                    processDesc = "Accessed without credentials!" + processDesc;
 
                     return Json(new { succes = !setLog(uID, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
                 }
@@ -871,6 +871,7 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        
         public JsonResult getBooking(tblBookingsModel booking)
         {
             try
@@ -1497,8 +1498,7 @@ namespace IsabellaCateringWebApp.Controllers
                         paxCount = bookingInfo.paxCount,
                         addAdult = bookingInfo.addAdult,
                         addKid = bookingInfo.addKid,
-                    }
-                ;
+                    };
                     db.bookings_tbl.Add(newBooking);
                     db.SaveChanges();
 
@@ -2145,6 +2145,88 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
+        public JsonResult GetClientEmailByBooking(int bookingID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl
+                                    .FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                        return Json(new { success = false, message = "Booking not found. BookingID: " + bookingID },
+                                    JsonRequestBehavior.AllowGet);
+
+                    var client = db.clients_tbl
+                                   .FirstOrDefault(c => c.clientID == booking.clientID);
+                    if (client == null)
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Client not found. BookingID: " + bookingID + " | ClientID from booking: " + booking.clientID
+                        }, JsonRequestBehavior.AllowGet);
+
+                    return Json(new
+                    {
+                        success = true,
+                        email = client.cEmail,
+                        firstName = client.cFName,
+                        lastName = client.cLName,
+                        bookingID = bookingID
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, message = innerMsg }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult LogPaymentReminder(tblPaymentRemindersModel model)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var now = DateTime.Now;
+                    var reminder = new tblPaymentRemindersModel
+                    {
+                        paymentID = model.paymentID,
+                        sentBy = model.sentBy,
+                        sentAt = model.sentAt,
+                        note = model.note,
+                        dateCreated = now,
+                        dateUpdated = now
+                    };
+                    db.paymentreminders_tbl.Add(reminder);
+                    db.SaveChanges();
+                }
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public JsonResult GetLogs()
+        {
+            using (var db = new IsabellaCateringContext())
+            {
+                var data = (from log in db.activitylogs_tbl
+                            join user in db.users_tbl on log.userID equals user.userID
+                            select new
+                            {
+                                logID = log.logID,
+                                action = log.processDesc + ": " + log.activityDesc,
+                                dateUpdated = log.dateCreated,
+                                userName = user.firstName + " " + user.lastName
+                            }).ToList();
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
     }
 }
-  

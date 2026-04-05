@@ -43,17 +43,15 @@
                             <h2 class="management-section-title">Accounts</h2>
 
                             <div class="management-section-actions">
-                                <input id="searchEmail"
-                                       type="text"
-                                       ng-model="accountSearchText"
-                                       ng-keydown="$event.keyCode === 13 && searchUser()"
-                                       placeholder="Search table data..."
-                                       class="management-toolbar-input management-section-search px-5" />
-
-                                <button type="button" ng-click="searchUser()"
-                                        class="management-toolbar-button management-toolbar-button-secondary w-full px-5 py-2 font-semibold transition-colors sm:w-auto">
-                                    Search
-                                </button>
+                                <div class="relative w-full sm:w-auto">
+                                    <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-gray-400">search</span>
+                                    <input id="searchEmail"
+                                           type="text"
+                                           ng-model="searchState.account"
+                                           ng-change="searchUser()"
+                                           placeholder="Search table data..."
+                                           class="management-toolbar-input management-section-search w-full pl-12 pr-4" />
+                                </div>
 
                                 <button ng-click="openAddAccountModal()"
                                         class="management-toolbar-button management-toolbar-button-primary w-full px-5 py-2 font-semibold transition-colors sm:w-auto"

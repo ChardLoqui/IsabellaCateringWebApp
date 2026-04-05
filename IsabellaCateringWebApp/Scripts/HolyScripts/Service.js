@@ -161,11 +161,6 @@
             params: { packageID: packageID }
         });
     }
-    this.removeBookingService = function (bookingID) {
-        return $http.get("/Main/removeBooking", {
-            params: { bookingID: bookingID }
-        });
-    }
 
 
     //========================================================CREATE BOOKING END=======================================================

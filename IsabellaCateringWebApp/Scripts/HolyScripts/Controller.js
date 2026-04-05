@@ -440,10 +440,138 @@
     //======================================================== ACCOUNT MANAGEMENT START=======================================================
     $scope.showAddAccountModal = false;
     $scope.showUpdateAccountModal = false;
-    $scope.accountSearchText = "";
-    $scope.accountAppliedSearch = "";
-    $scope.logSearchText = "";
-    $scope.logAppliedSearch = "";
+    $scope.searchState = {
+        account: "",
+        log: "",
+        due: "",
+        payments: ""
+    };
+    $scope.filteredAccountsData = [];
+    $scope.filteredLogsData = [];
+
+    function normalizeSearchValue(value) {
+        return String(value == null ? '' : value).toLowerCase().trim();
+    }
+
+    function resolveSearchDate(value) {
+        if (!value) {
+            return null;
+        }
+
+        if (value instanceof Date) {
+            return isNaN(value.getTime()) ? null : value;
+        }
+
+        if (typeof value === 'string') {
+            var jsonDateMatch = value.match(/\/Date\(([-+]?\d+)\)\//);
+            if (jsonDateMatch) {
+                var jsonDate = new Date(parseInt(jsonDateMatch[1], 10));
+                return isNaN(jsonDate.getTime()) ? null : jsonDate;
+            }
+
+            var localDateMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (localDateMatch) {
+                var localDate = new Date(
+                    Number(localDateMatch[1]),
+                    Number(localDateMatch[2]) - 1,
+                    Number(localDateMatch[3])
+                );
+                return isNaN(localDate.getTime()) ? null : localDate;
+            }
+        }
+
+        var parsedDate = new Date(value);
+        return isNaN(parsedDate.getTime()) ? null : parsedDate;
+    }
+
+    function formatSearchDate(value) {
+        var date = resolveSearchDate(value);
+        if (!date) {
+            return '';
+        }
+
+        var month = String(date.getMonth() + 1).padStart(2, '0');
+        var day = String(date.getDate()).padStart(2, '0');
+        var year = date.getFullYear();
+
+        return month + '/' + day + '/' + year;
+    }
+
+    function formatCurrencySearch(value) {
+        if (value == null || value === '') {
+            return '';
+        }
+
+        var amount = Number(value);
+        if (isNaN(amount)) {
+            return String(value);
+        }
+
+        var localizedAmount = amount.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        return ['₱' + localizedAmount, localizedAmount, String(amount)].join(' ');
+    }
+
+    function matchesSearchValues(query, values) {
+        if (!query) {
+            return true;
+        }
+
+        return (values || []).some(function (value) {
+            return normalizeSearchValue(value).indexOf(query) !== -1;
+        });
+    }
+
+    function getDuePaymentSearchStatus(payment) {
+        var paid = Number(payment.amountPaid) || 0;
+        var due = Number(payment.amountDue) || 0;
+        return paid <= 0 ? 'Unpaid' : paid < due ? 'Partially Paid' : 'Paid';
+    }
+
+    function applyAccountsSearch() {
+        if (!$scope.usersData) {
+            $scope.filteredAccountsData = [];
+            return;
+        }
+
+        var query = normalizeSearchValue($scope.searchState.account);
+
+        $scope.filteredAccountsData = $scope.usersData.filter(function (user) {
+            var role = user.permissionID == 1 ? 'admin' : user.permissionID == 2 ? 'staff' : 'user';
+            var status = user.isActive == 1 || user.isActive === true ? 'active' : 'inactive';
+
+            return matchesSearchValues(query, [
+                user.userID,
+                role,
+                user.firstName,
+                user.lastName,
+                user.email,
+                formatSearchDate(user.dateUpdated),
+                status
+            ]);
+        });
+    }
+
+    function applyLogsSearch() {
+        if (!$scope.logsData) {
+            $scope.filteredLogsData = [];
+            return;
+        }
+
+        var query = normalizeSearchValue($scope.searchState.log);
+
+        $scope.filteredLogsData = $scope.logsData.filter(function (log) {
+            return matchesSearchValues(query, [
+                log.logID,
+                log.action,
+                formatSearchDate(log.dateUpdated),
+                log.userName
+            ]);
+        });
+    }
 
     function resetAddAccountForm() {
         $scope.firstName = '';
@@ -549,10 +677,12 @@
                     }
                     return user;
                 });
+                applyAccountsSearch();
             })
             .catch(function (error) {
                 console.error('Error loading accounts', error);
                 $scope.usersData = [];
+                applyAccountsSearch();
             })
             .finally(function () {
                 $scope.accountsLoading = false;
@@ -649,30 +779,14 @@
 
     // search button
     $scope.searchUser = function () {
-        $scope.accountAppliedSearch = $scope.accountSearchText;
         accountsPag.resetPage();
         $scope.accountsPageDropOpen = false;
         $scope.accountsSizeDropOpen = false;
+        applyAccountsSearch();
     };
 
     $scope.getAccountsFiltered = function () {
-        if (!$scope.usersData) return [];
-
-        var query = ($scope.accountAppliedSearch || '').toLowerCase().trim();
-
-        return $scope.usersData.filter(function (user) {
-            var role = user.permissionID == 1 ? 'admin' : user.permissionID == 2 ? 'staff' : 'user';
-            var status = user.isActive == 1 || user.isActive === true ? 'active' : 'inactive';
-
-            return (
-                String(user.userID || '').toLowerCase().indexOf(query) !== -1
-                || String(role).indexOf(query) !== -1
-                || String(user.firstName || '').toLowerCase().indexOf(query) !== -1
-                || String(user.lastName || '').toLowerCase().indexOf(query) !== -1
-                || String(user.email || '').toLowerCase().indexOf(query) !== -1
-                || String(status).indexOf(query) !== -1
-            );
-        });
+        return $scope.filteredAccountsData || [];
     };
 
     $scope.getAccountsPage = function () {
@@ -700,30 +814,29 @@
         accountsPag.setPageSize(size);
     };
 
+    $scope.$watch('searchState.account', function () {
+        applyAccountsSearch();
+        accountsPag.resetPage();
+    });
+
+    $scope.$watchCollection('usersData', function () {
+        applyAccountsSearch();
+    });
+
     $scope.logsData = [];
     var logsPag = makePagination({ defaultSort: 'logID', defaultSize: 10 });
     $scope.logsTable = logsPag.state;
 
     // search
     $scope.searchLogs = function () {
-        $scope.logAppliedSearch = $scope.logSearchText;
         logsPag.resetPage();
         $scope.logsPageDropOpen = false;
         $scope.logsSizeDropOpen = false;
+        applyLogsSearch();
     };
 
     $scope.getLogsFiltered = function () {
-        if (!$scope.logsData) return [];
-
-        var query = ($scope.logAppliedSearch || '').toLowerCase().trim();
-
-        return $scope.logsData.filter(function (log) {
-            return (
-                String(log.logID || '').toLowerCase().indexOf(query) !== -1
-                || String(log.action || '').toLowerCase().indexOf(query) !== -1
-                || String(log.userName || '').toLowerCase().indexOf(query) !== -1
-            );
-        });
+        return $scope.filteredLogsData || [];
     };
 
     $scope.getLogsPage = function () {
@@ -750,6 +863,16 @@
     $scope.setLogsPageSize = function (size) {
         logsPag.setPageSize(size);
     };
+
+    $scope.$watch('searchState.log', function () {
+        applyLogsSearch();
+        logsPag.resetPage();
+    });
+
+    $scope.$watchCollection('logsData', function () {
+        applyLogsSearch();
+    });
+
     //get logs data
     $scope.getLogsData = function () {
         $scope.logsLoading = true;
@@ -763,10 +886,12 @@
                     }
                     return log;
                 });
+                applyLogsSearch();
             })
             .catch(function (error) {
                 console.error('Error loading logs', error);
                 $scope.logsData = [];
+                applyLogsSearch();
             })
             .finally(function () {
                 $scope.logsLoading = false;
@@ -1395,10 +1520,8 @@
 
     //====================================================== PAYMENT REMINDER START ======================================================
 
-    $scope.dueSearchQuery = '';
-    $scope.dueAppliedSearch = '';
-    $scope.paymentsSearchQuery = '';
-    $scope.paymentsAppliedSearch = '';
+    $scope.filteredDuePayments = [];
+    $scope.filteredPaymentGroups = [];
 
     //date formatting
     function parseDate(dateStr) {
@@ -1581,11 +1704,15 @@
                 });
                 $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
                 $scope.getSummary();
+                applyDuePaymentsSearch();
+                applyPaymentsSearch();
             })
             .catch(function (error) {
                 console.error('Error loading payments', error);
                 $scope.paymentData = [];
                 $scope.groupedPayments = [];
+                applyDuePaymentsSearch();
+                applyPaymentsSearch();
             })
             .finally(function () {
                 $scope.paymentLoading = false;
@@ -1919,6 +2046,7 @@
 
     $scope.refreshGroups = function () {
         $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
+        applyPaymentsSearch();
     };
 
     //delete payment
@@ -2023,22 +2151,41 @@
     var duePag = makePagination({ defaultSort: 'paymentID', defaultSize: 5 });
     $scope.duePayments = duePag.state;
 
+    function applyDuePaymentsSearch() {
+        if (!$scope.paymentData) {
+            $scope.filteredDuePayments = [];
+            return;
+        }
+
+        var query = normalizeSearchValue($scope.searchState.due);
+
+        $scope.filteredDuePayments = $scope.paymentData.filter($scope.isUpcomingDue).filter(function (p) {
+            var statusText = getDuePaymentSearchStatus(p);
+            return matchesSearchValues(query, [
+                p.paymentID,
+                p.paymentType,
+                formatCurrencySearch(p.amountDue),
+                p.amountDue,
+                formatCurrencySearch(p.amountPaid),
+                p.amountPaid,
+                statusText,
+                $scope.isOverdue(p) ? 'Overdue' : '',
+                formatSearchDate(p.dueDate),
+                formatSearchDate(p.dateCreated),
+                formatSearchDate(p.dateUpdated)
+            ]);
+        });
+    }
+
     $scope.searchDuePayments = function () {
-        $scope.dueAppliedSearch = $scope.dueSearchQuery;
         duePag.resetPage();
         $scope.duePageDropOpen = false;
         $scope.dueSizeDropOpen = false;
+        applyDuePaymentsSearch();
     };
 
     $scope.getDuePaymentsFiltered = function () {
-        if (!$scope.paymentData) return [];
-        return $scope.paymentData.filter($scope.isUpcomingDue).filter(function (p) {
-            if (!$scope.dueAppliedSearch) return true;
-            var q = String($scope.dueAppliedSearch).toLowerCase().trim();
-            return String(p.paymentID).indexOf(q) !== -1
-                || String(p.paymentType).toLowerCase().indexOf(q) !== -1
-                || String(p.paymentStatus).toLowerCase().indexOf(q) !== -1;
-        });
+        return $scope.filteredDuePayments || [];
     };
 
     $scope.dueSortBy = function (f) {
@@ -2066,23 +2213,101 @@
         duePag.setPageSize(s);
     };
 
+    $scope.$watch('searchState.due', function () {
+        applyDuePaymentsSearch();
+        duePag.resetPage();
+    });
+
+    $scope.$watchCollection('paymentData', function () {
+        applyDuePaymentsSearch();
+    });
+
     // for payments table pagination
     var groupsPag = makePagination({ defaultSort: 'bookingID', defaultSize: 10 });
     $scope.paymentsTable = groupsPag.state;
 
+    function getPaymentSearchValues(payment) {
+        return [
+            payment.paymentID,
+            '#' + payment.paymentID,
+            payment.paymentType,
+            payment.paymentStatus,
+            formatCurrencySearch(payment.amountDue),
+            payment.amountDue,
+            formatCurrencySearch(payment.amountPaid),
+            payment.amountPaid,
+            payment.dueDate,
+            formatSearchDate(payment.dueDate),
+            payment.dateCreated,
+            formatSearchDate(payment.dateCreated),
+            payment.dateUpdated,
+            formatSearchDate(payment.dateUpdated),
+            $scope.isOverdue(payment) && payment.paymentStatus !== 'Paid' ? 'Overdue' : ''
+        ];
+    }
+
+    function applyPaymentsSearch() {
+        if (!$scope.groupedPayments) {
+            $scope.filteredPaymentGroups = [];
+            return;
+        }
+
+        var query = normalizeSearchValue($scope.searchState.payments);
+
+        $scope.filteredPaymentGroups = $scope.groupedPayments.filter(function (g) {
+            var matchingPayments = [];
+
+            (g.payments || []).forEach(function (payment) {
+                if (matchesSearchValues(query, getPaymentSearchValues(payment))) {
+                    matchingPayments.push(payment);
+                }
+            });
+
+            var groupMatches = matchesSearchValues(query, [
+                g.bookingID,
+                '#' + g.bookingID,
+                formatCurrencySearch(g.totalDue),
+                g.totalDue,
+                formatCurrencySearch(g.totalPaid),
+                g.totalPaid,
+                g.overallStatus,
+                g.nextDueDate,
+                formatSearchDate(g.nextDueDate),
+                g.dateCreated,
+                formatSearchDate(g.dateCreated),
+                g.dateUpdated,
+                formatSearchDate(g.dateUpdated),
+                g.unpaidCount > 0 ? g.unpaidCount + ' unpaid' : '',
+                g.partialCount > 0 ? g.partialCount + ' partial' : ''
+            ]);
+
+            g.filteredPayments = !query || groupMatches ? (g.payments || []) : matchingPayments;
+
+            if (query && !groupMatches && matchingPayments.length > 0) {
+                g.expanded = true;
+            }
+
+            return !query || groupMatches || matchingPayments.length > 0;
+        });
+    }
+
     $scope.searchPayments = function () {
-        $scope.paymentsAppliedSearch = $scope.paymentsSearchQuery;
         groupsPag.resetPage();
         $scope.groupsPageDropOpen = false;
         $scope.groupsSizeDropOpen = false;
+        applyPaymentsSearch();
     };
 
     $scope.getGroupsFiltered = function () {
-        if (!$scope.groupedPayments) return [];
-        return $scope.groupedPayments.filter(function (g) {
-            if (!$scope.paymentsAppliedSearch) return true;
-            return String(g.bookingID).indexOf($scope.paymentsAppliedSearch) !== -1;
-        });
+        return $scope.filteredPaymentGroups || [];
+    };
+
+    $scope.getVisibleGroupPayments = function (group) {
+        if (!group) {
+            return [];
+        }
+
+        return group.filteredPayments || group.payments || [];
     };
 
     $scope.paymentsSortBy = function (f) {
@@ -2109,6 +2334,15 @@
     $scope.setGroupsPageSize = function (s) {
         groupsPag.setPageSize(s);
     };
+
+    $scope.$watch('searchState.payments', function () {
+        applyPaymentsSearch();
+        groupsPag.resetPage();
+    });
+
+    $scope.$watchCollection('groupedPayments', function () {
+        applyPaymentsSearch();
+    });
 
     //payment reminder in PAYMENTS table
     $scope.sendPaymentReminder = function (group) {
@@ -2692,68 +2926,12 @@
             }
         }
     };
-    $scope.deleteBooking = function () {
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('mode') === 'edit') {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "Do you want to REMOVE this booking for Isabella Catering? Once data is PERMANENTLY REMOVED, it cannot be UNDONE!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ec4899',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, remove it!',
-                cancelButtonText: 'No, cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    var deleteBookingID = parseInt(urlParams.get('id'));
-                    IsabellaCateringWebAppService.removeBookingService(deleteBookingID).then(function (returnedData) {
-                        if (returnedData.data.success) {
-                            Swal.fire({
-                                title: 'Booking Removed!',
-                                text: "Booking data has been deleted permanently! "+returnedData.data.message,
-                                icon: 'success',
-                                confirmButtonColor: '#ec4899',
-                            }).then((reuslt) => {
-                                $scope.redirectToBookingCalendarPage();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: "Failed to remove the booking permanently! "+returnedData.data.message,
-                                icon: 'error',
-                                confirmButtonColor: '#ec4899',
-                            });
-                        }
-                    });
-                }
-                else {
-                    Swal.fire({
-                        title: 'Be Careful!',
-                        text: "Once done you cannot undo it!",
-                        icon: 'warning',
-                        confirmButtonColor: '#ec4899',
-                    });
-                }
-            });
-        }
-        else {
-            Swal.fire({
-                title: 'No Access!',
-                text: "",
-                icon: 'error',
-                confirmButtonColor: '#ec4899',
-            });
-        }
-
-    }
-
     $scope.initializeBookingFlow = function () {
         if ($scope.bookingFlowSteps && $scope.bookingFlowSteps.length) {
             return;
         }
 
+        $scope.bookingEditLoading = false;
         $scope.bookingFlowSteps = [
             { id: 1, label: 'Event Details', description: 'Client, schedule, and package setup' },
             { id: 2, label: 'Package Summary', description: 'Review the booking before pricing' },
@@ -3055,8 +3233,9 @@
 
         $scope.isEditMode = true;
         $scope.editBookingID = bookingID;
+        $scope.bookingEditLoading = true;
 
-        IsabellaCateringWebAppService.getBooking({ bookingID: bookingID }).then(function (bookingRes) {
+        return IsabellaCateringWebAppService.getBooking({ bookingID: bookingID }).then(function (bookingRes) {
             if (!bookingRes.data || !bookingRes.data.bookingID) {
                 throw new Error('Booking not found.');
             }
@@ -3077,6 +3256,8 @@
             }).then(function () {
                 $scope.redirectToBookingCalendarPage();
             });
+        }).finally(function () {
+            $scope.bookingEditLoading = false;
         });
     }
 
@@ -3200,6 +3381,7 @@
     $scope.loadPackageOptions = function () {
         var editBookingID = getEditBookingId();
         $scope.isEditMode = !!editBookingID;
+        $scope.bookingEditLoading = !!editBookingID;
 
         IsabellaCateringWebAppService.getPackageBookingOptionsService().then(function (returnedData) {
             if (returnedData.data.success) {
@@ -3232,9 +3414,11 @@
                 }
 
                 if (editBookingID) {
-                    loadBookingForEdit(editBookingID);
+                    return loadBookingForEdit(editBookingID);
                 }
             });
+        }).catch(function () {
+            $scope.bookingEditLoading = false;
         });
     };
 
@@ -3266,7 +3450,8 @@
                                     icon: 'success',
                                     confirmButtonColor: '#ec4899',
                                 }).then(function () {
-                                    $scope.redirectToBookingCalendarPage()});
+                                    $scope.redirectToBookingCalendarPage();
+                                });
                             } else {
                                 Swal.fire({
                                     title: 'Error!',
