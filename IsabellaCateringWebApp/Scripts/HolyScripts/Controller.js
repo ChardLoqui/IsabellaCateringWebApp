@@ -2860,7 +2860,6 @@
     //====================================================== PAYMENT REMINDER END ======================================================
 
     //====================================================== CREATE BOOKING START ======================================================
-
     $scope.initializeBookingFlow = function () {
         if ($scope.bookingFlowSteps && $scope.bookingFlowSteps.length) {
             return;
