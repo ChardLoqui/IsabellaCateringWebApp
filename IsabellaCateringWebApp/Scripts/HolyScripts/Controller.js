@@ -1242,6 +1242,7 @@
 
                 var client = detailsRes.data.clients || {};
                 var packageInfo = detailsRes.data.packages || {};
+                var initial = detailsRes.data.payment || {};
                 var packageItems = [
                     `Main Courses: ${detailsRes.data.preMainCourse.mainCourseTypDesc}`,
                     `Sides & Dessert: ${$scope.sidesType}`,
@@ -1267,6 +1268,15 @@
                 });
                 $scope.packageTypeInfo = detailsRes.data.packageType.packageTypDesc
 
+                const formattedPrice = new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                }).format(initial.amountDue);
+
+                $scope.payment = {
+                    paymentInitial: formattedPrice
+                };
+
                 $scope.client = {
                     eventName: client.eventName || 'Not set',
                     fullName: [client.cFName, client.cLName].filter(Boolean).join(' ') || 'Not set',
@@ -1280,6 +1290,8 @@
                     title: packageInfo.packageID ? ('Package ' + packageInfo.packageID) : '',
                     items: packageItems
                 };
+
+                $scope.recei
 
                 
             })

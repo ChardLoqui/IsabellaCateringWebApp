@@ -21,6 +21,7 @@ using System.Web;
 using System.Web.Helpers;
 using System.Web.Mvc;
 using System.Web.Services.Description;
+using System.Xml.Linq;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace IsabellaCateringWebApp.Controllers
@@ -1227,81 +1228,95 @@ namespace IsabellaCateringWebApp.Controllers
 
                                     if (bookingEvent != null)
                                     {
-                                        return Json(new
+                                        var bookingPayment = db.payments_tbl.Where(e => e.bookingID == bookingID && e.paymentType == "Initial").FirstOrDefault();
+                                        var transactions = db.payments_tbl.Where(e => e.bookingID == bookingID).OrderByDescending(x => x.transactionNum).ToList();
+                                        if (bookingPayment != null)
                                         {
-                                            packages = bookingPackage,
-                                            clients = bookingClient,
-                                            events = bookingEvent,
-                                            packageType = packageType,
+                                            return Json(new
+                                            {
+                                                packages = bookingPackage,
+                                                clients = bookingClient,
+                                                events = bookingEvent,
+                                                packageType = packageType,
+                                                payment = bookingPayment,
 
-                                            preMainCourse = preMainCourse,
+                                                preMainCourse = preMainCourse,
 
-                                            preSides1 = preSides1,
-                                            preSides2 = preSides2,
-                                            preSides3 = preSides3,
-                                            preSides4 = preSides4,
+                                                preSides1 = preSides1,
+                                                preSides2 = preSides2,
+                                                preSides3 = preSides3,
+                                                preSides4 = preSides4,
 
-                                            preCenterPiece = preCenterPiece,
+                                                preCenterPiece = preCenterPiece,
 
-                                            preSeating = preSeating,
+                                                preSeating = preSeating,
 
-                                            preSpecials1 = preSpecials1,
-                                            preSpecials2 = preSpecials2,
-                                            preSpecials3 = preSpecials3,
-                                            preSpecials4 = preSpecials4,
-                                            preSpecials5 = preSpecials5,
-                                            preSpecials6 = preSpecials6,
-                                            preSpecials7 = preSpecials7,
-                                            preSpecials8 = preSpecials8,
-                                            preSpecials9 = preSpecials9,
+                                                preSpecials1 = preSpecials1,
+                                                preSpecials2 = preSpecials2,
+                                                preSpecials3 = preSpecials3,
+                                                preSpecials4 = preSpecials4,
+                                                preSpecials5 = preSpecials5,
+                                                preSpecials6 = preSpecials6,
+                                                preSpecials7 = preSpecials7,
+                                                preSpecials8 = preSpecials8,
+                                                preSpecials9 = preSpecials9,
 
-                                            preStaff1 = preStaff1,
-                                            preStaff2 = preStaff2,
-                                            preStaff3 = preStaff3,
+                                                preStaff1 = preStaff1,
+                                                preStaff2 = preStaff2,
+                                                preStaff3 = preStaff3,
 
-                                            preBackdrop = preBackdrop,
+                                                preBackdrop = preBackdrop,
 
-                                            preEntrance = preEntrance,
+                                                preEntrance = preEntrance,
 
-                                            preCouch = preCouch,
+                                                preCouch = preCouch,
 
-                                            preEquip1 = preEquip1,
-                                            preEquip2 = preEquip2,
-                                            preEquip3 = preEquip3,
-                                            preEquip4 = preEquip4,
-                                            preEquip5 = preEquip5,
-                                            preEquip6 = preEquip6,
-                                            preEquip7 = preEquip7,
+                                                preEquip1 = preEquip1,
+                                                preEquip2 = preEquip2,
+                                                preEquip3 = preEquip3,
+                                                preEquip4 = preEquip4,
+                                                preEquip5 = preEquip5,
+                                                preEquip6 = preEquip6,
+                                                preEquip7 = preEquip7,
 
-                                            preEntertainment1 = preEntertainment1,
-                                            preEntertainment2 = preEntertainment2,
-                                            preEntertainment3 = preEntertainment3,
-                                            preEntertainment4 = preEntertainment4,
-                                            preEntertainment5 = preEntertainment5,
-                                            preEntertainment6 = preEntertainment6,
-                                            preEntertainment7 = preEntertainment7,
+                                                preEntertainment1 = preEntertainment1,
+                                                preEntertainment2 = preEntertainment2,
+                                                preEntertainment3 = preEntertainment3,
+                                                preEntertainment4 = preEntertainment4,
+                                                preEntertainment5 = preEntertainment5,
+                                                preEntertainment6 = preEntertainment6,
+                                                preEntertainment7 = preEntertainment7,
 
-                                            prePhoto1 = prePhoto1,
-                                            prePhoto2 = prePhoto2,
-                                            prePhoto3 = prePhoto3,
-                                            prePhoto4 = prePhoto4,
-                                            prePhoto5 = prePhoto5,
-                                            prePhoto6 = prePhoto6,
-                                            prePhoto7 = prePhoto7,
+                                                prePhoto1 = prePhoto1,
+                                                prePhoto2 = prePhoto2,
+                                                prePhoto3 = prePhoto3,
+                                                prePhoto4 = prePhoto4,
+                                                prePhoto5 = prePhoto5,
+                                                prePhoto6 = prePhoto6,
+                                                prePhoto7 = prePhoto7,
 
-                                            preKeepsakes1 = preKeepsakes1,
-                                            preKeepsakes2 = preKeepsakes2,
-                                            preKeepsakes3 = preKeepsakes3,
-                                            preKeepsakes4 = preKeepsakes4,
-                                            preKeepsakes5 = preKeepsakes5,
+                                                preKeepsakes1 = preKeepsakes1,
+                                                preKeepsakes2 = preKeepsakes2,
+                                                preKeepsakes3 = preKeepsakes3,
+                                                preKeepsakes4 = preKeepsakes4,
+                                                preKeepsakes5 = preKeepsakes5,
 
-                                            preDebut1 = preDebut1,
-                                            preDebut2 = preDebut2,
-                                            preDebut3 = preDebut3,
+                                                preDebut1 = preDebut1,
+                                                preDebut2 = preDebut2,
+                                                preDebut3 = preDebut3,
 
-                                            success = true,
-                                            message = "Package Fetched Successfully!"
-                                        }, JsonRequestBehavior.AllowGet);
+                                                success = true,
+                                                message = "Package Fetched Successfully!"
+                                            }, JsonRequestBehavior.AllowGet);
+                                        }
+                                        else
+                                        {
+                                            Logs(
+                                                "WARN",
+                                                "Booking Management:",
+                                                "Attempted to get booking details. Message : \"No Event Payment!\"");
+                                            return Json(new { success = false, message = "No Event Payment!" }, JsonRequestBehavior.AllowGet);
+                                        }
                                     }
                                     else
                                     {
@@ -1573,6 +1588,48 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
+                    var existingBooking = db.bookings_tbl
+                        .Where(x =>
+                        x.eventID == bookingInfo.eventID &&
+                        x.dsgnTheme == bookingInfo.dsgnTheme &&
+                        x.dsgnMotif == bookingInfo.dsgnMotif &&
+                        x.prepVenue == bookingInfo.prepVenue &&
+                        x.ceremTime == bookingInfo.ceremTime &&
+                        x.eventTime == bookingInfo.eventTime &&
+                        x.venue == bookingInfo.venue &&
+                        x.eventSetTime == bookingInfo.eventSetTime &&
+                        x.eventMealTime == bookingInfo.eventMealTime &&
+                        x.bookingNote == bookingInfo.bookingNote &&
+                        x.paxCount == bookingInfo.paxCount &&
+                        x.addAdult == bookingInfo.addAdult &&
+                        x.addKid == bookingInfo.addKid
+                        ).FirstOrDefault();
+
+                    if(existingBooking != null)
+                    {
+                        var existingClient = db.clients_tbl
+                            .Where(x =>
+                            x.eventName == clientInfo.eventName &&
+                            x.cFName == clientInfo.cFName &&
+                            x.cLName == clientInfo.cLName &&
+                            x.cEmail == clientInfo.cEmail &&
+                            x.cContact == clientInfo.cContact &&
+                            x.cCeleb1FName == clientInfo.cCeleb1FName &&
+                            x.cCeleb1LName == clientInfo.cCeleb1LName &&
+                            x.cCeleb2FName == clientInfo.cCeleb2FName &&
+                            x.cCeleb2LName == clientInfo.cCeleb2LName
+                            ).FirstOrDefault();
+
+                        if(existingClient != null)
+                        {
+                            Logs(
+                               "WARN",
+                               "Booking Management:",
+                               $"Attempted to create duplicate booking data. bookingID: {existingBooking.bookingID}");
+                            return Json(new { success = false, message = "Booking is already registered" }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+
                     var currPackageID = ResolvePackageId(db, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes);
 
                     string datePart = DateTime.Now.ToString("yyMMdd");
