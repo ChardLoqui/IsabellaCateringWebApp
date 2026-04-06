@@ -1084,6 +1084,7 @@ namespace IsabellaCateringWebApp.Controllers
                                     {
                                         bookingID = booking.bookingID,
                                         bookingDate = booking.bookingDate,
+                                        bookingVenue = booking.venue,
                                         eventName = client.eventName,
                                         eventTime = booking.eventTime
                                     })
@@ -1092,6 +1093,7 @@ namespace IsabellaCateringWebApp.Controllers
                                     {
                                         booking.bookingID,
                                         dateKey = booking.bookingDate.Year + "-" + booking.bookingDate.Month + "-" + booking.bookingDate.Day,
+                                        booking.bookingVenue,
                                         booking.eventName,
                                         booking.eventTime
                                     })
@@ -1605,7 +1607,7 @@ namespace IsabellaCateringWebApp.Controllers
                         x.addKid == bookingInfo.addKid
                         ).FirstOrDefault();
 
-                    if(existingBooking != null)
+                    if (existingBooking != null)
                     {
                         var existingClient = db.clients_tbl
                             .Where(x =>
