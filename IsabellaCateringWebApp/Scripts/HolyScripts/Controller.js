@@ -1576,6 +1576,7 @@
         $scope.renderCalendar();
     }
 
+
     $scope.renderCalendar = function () {
         if (!daysContainer || !currentMonthElement) {
             return;
