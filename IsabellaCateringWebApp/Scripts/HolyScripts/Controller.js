@@ -1765,6 +1765,13 @@
     //====================================================== BOOKING CALENDAR END ======================================================
 
     //====================================================== PAYMENT REMINDER START ======================================================
+    $scope.showIfAdd = true;
+    $scope.showAdd = function () {
+        if ($scope.newPayment.paymentType == "Additional")
+            $scope.showIfAdd = false;
+        else
+            $scope.showIfAdd = true;
+    }
 
     $scope.filteredDuePayments = [];
     $scope.filteredPaymentGroups = [];
@@ -3236,6 +3243,16 @@
     };
 
     $scope.goToNextBookingStep = function () {
+        if (!$scope.cEmail || $scope.cEmail.indexOf('@') === -1) {
+            Swal.fire({
+                title: 'Invalid Email',
+                text: 'Your email must contain an @ symbol.',
+                icon: 'error',
+                confirmButtonColor: '#EC4899'
+            });
+            return;
+        }
+
         if ($scope.bookingStep === 1 && !$scope.validateBookingDetailsStep(true, false)) {
             return;
         }
