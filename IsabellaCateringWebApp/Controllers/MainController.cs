@@ -294,9 +294,15 @@ namespace IsabellaCateringWebApp.Controllers
                     {
 
                         var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
+
+                        if (verify.isActive != 1)
+                        {
+                            return Json(new { success = false, message = "Account Disabled! Please contact the administrators for account activation" }, JsonRequestBehavior.AllowGet);
+                        }
+
                         if (verify == null)
                         {
-                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet); ;
+                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet);
                         }
 
                         if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
@@ -1735,7 +1741,7 @@ namespace IsabellaCateringWebApp.Controllers
                         remainingBalance = paymentInfo.amountDue,
                         transactionNum = 0,
                         paymentStatus = "incomplete",
-                        dueDate = bookingInfo.bookingDate,
+                        dueDate = bookingInfo.bookingDate.AddDays(10),
                         dateCreated = DateTime.Now,
                         dateUpdated = DateTime.Now
                     };

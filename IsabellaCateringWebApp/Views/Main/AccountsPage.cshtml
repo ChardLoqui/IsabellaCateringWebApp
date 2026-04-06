@@ -119,13 +119,13 @@
                 </div>
 
             <div ng-cloak
-                 ng-if="showAddAccountModal"
+                 ng-show="showAddAccountModal"
                  class="management-modal-frame">
                 <div class="absolute inset-0 bg-black/40" ng-click="closeAddAccountModal()"></div>
 
                 <form name="addUserForm"
                       ng-submit="addUsrSubmit()"
-                      novalidate
+                      @*novalidate*@
                       class="management-modal-panel">
                     <div class="flex items-center justify-between bg-pink-500 px-6 py-4">
                         <div class="flex items-center gap-3">
