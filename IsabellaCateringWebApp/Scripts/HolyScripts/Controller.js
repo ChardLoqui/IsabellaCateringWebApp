@@ -472,7 +472,8 @@
         account: "",
         log: "",
         due: "",
-        payments: ""
+        payments: "",
+        calendar: ""
     };
     $scope.filteredAccountsData = [];
     $scope.filteredLogsData = [];
@@ -1590,6 +1591,428 @@
     let currentDate = new Date();
     let selectedDate = null;
     let activeCalendarRequestId = 0;
+    let activeCalendarSearchRequestId = 0;
+    let highlightedBookingId = null;
+    let pendingCalendarSelection = null;
+    let calendarSearchDebounceId = null;
+    let calendarSearchCloseTimer = null;
+    let calendarSearchPreviewOrigin = null;
+    let livePreviewDateKey = null;
+    let livePreviewBookingId = null;
+    let calendarSearchDropdownUpdateToken = null;
+
+    $scope.calendarSearchResults = [];
+    $scope.calendarSearchOpen = false;
+    $scope.calendarSearchLoading = false;
+    $scope.livePreviewBookingId = null;
+
+    function getCalendarDateKey(value) {
+        const date = resolveSearchDate(value);
+        if (!date) {
+            return "";
+        }
+
+        return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    }
+
+    function clearCalendarDaySelection() {
+        document.querySelectorAll('#days-container .calendar-day').forEach(function (day) {
+            day.classList.remove('selected-day');
+        });
+
+        document.querySelectorAll('#days-container .calendar-day .date-block').forEach(function (dateBlock) {
+            dateBlock.classList.remove('bg-[#EC4899]', 'text-white', 'selected');
+        });
+
+        document.querySelectorAll('#days-container .calendar-event-card').forEach(function (eventCard) {
+            eventCard.classList.remove('calendar-event-card--active');
+        });
+
+        document.querySelectorAll('#days-container .calendar-day').forEach(function (day) {
+            day.classList.remove('is-search-preview');
+        });
+    }
+
+    function applyCalendarSelection(dateKey, bookingId, shouldScroll, isPreview) {
+        if (!dateKey) {
+            return false;
+        }
+
+        selectedDate = dateKey;
+        highlightedBookingId = bookingId == null ? null : String(bookingId);
+        clearCalendarDaySelection();
+
+        let matchedDay = null;
+        document.querySelectorAll('#days-container .calendar-day').forEach(function (day) {
+            if (day.dataset && day.dataset.date === dateKey) {
+                matchedDay = day;
+            }
+        });
+
+        if (!matchedDay) {
+            return false;
+        }
+
+        if (isPreview) {
+            matchedDay.classList.add('is-search-preview');
+        }
+
+        matchedDay.classList.add('selected-day');
+        const dateBlock = matchedDay.querySelector('.date-block');
+        if (dateBlock) {
+            dateBlock.classList.add('bg-[#EC4899]', 'text-white', 'selected');
+        }
+
+        if (highlightedBookingId) {
+            matchedDay.querySelectorAll('.calendar-event-card').forEach(function (eventCard) {
+                if (eventCard.dataset && eventCard.dataset.bookingId === highlightedBookingId) {
+                    eventCard.classList.add('calendar-event-card--active');
+                }
+            });
+        }
+
+        if (shouldScroll) {
+            matchedDay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        return true;
+    }
+
+    function cloneCurrentCalendarDate() {
+        return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    }
+
+    function beginCalendarSearchPreview() {
+        if (calendarSearchPreviewOrigin) {
+            return;
+        }
+
+        calendarSearchPreviewOrigin = {
+            currentDate: cloneCurrentCalendarDate(),
+            selectedDate: selectedDate,
+            highlightedBookingId: highlightedBookingId
+        };
+    }
+
+    function resetCalendarSearchPreviewState() {
+        calendarSearchPreviewOrigin = null;
+        livePreviewDateKey = null;
+        livePreviewBookingId = null;
+        $scope.livePreviewBookingId = null;
+    }
+
+    function restoreCalendarSearchPreviewOrigin() {
+        if (!calendarSearchPreviewOrigin) {
+            livePreviewDateKey = null;
+            livePreviewBookingId = null;
+            return;
+        }
+
+        const origin = calendarSearchPreviewOrigin;
+        currentDate = new Date(origin.currentDate.getFullYear(), origin.currentDate.getMonth(), 1);
+        selectedDate = origin.selectedDate;
+        highlightedBookingId = origin.highlightedBookingId;
+        livePreviewDateKey = null;
+        livePreviewBookingId = null;
+        resetCalendarSearchPreviewState();
+        queueCalendarSelection(selectedDate ? {
+            bookingID: highlightedBookingId,
+            dateKey: selectedDate
+        } : null);
+        $scope.renderCalendar();
+    }
+
+    function commitCalendarSelectionState() {
+        resetCalendarSearchPreviewState();
+    }
+
+    function queueCalendarSelection(selection) {
+        pendingCalendarSelection = selection && selection.dateKey ? {
+            bookingID: selection.bookingID,
+            dateKey: selection.dateKey
+        } : null;
+    }
+
+    function applyPendingCalendarSelection(shouldScroll) {
+        if (!pendingCalendarSelection) {
+            return;
+        }
+
+        const isPreviewSelection = pendingCalendarSelection.dateKey === livePreviewDateKey &&
+            String(pendingCalendarSelection.bookingID == null ? '' : pendingCalendarSelection.bookingID) === String(livePreviewBookingId == null ? '' : livePreviewBookingId);
+
+        if (applyCalendarSelection(pendingCalendarSelection.dateKey, pendingCalendarSelection.bookingID, shouldScroll, isPreviewSelection)) {
+            pendingCalendarSelection = null;
+        }
+    }
+
+    function setCurrentCalendarMonth(value) {
+        const date = resolveSearchDate(value);
+        if (!date) {
+            return false;
+        }
+
+        currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+        return true;
+    }
+
+    function formatCalendarSearchResultLabel(result) {
+        if (!result) {
+            return "";
+        }
+
+        const parts = [];
+        const title = result.eventName || `Booking #${result.bookingID || ''}`;
+
+        parts.push(title);
+
+        if (result.bookingVenue) {
+            parts.push(result.bookingVenue);
+        }
+
+        const dateLabel = $scope.formatCalendarSearchResultDate(result.bookingDate);
+        if (dateLabel) {
+            parts.push(dateLabel);
+        }
+
+        const timeLabel = $scope.formatCalendarSearchResultTime(result.eventTime);
+        if (timeLabel) {
+            parts.push(timeLabel);
+        }
+
+        if (result.bookingID != null) {
+            parts.push(`#${result.bookingID}`);
+        }
+
+        return parts.join(' | ');
+    }
+
+    function previewCalendarSearchResult(result) {
+        if (!result) {
+            restoreCalendarSearchPreviewOrigin();
+            return;
+        }
+
+        const previewDateKey = result.dateKey || getCalendarDateKey(result.bookingDate);
+        const previewBookingId = result.bookingID == null ? null : String(result.bookingID);
+
+        if (!previewDateKey) {
+            return;
+        }
+
+        beginCalendarSearchPreview();
+
+        if (livePreviewDateKey === previewDateKey && livePreviewBookingId === previewBookingId) {
+            return;
+        }
+
+        livePreviewDateKey = previewDateKey;
+        livePreviewBookingId = previewBookingId;
+        $scope.livePreviewBookingId = previewBookingId;
+
+        queueCalendarSelection({
+            bookingID: result.bookingID,
+            dateKey: previewDateKey
+        });
+
+        if (setCurrentCalendarMonth(result.bookingDate || previewDateKey)) {
+            $scope.renderCalendar();
+            return;
+        }
+
+        applyPendingCalendarSelection(false);
+    }
+
+    function requestCalendarSearch(query) {
+        if (IsabellaCateringWebAppService && typeof IsabellaCateringWebAppService.findbookingService === 'function') {
+            return IsabellaCateringWebAppService.findbookingService(query);
+        }
+
+        return $http.get("/Main/findbooking", {
+            params: { query: query }
+        });
+    }
+
+    $scope.formatCalendarSearchResultDate = function (value) {
+        return convertDate(value);
+    };
+
+    $scope.formatCalendarSearchResultTime = function (value) {
+        return convertTime(value);
+    };
+
+    function updateCalendarSearchDropdownPosition() {
+        if (calendarSearchDropdownUpdateToken) {
+            window.cancelAnimationFrame(calendarSearchDropdownUpdateToken);
+        }
+
+        calendarSearchDropdownUpdateToken = window.requestAnimationFrame(function () {
+            calendarSearchDropdownUpdateToken = null;
+            const searchInput = document.getElementById('searchCalendar');
+            const searchDropdown = document.getElementById('bookingCalendarSearchDropdown');
+
+            if (!searchInput || !searchDropdown || !$scope.calendarSearchOpen) {
+                return;
+            }
+
+            const rect = searchInput.getBoundingClientRect();
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth || rect.width;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+            const gutter = 12;
+            const gap = 8;
+            const width = Math.max(220, Math.min(Math.round(rect.width), viewportWidth - (gutter * 2)));
+            let left = Math.round(rect.left);
+
+            if (left + width > viewportWidth - gutter) {
+                left = viewportWidth - gutter - width;
+            }
+
+            if (left < gutter) {
+                left = gutter;
+            }
+
+            const availableHeight = viewportHeight > 0
+                ? Math.max(160, viewportHeight - Math.round(rect.bottom) - gap - gutter)
+                : 288;
+
+            searchDropdown.style.top = `${Math.round(rect.bottom + gap)}px`;
+            searchDropdown.style.left = `${left}px`;
+            searchDropdown.style.width = `${width}px`;
+            searchDropdown.style.maxHeight = `${Math.min(320, availableHeight)}px`;
+        });
+    }
+
+    window.addEventListener('resize', updateCalendarSearchDropdownPosition);
+    window.addEventListener('scroll', updateCalendarSearchDropdownPosition, true);
+
+    $scope.openCalendarSearchDropdown = function () {
+        if (calendarSearchCloseTimer) {
+            clearTimeout(calendarSearchCloseTimer);
+        }
+
+        if ($scope.searchState.calendar && ($scope.calendarSearchLoading || $scope.calendarSearchResults.length > 0)) {
+            $scope.calendarSearchOpen = true;
+            updateCalendarSearchDropdownPosition();
+        }
+    };
+
+    $scope.scheduleCalendarSearchClose = function () {
+        if (calendarSearchCloseTimer) {
+            clearTimeout(calendarSearchCloseTimer);
+        }
+
+        calendarSearchCloseTimer = setTimeout(function () {
+            $scope.$applyAsync(function () {
+                $scope.calendarSearchOpen = false;
+            });
+        }, 150);
+    };
+
+    $scope.findbooking = function () {
+        if (calendarSearchCloseTimer) {
+            clearTimeout(calendarSearchCloseTimer);
+        }
+
+        if (calendarSearchDebounceId) {
+            clearTimeout(calendarSearchDebounceId);
+        }
+
+        const query = normalizeSearchValue($scope.searchState.calendar);
+        if (!query) {
+            activeCalendarSearchRequestId++;
+            $scope.calendarSearchLoading = false;
+            $scope.calendarSearchOpen = false;
+            $scope.calendarSearchResults = [];
+            restoreCalendarSearchPreviewOrigin();
+            return;
+        }
+
+        $scope.calendarSearchLoading = true;
+        $scope.calendarSearchOpen = true;
+        updateCalendarSearchDropdownPosition();
+
+        const requestQuery = $scope.searchState.calendar;
+        const requestId = ++activeCalendarSearchRequestId;
+        calendarSearchDebounceId = setTimeout(function () {
+            requestCalendarSearch(requestQuery).then(function (response) {
+                if (requestId !== activeCalendarSearchRequestId ||
+                    normalizeSearchValue($scope.searchState.calendar) !== normalizeSearchValue(requestQuery)) {
+                    return;
+                }
+
+                const results = response.data && response.data.success
+                    ? (response.data.bookingData || [])
+                    : [];
+
+                results.forEach(function (result) {
+                    result.searchLabel = formatCalendarSearchResultLabel(result);
+                });
+
+                $scope.$applyAsync(function () {
+                    $scope.calendarSearchResults = results;
+                    $scope.calendarSearchLoading = false;
+                    $scope.calendarSearchOpen = true;
+                });
+                updateCalendarSearchDropdownPosition();
+
+                if (results.length > 0) {
+                    previewCalendarSearchResult(results[0]);
+                } else {
+                    restoreCalendarSearchPreviewOrigin();
+                }
+            }).catch(function () {
+                if (requestId !== activeCalendarSearchRequestId ||
+                    normalizeSearchValue($scope.searchState.calendar) !== normalizeSearchValue(requestQuery)) {
+                    return;
+                }
+
+                $scope.$applyAsync(function () {
+                    $scope.calendarSearchResults = [];
+                    $scope.calendarSearchLoading = false;
+                    $scope.calendarSearchOpen = true;
+                });
+                updateCalendarSearchDropdownPosition();
+
+                restoreCalendarSearchPreviewOrigin();
+            });
+        }, 250);
+    };
+
+    $scope.selectCalendarSearchResult = function (result, $event) {
+        if ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+        }
+
+        if (!result) {
+            return;
+        }
+
+        if (calendarSearchCloseTimer) {
+            clearTimeout(calendarSearchCloseTimer);
+        }
+
+        const dateKey = result.dateKey || getCalendarDateKey(result.bookingDate);
+        queueCalendarSelection({
+            bookingID: result.bookingID,
+            dateKey: dateKey
+        });
+
+        highlightedBookingId = result.bookingID == null ? null : String(result.bookingID);
+        $scope.livePreviewBookingId = highlightedBookingId;
+        $scope.searchState.calendar = result.searchLabel || formatCalendarSearchResultLabel(result);
+        $scope.calendarSearchOpen = false;
+        $scope.calendarSearchResults = [];
+        commitCalendarSelectionState();
+
+        if (setCurrentCalendarMonth(result.bookingDate || dateKey)) {
+            $scope.renderCalendar();
+            return;
+        }
+
+        applyPendingCalendarSelection(true);
+    };
+
     // Month navigation
     $scope.togglePrevMonth = function () {
         currentDate.setMonth(currentDate.getMonth() - 1);
@@ -1616,6 +2039,7 @@
         currentMonthElement.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
         daysContainer.innerHTML = '';
+        updateCalendarSearchDropdownPosition();
         // Get the first day of the month (0 = Sunday, 1 = Monday, etc.)
         let firstDayOfMonth = new Date(year, month, 1).getDay();
         // Adjust for Monday as first day (0 = Sunday, 6 = Monday)
@@ -1630,20 +2054,13 @@
         }
 
         for (let i = 1; i <= daysInMonth; i++) {
-            const isCurrentDay = new Date().getDate() === i &&
-                new Date().getMonth() === month &&
-                new Date().getFullYear() === year;
-
-            const isSelectedDay = selectedDate &&
-                selectedDate.split('-')[1] === i.toString() &&
-                parseInt(selectedDate.split('-')[0]) === month + 1 &&
-                parseInt(selectedDate.split('-')[2]) === year;
+            const dayString = `${year}-${month + 1}-${i}`;
+            const isSelectedDay = selectedDate === dayString;
 
             const dayClass = isSelectedDay
                 ? "flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-[#D6418B] hover:bg-[#EC4899] hover:border-2 hover:border-[#D6418B] hover:text-white bg-[#EC4899] text-white"
                 : "flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
 
-            const dayString = `${year}-${month + 1}-${i}`;
             const selectedDayClass = isSelectedDay ? "selected-day" : "";
             daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full bg-white rounded-md border shadow-inner" data-date="${dayString}"></div></div>`;
         }
@@ -1696,6 +2113,7 @@
                     eventCard.className = "calendar-event-card mb-1 mx-1 flex cursor-pointer items-center justify-left bg-[#EC4899] hover:bg-[#D6418B] text-white py-2 px-4 border-b-4 border-[#D6418B] hover:border-[#EC4899] rounded-md w-100 placeholder-white text-xs";
                     eventCard.innerText = `${item.eventName || 'Untitled Event'}, (${item.bookingVenue || 'No Venue'}), ${convertTime(item.eventTime)}`;
                     eventCard.dataset.date = day.dataset.date;
+                    eventCard.dataset.bookingId = item.bookingID;
 
                     eventCard.addEventListener("click", function () {
                         IsabellaCateringWebAppService.setBookingViewService(item.bookingID).then(function (returnedData) {
@@ -1716,7 +2134,14 @@
                 });
             });
 
+            if (pendingCalendarSelection) {
+                applyPendingCalendarSelection(Boolean(livePreviewDateKey === null));
+            } else if (selectedDate) {
+                applyCalendarSelection(selectedDate, highlightedBookingId, false, selectedDate === livePreviewDateKey);
+            }
+
             $scope.calendarLoading = false;
+            updateCalendarSearchDropdownPosition();
         }).catch(function () {
             if (requestId !== activeCalendarRequestId) {
                 return;
@@ -1734,14 +2159,8 @@
         document.querySelectorAll('#days-container .calendar-day').forEach(day => {
             if (day.dataset && day.dataset.date) {
                 day.addEventListener('click', function () {
-                    selectedDate = this.dataset.date;
-                    document.querySelectorAll('#days-container .calendar-day').forEach(d => d.classList.remove('selected-day'));
-                    document.querySelectorAll('#days-container .calendar-day .date-block').forEach(d => d.classList.remove('bg-[#EC4899]', 'text-white', 'selected'));
-                    this.classList.add('selected-day');
-                    const dateBlock = this.querySelector('.date-block');
-                    if (dateBlock) {
-                        dateBlock.classList.add('bg-[#EC4899]', 'text-white', 'selected');
-                    }
+                    commitCalendarSelectionState();
+                    applyCalendarSelection(this.dataset.date, null, false, false);
                 });
             }
         });

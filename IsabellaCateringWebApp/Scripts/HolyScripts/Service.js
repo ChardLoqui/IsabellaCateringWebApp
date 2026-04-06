@@ -179,6 +179,12 @@
         });
     };
 
+    this.findbookingService = function (query) {
+        return $http.get("/Main/findbooking", {
+            params: { query: query }
+        });
+    };
+
     this.getBookingDetailsService = function (bookingID) {
         return $http.get("/Main/getBookingDetails", {
             params: { bookingID: bookingID }

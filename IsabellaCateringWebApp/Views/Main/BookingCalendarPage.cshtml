@@ -13,7 +13,7 @@
             Select a date first, then continue to Add Booking.
         </p>
 
-        <section class="panel-surface management-surface relative overflow-hidden rounded-lg">
+        <section class="panel-surface management-surface booking-calendar-panel relative rounded-lg">
             <div ng-show="calendarLoading" class="management-loader-overlay">
                 <div class="management-loader">
                     <span class="management-loader-spinner" aria-hidden="true"></span>
@@ -43,13 +43,24 @@
                         </button>
                     </div>
 
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <div class="relative">
-                            <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-zinc-400">search</span>
-                            <input id="searchCalendar"
-                                   type="text"
-                                   placeholder="Search calendar"
-                                   class="booking-toolbar-input w-full sm:w-[18rem]" />
+                    <div class="booking-calendar-toolbar flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <div class="booking-calendar-search-shell">
+                            <div class="booking-calendar-search relative">
+                                <div class="booking-calendar-search-field">
+                                    <span class="material-symbols-outlined booking-calendar-search-icon pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[20px]">search</span>
+                                    <input id="searchCalendar"
+                                           type="text"
+                                           ng-model="searchState.calendar"
+                                           ng-change="findbooking()"
+                                           ng-focus="openCalendarSearchDropdown()"
+                                           ng-blur="scheduleCalendarSearchClose()"
+                                           autocomplete="off"
+                                           placeholder="Search bookings"
+                                           ng-class="{'booking-toolbar-input--active': calendarSearchOpen, 'booking-toolbar-input--loading': calendarSearchLoading}"
+                                           class="booking-toolbar-input booking-toolbar-input--calendar w-full sm:w-[18rem]" />
+                                </div>
+
+                            </div>
                         </div>
 
                         <button id="addBooking"
@@ -103,5 +114,46 @@
             </div>
         </section>
     </div>
+    </div>
+
+    <div class="booking-calendar-search-layer"
+         ng-if="calendarSearchOpen && searchState.calendar">
+        <div id="bookingCalendarSearchDropdown"
+             class="booking-calendar-search-dropdown">
+            <div class="booking-calendar-search-loading"
+                 ng-if="calendarSearchLoading">
+                <span class="booking-calendar-search-loading-spinner" aria-hidden="true"></span>
+                <span>Searching bookings</span>
+            </div>
+
+            <ul class="booking-calendar-search-results"
+                ng-if="calendarSearchResults.length > 0">
+                <li class="booking-calendar-search-result-row"
+                    ng-repeat="result in calendarSearchResults track by result.bookingID">
+                    <button type="button"
+                            class="booking-calendar-search-item"
+                            ng-class="{'is-preview': livePreviewBookingId === (result.bookingID + '')}"
+                            ng-mousedown="selectCalendarSearchResult(result, $event)">
+                        <span class="booking-calendar-search-item-content">
+                            <span class="booking-calendar-search-item-row">
+                                <span class="booking-calendar-search-item-title"
+                                      title="{{ result.eventName || ('Booking #' + result.bookingID) }}">{{ result.eventName || ('Booking #' + result.bookingID) }}</span>
+                                <span class="booking-calendar-search-item-id"
+                                      ng-if="livePreviewBookingId !== (result.bookingID + '')">#{{ result.bookingID }}</span>
+                            </span>
+                            <span class="booking-calendar-search-item-meta"
+                                  title="{{ result.bookingVenue || 'No venue' }}">{{ result.bookingVenue || 'No venue' }}</span>
+                            <span class="booking-calendar-search-item-meta"
+                                  title="{{ formatCalendarSearchResultDate(result.bookingDate) }}{{ result.eventTime ? (' at ' + formatCalendarSearchResultTime(result.eventTime)) : '' }}">{{ formatCalendarSearchResultDate(result.bookingDate) }}<span ng-if="result.eventTime"> at {{ formatCalendarSearchResultTime(result.eventTime) }}</span></span>
+                        </span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="booking-calendar-search-status"
+                 ng-if="!calendarSearchLoading && calendarSearchResults.length === 0">
+                No bookings found.
+            </div>
+        </div>
     </div>
 </section>

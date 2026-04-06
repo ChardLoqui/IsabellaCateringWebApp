@@ -36,6 +36,161 @@ namespace IsabellaCateringWebApp.Controllers
             public string Message { get; set; }
         }
 
+        private class CalendarSearchBookingRow
+        {
+            public int BookingID { get; set; }
+            public DateTime BookingDate { get; set; }
+            public string BookingVenue { get; set; }
+            public TimeSpan EventTime { get; set; }
+            public string EventName { get; set; }
+            public string BookingNote { get; set; }
+            public string DesignTheme { get; set; }
+            public string DesignMotif { get; set; }
+            public string PrepVenue { get; set; }
+            public string ClientFirstName { get; set; }
+            public string ClientLastName { get; set; }
+            public string ClientEmail { get; set; }
+            public string ClientContact { get; set; }
+            public string CelebrantOneFirstName { get; set; }
+            public string CelebrantOneLastName { get; set; }
+            public string CelebrantTwoFirstName { get; set; }
+            public string CelebrantTwoLastName { get; set; }
+            public int PaxCount { get; set; }
+            public int AddAdult { get; set; }
+            public int AddKid { get; set; }
+        }
+
+        private static string NormalizeCalendarSearchValue(string value)
+        {
+            return string.IsNullOrWhiteSpace(value)
+                ? string.Empty
+                : value.Trim().ToLowerInvariant();
+        }
+
+        private static bool ContainsCalendarSearchValue(string value, string query)
+        {
+            return NormalizeCalendarSearchValue(value).Contains(query);
+        }
+
+        private static string CombineCalendarSearchValues(params string[] values)
+        {
+            return string.Join(" ", values.Where(value => !string.IsNullOrWhiteSpace(value)));
+        }
+
+        private static string FormatCalendarSearchTime(TimeSpan value)
+        {
+            return DateTime.Today.Add(value).ToString("h:mm tt", CultureInfo.InvariantCulture);
+        }
+
+        private static int GetCalendarSearchScore(CalendarSearchBookingRow booking, string query)
+        {
+            if (booking == null || string.IsNullOrWhiteSpace(query))
+            {
+                return 0;
+            }
+
+            var bookingId = booking.BookingID.ToString(CultureInfo.InvariantCulture);
+            var displayDate = booking.BookingDate.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture);
+            var compactDate = booking.BookingDate.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
+            var dateKey = booking.BookingDate.ToString("yyyy-M-d", CultureInfo.InvariantCulture);
+            var eventTime = FormatCalendarSearchTime(booking.EventTime);
+            var clientName = CombineCalendarSearchValues(booking.ClientFirstName, booking.ClientLastName);
+            var celebrantOne = CombineCalendarSearchValues(booking.CelebrantOneFirstName, booking.CelebrantOneLastName);
+            var celebrantTwo = CombineCalendarSearchValues(booking.CelebrantTwoFirstName, booking.CelebrantTwoLastName);
+
+            var score = 0;
+
+            if (ContainsCalendarSearchValue(booking.EventName, query))
+            {
+                score += NormalizeCalendarSearchValue(booking.EventName).StartsWith(query) ? 140 : 110;
+            }
+
+            if (ContainsCalendarSearchValue(booking.BookingVenue, query))
+            {
+                score += NormalizeCalendarSearchValue(booking.BookingVenue).StartsWith(query) ? 120 : 90;
+            }
+
+            if (ContainsCalendarSearchValue(bookingId, query))
+            {
+                score += bookingId == query ? 150 : 120;
+            }
+
+            if (ContainsCalendarSearchValue(displayDate, query) ||
+                ContainsCalendarSearchValue(compactDate, query) ||
+                ContainsCalendarSearchValue(dateKey, query))
+            {
+                score += 100;
+            }
+
+            if (ContainsCalendarSearchValue(eventTime, query))
+            {
+                score += 80;
+            }
+
+            if (ContainsCalendarSearchValue(clientName, query))
+            {
+                score += 70;
+            }
+
+            if (ContainsCalendarSearchValue(booking.ClientEmail, query) ||
+                ContainsCalendarSearchValue(booking.ClientContact, query))
+            {
+                score += 65;
+            }
+
+            if (ContainsCalendarSearchValue(celebrantOne, query) ||
+                ContainsCalendarSearchValue(celebrantTwo, query))
+            {
+                score += 60;
+            }
+
+            if (ContainsCalendarSearchValue(booking.BookingNote, query) ||
+                ContainsCalendarSearchValue(booking.DesignTheme, query) ||
+                ContainsCalendarSearchValue(booking.DesignMotif, query) ||
+                ContainsCalendarSearchValue(booking.PrepVenue, query))
+            {
+                score += 45;
+            }
+
+            if (ContainsCalendarSearchValue(booking.PaxCount.ToString(CultureInfo.InvariantCulture), query) ||
+                ContainsCalendarSearchValue(booking.AddAdult.ToString(CultureInfo.InvariantCulture), query) ||
+                ContainsCalendarSearchValue(booking.AddKid.ToString(CultureInfo.InvariantCulture), query))
+            {
+                score += 25;
+            }
+
+            if (score > 0)
+            {
+                return score;
+            }
+
+            var haystack = NormalizeCalendarSearchValue(CombineCalendarSearchValues(
+                booking.EventName,
+                booking.BookingVenue,
+                booking.BookingNote,
+                booking.DesignTheme,
+                booking.DesignMotif,
+                booking.PrepVenue,
+                booking.ClientFirstName,
+                booking.ClientLastName,
+                booking.ClientEmail,
+                booking.ClientContact,
+                booking.CelebrantOneFirstName,
+                booking.CelebrantOneLastName,
+                booking.CelebrantTwoFirstName,
+                booking.CelebrantTwoLastName,
+                bookingId,
+                displayDate,
+                compactDate,
+                dateKey,
+                eventTime,
+                booking.PaxCount.ToString(CultureInfo.InvariantCulture),
+                booking.AddAdult.ToString(CultureInfo.InvariantCulture),
+                booking.AddKid.ToString(CultureInfo.InvariantCulture)));
+
+            return haystack.Contains(query) ? 10 : 0;
+        }
+
         // GET: Main
         public ActionResult HomePage()
         {
@@ -1117,6 +1272,87 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
+        public JsonResult findbooking(string query)
+        {
+            try
+            {
+                var normalizedQuery = NormalizeCalendarSearchValue(query);
+                if (string.IsNullOrWhiteSpace(normalizedQuery))
+                {
+                    return Json(new { success = true, bookingData = new object[0] }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookings = (from booking in db.bookings_tbl
+                                    join clientEntry in db.clients_tbl on booking.clientID equals clientEntry.clientID into bookingClients
+                                    from client in bookingClients.DefaultIfEmpty()
+                                    select new CalendarSearchBookingRow
+                                    {
+                                        BookingID = booking.bookingID,
+                                        BookingDate = booking.bookingDate,
+                                        BookingVenue = booking.venue,
+                                        EventTime = booking.eventTime,
+                                        EventName = client != null ? client.eventName : string.Empty,
+                                        BookingNote = booking.bookingNote,
+                                        DesignTheme = booking.dsgnTheme,
+                                        DesignMotif = booking.dsgnMotif,
+                                        PrepVenue = booking.prepVenue,
+                                        ClientFirstName = client != null ? client.cFName : string.Empty,
+                                        ClientLastName = client != null ? client.cLName : string.Empty,
+                                        ClientEmail = client != null ? client.cEmail : string.Empty,
+                                        ClientContact = client != null ? client.cContact : string.Empty,
+                                        CelebrantOneFirstName = client != null ? client.cCeleb1FName : string.Empty,
+                                        CelebrantOneLastName = client != null ? client.cCeleb1LName : string.Empty,
+                                        CelebrantTwoFirstName = client != null ? client.cCeleb2FName : string.Empty,
+                                        CelebrantTwoLastName = client != null ? client.cCeleb2LName : string.Empty,
+                                        PaxCount = booking.paxCount,
+                                        AddAdult = booking.addAdult,
+                                        AddKid = booking.addKid
+                                    })
+                                    .ToList();
+
+                    var results = bookings
+                        .Select(booking => new
+                        {
+                            booking.BookingID,
+                            booking.BookingDate,
+                            booking.BookingVenue,
+                            booking.EventName,
+                            booking.EventTime,
+                            Score = GetCalendarSearchScore(booking, normalizedQuery)
+                        })
+                        .Where(booking => booking.Score > 0)
+                        .OrderByDescending(booking => booking.Score)
+                        .ThenBy(booking => Math.Abs((booking.BookingDate.Date - DateTime.Today).Days))
+                        .ThenBy(booking => booking.BookingDate)
+                        .ThenBy(booking => booking.BookingID)
+                        .Take(8)
+                        .Select(booking => new
+                        {
+                            bookingID = booking.BookingID,
+                            bookingDate = booking.BookingDate,
+                            dateKey = booking.BookingDate.Year + "-" + booking.BookingDate.Month + "-" + booking.BookingDate.Day,
+                            bookingVenue = booking.BookingVenue,
+                            eventName = booking.EventName,
+                            eventTime = booking.EventTime
+                        })
+                        .ToList();
+
+                    return Json(new { success = true, bookingData = results }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Calendar:",
+                "Attempted to search booking calendar. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         public JsonResult getBookingDetails(int bookingID)
         {
             try
