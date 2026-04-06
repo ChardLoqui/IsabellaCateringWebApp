@@ -219,17 +219,45 @@
             return false;
         }
 
-        return getMissingBookingFields().some(function (field) {
+
+        var isMissing = getMissingBookingFields().some(function (field) {
             return field.key === fieldKey;
         });
+
+
+        if (fieldKey === 'guestCount') {
+
+            return !$scope.priceType;
+        }
+
+        if (fieldKey === 'cEmail') {
+            var emailValue = $scope.cEmail;
+            var isInvalidEmail = emailValue && emailValue.indexOf('@') === -1;
+            return isInvalidEmail;
+        }
+
+        return isMissing;
     };
 
     $scope.getBookingFieldErrorMessage = function (fieldKey) {
+        if (fieldKey === 'guestCount') {
+            return 'Please select the number of guests.';
+        }
+
         var fieldConfig = bookingRequiredFields.find(function (field) {
             return field.key === fieldKey;
         });
 
-        return (fieldConfig ? fieldConfig.label : 'This field') + ' is required.';
+        var label = fieldConfig ? fieldConfig.label : 'This field';
+
+        if (fieldKey === 'cEmail') {
+            var emailValue = $scope.cEmail;
+            if (emailValue && emailValue.indexOf('@') === -1) {
+                return label + ' must contain an @ symbol.';
+            }
+        }
+
+        return label + ' is required.';
     };
 
     function getMissingBookingFields() {
@@ -348,7 +376,7 @@
     }
 
     //for testing purposes only
-    const homepage = document.getElementById('showSess'); //remove
+    const homepage = document.getElementById('showSess'); 
 
     $scope.checkGetCreds = function (verify) {
         var getData = IsabellaCateringWebAppService.getCurrentSessionService();
@@ -609,7 +637,7 @@
 
     //bago, to add user 
     $scope.addUsrSubmit = function () {
-        // check inputs
+
         if ($scope.addUserForm.$invalid) {
             Swal.fire({
                 title: "Invalid Input",
@@ -619,7 +647,7 @@
             });
             return;
         }
-        // check dupe
+
         if ($scope.isEmailDuplicate()) {
             Swal.fire({
                 title: "Duplicate Email",
@@ -629,7 +657,7 @@
             });
             return;
         }
-        // pword check
+
         if ($scope.password !== $scope.confirmPassword) {
             Swal.fire({
                 title: "Password Mismatch",
@@ -655,7 +683,7 @@
                     confirmButtonColor: "#EC4899" });
                 resetAddAccountForm();
                 $scope.closeAddAccountModal();
-                $scope.getUsersData(); //refresh table 
+                $scope.getUsersData();  
             } else {
                 Swal.fire({
                     title: "Error", text: response.data.message, icon: "error",
@@ -664,7 +692,7 @@
         });
     };
 
-    // for getting the data
+
     $scope.getUsersData = function () {
         $scope.accountsLoading = true;
 
@@ -694,15 +722,13 @@
     }
 
     // MODAL STARTTTT
-    // select user to update 
+
     $scope.selectUserForUpdate = function (user) {
         $scope.selectedUser = angular.copy(user);
-        //change active to inactive n vice versa 
         $scope.selectedUser.isActive = user.isActive === 1;
         $scope.showUpdateAccountModal = true;
     };
 
-    // save changes 
     $scope.updateUsrSubmit = function () {
         if (!$scope.selectedUser.firstName || !$scope.selectedUser.lastName || !$scope.selectedUser.permissionID) {
             Swal.fire({
@@ -710,7 +736,7 @@
                 confirmButtonColor: "#EC4899" });
             return;
         }
-        //fetch data from modal inputs and prepare for update
+
         var updateData = {
             userID: $scope.selectedUser.userID,
             permissionID: $scope.selectedUser.permissionID,
@@ -718,13 +744,13 @@
             lastName: $scope.selectedUser.lastName,
             isActive: $scope.selectedUser.isActive ? 1 : 0
         };
-        // Call service to update
+
         IsabellaCateringWebAppService.UpdateUsrCall(updateData).then(function (response) {
             if (response.data.success) {
                 Swal.fire({
                     title: "Updated!", text: "Account has been updated successfully.", icon: "success",
                     confirmButtonColor: "#EC4899" });
-                $scope.getUsersData(); // refresh table 
+                $scope.getUsersData(); 
                 $scope.closeUpdateModal();
             } else {
                 Swal.fire({
@@ -738,7 +764,7 @@
         });
     };
 
-    //delete acc function
+
     $scope.deleteAccount = function () {
         Swal.fire({
             title: "Are you sure?",
@@ -873,7 +899,7 @@
         applyLogsSearch();
     });
 
-    //get logs data
+
     $scope.getLogsData = function () {
         $scope.logsLoading = true;
 
@@ -1983,36 +2009,36 @@
     };
 
     //create modal start
-    $scope.openCreatePaymentModal = function () {
-        $scope.createPayment = {
-            bookingID: '',
-            paymentType: 'Down Payment',
-            amountDue: null,
-            amountPaid: null,
-            dueDate: '',
-        };
-        $scope.createRestrictions = {
-            hasDownPayment: false,
-            hasFullPayment: false
-        };
-        $scope.createPaymentLoading = false;
-        $scope.availableBookings = [];
+    //$scope.openCreatePaymentModal = function () {
+    //    $scope.createPayment = {
+    //        bookingID: '',
+    //        paymentType: 'Down Payment',
+    //        amountDue: null,
+    //        amountPaid: null,
+    //        dueDate: '',
+    //    };
+    //    $scope.createRestrictions = {
+    //        hasDownPayment: false,
+    //        hasFullPayment: false
+    //    };
+    //    $scope.createPaymentLoading = false;
+    //    $scope.availableBookings = [];
 
-        IsabellaCateringWebAppService.getBookingsWithoutPayments()
-            .then(function (res) {
-                $scope.availableBookings = res.data;
-            })
-            .catch(function () {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Could not load bookings.',
-                    icon: 'error',
-                    confirmButtonColor: "#EC4899"
-                });
-            });
+    //    IsabellaCateringWebAppService.getBookingsWithoutPayments()
+    //        .then(function (res) {
+    //            $scope.availableBookings = res.data;
+    //        })
+    //        .catch(function () {
+    //            Swal.fire({
+    //                title: 'Error',
+    //                text: 'Could not load bookings.',
+    //                icon: 'error',
+    //                confirmButtonColor: "#EC4899"
+    //            });
+    //        });
 
-        $scope.showCreatePaymentModal = true;
-    };
+    //    $scope.showCreatePaymentModal = true;
+    //};
 
     $scope.onCreateBookingChanged = function () {
         var bID = Number($scope.createPayment.bookingID);
@@ -3946,6 +3972,13 @@
         $scope.priceTypeID = id;
         $scope.bookingBasePrice = `Php ${price}`;
         $scope.activeDropdown = null;
+
+        if ($scope.markBookingFieldTouched) {
+            $scope.markBookingFieldTouched('guestCount');
+        } else {
+            $scope.bookingTouchedFields['guestCount'] = true;
+        }
+
         $scope.computeFinalPrice();
     };
 
