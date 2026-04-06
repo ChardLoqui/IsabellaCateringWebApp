@@ -804,10 +804,10 @@
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                         Transaction Type
                     </label>
-                    <select ng-model="newPayment.paymentType"
+                    <select ng-model="newPayment.paymentType" ng-click="showAdd()"
                             class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500">
-                        <option value="Payment">Payment</option>
-                        <option value="Additional">Additional</option>
+                        <option value="Payment" >Payment</option>
+                        <option value="Additional" >Additional</option>
                     </select>
                 </div>
                 <div>
@@ -823,7 +823,7 @@
                            class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500" />
                 </div>
 
-                <div class="flex items-center">
+                <div class="flex items-center" ng-show="showIfAdd">
                     <label class="flex cursor-pointer items-center gap-3 text-sm font-medium text-gray-500">
                         <input type="checkbox"
                                ng-model="newPayment.paymentStatus"
@@ -832,7 +832,7 @@
                     </label>
                 </div>
 
-                <div>
+                <div ng-show="showIfAdd">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                         Due Date
                     </label>

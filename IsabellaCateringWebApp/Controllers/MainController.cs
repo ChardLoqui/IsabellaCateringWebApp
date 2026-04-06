@@ -92,7 +92,7 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 string traceId = Guid.NewGuid().ToString();
                 string email = "";
-                if (Session["currentLog"].ToString() != "")
+                if (Session["currentLog"]?.ToString() != "" && Session["currentLog"]?.ToString() != null)
                 {
                     int uID = int.Parse(Session["currentLog"].ToString());
                     int pID = int.Parse(Session["currentPerm"].ToString());
@@ -1596,6 +1596,10 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
+                    if(bookingInfo.paxCount == 0)
+                    {
+                        return Json(new { success = false, message = "Please choose Guest Count!" }, JsonRequestBehavior.AllowGet);
+                    }
                     var existingBooking = db.bookings_tbl
                         .Where(x =>
                         x.eventID == bookingInfo.eventID &&
@@ -2239,6 +2243,10 @@ namespace IsabellaCateringWebApp.Controllers
 
                         if (paymentData.paymentType == "Payment")
                         {
+                            if(paymentData.dueDate == null)
+                            {
+                                return Json(new { success = false, message = "Please select a due date!" }, JsonRequestBehavior.AllowGet);
+                            }
                             var newPayment = new tblPaymentsModel()
                             {
                                 bookingID = paymentData.bookingID,
@@ -2264,8 +2272,8 @@ namespace IsabellaCateringWebApp.Controllers
                                 paymentType = paymentData.paymentType,
                                 remainingBalance = (latestPayment.remainingBalance + paymentData.amountPaid),
                                 transactionNum = (latestPayment.transactionNum + 1),
-                                paymentStatus = paymentData.paymentStatus,
-                                dueDate = paymentData.dueDate,
+                                paymentStatus = "complete",
+                                dueDate = DateTime.Now,
                                 dateCreated = DateTime.Now,
                                 dateUpdated = DateTime.Now
                             };

@@ -15,7 +15,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public int transactionNum { get; set; }
         public string paymentType { get; set; }
         public string paymentStatus { get; set; }
-        public DateTime dueDate { get; set; }
+        public DateTime? dueDate { get; set; }
         public DateTime dateCreated { get; set; }
         public DateTime dateUpdated { get; set; }
     }
