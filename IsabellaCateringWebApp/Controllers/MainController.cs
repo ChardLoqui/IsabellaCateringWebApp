@@ -2419,7 +2419,7 @@ namespace IsabellaCateringWebApp.Controllers
                     return jsonResult;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logs(
                 "LETHAL",
@@ -2472,58 +2472,19 @@ namespace IsabellaCateringWebApp.Controllers
                     }
                     else
                     {
-                        var latestPayment = db.payments_tbl
-                                .Where(x => x.bookingID == paymentData.bookingID)
-                                .OrderByDescending(x => x.transactionNum)
-                                .FirstOrDefault();
-
-                        if (paymentData.paymentType == "Payment")
+                        var newPayment = new tblPaymentsModel()
                         {
-                            if(paymentData.dueDate == null)
-                            {
-                                return Json(new { success = false, message = "Please select a due date!" }, JsonRequestBehavior.AllowGet);
-                            }
-                            var newPayment = new tblPaymentsModel()
-                            {
-                                bookingID = paymentData.bookingID,
-                                amountDue = latestPayment.remainingBalance,
-                                amountPaid = paymentData.amountPaid,
-                                paymentType = paymentData.paymentType,
-                                remainingBalance = (latestPayment.remainingBalance - paymentData.amountPaid),
-                                transactionNum = (latestPayment.transactionNum + 1),
-                                paymentStatus = paymentData.paymentStatus,
-                                dueDate = paymentData.dueDate,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-                            db.payments_tbl.Add(newPayment);
-                        }
-                        else if (paymentData.paymentType == "Additional")
-                        {
-                            var newPayment = new tblPaymentsModel()
-                            {
-                                bookingID = paymentData.bookingID,
-                                amountDue = latestPayment.remainingBalance,
-                                amountPaid = paymentData.amountPaid,
-                                paymentType = paymentData.paymentType,
-                                remainingBalance = (latestPayment.remainingBalance + paymentData.amountPaid),
-                                transactionNum = (latestPayment.transactionNum + 1),
-                                paymentStatus = "complete",
-                                dueDate = DateTime.Now,
-                                dateCreated = DateTime.Now,
-                                dateUpdated = DateTime.Now
-                            };
-                            db.payments_tbl.Add(newPayment);
-                        }
-                        else
-                        {
-                            return Json(new { success = false, message = "Invalid payment type!" }, JsonRequestBehavior.AllowGet);
-                        }
+                            bookingID = paymentData.bookingID,
+                            amountDue = paymentData.amountDue,
+                            amountPaid = paymentData.amountPaid,
+                            paymentType = paymentData.paymentType,
+                            paymentStatus = paymentData.paymentStatus,
+                            dueDate = paymentData.dueDate,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+                        db.payments_tbl.Add(newPayment);
                     }
-                    Logs(
-                        "INFO",
-                        "Payment Management:",
-                        $"Booking Payment Data has been created. Type: {paymentData.paymentType} bookingID: {paymentData.bookingID}");
 
                     db.SaveChanges();
                     return Json(new { success = true, message = "Saved successfully!" });
@@ -2531,10 +2492,6 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
-                Logs(
-                "LETHAL",
-                "Payment Management:",
-                "Attempted to get payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -2550,14 +2507,7 @@ namespace IsabellaCateringWebApp.Controllers
                                      .FirstOrDefault(p => p.paymentID == paymentData.paymentID);
 
                     if (existing == null)
-                    {
-                        Logs(
-                            "WARN",
-                            "Payment Management:",
-                            "Attempted to update payment details. Message : \"Payment not found.\"");
                         return Json(new { success = false, message = "Payment not found." });
-                    }
-                        
 
                     existing.bookingID = paymentData.bookingID;
                     existing.paymentType = paymentData.paymentType;
@@ -2568,11 +2518,6 @@ namespace IsabellaCateringWebApp.Controllers
                     existing.dateUpdated = DateTime.Now;
 
                     db.SaveChanges();
-
-                    Logs(
-                        "INFO",
-                        "Payment Management:",
-                        $"Booking Payment Data has been updated. Type: {paymentData.paymentType} bookingID: {paymentData.bookingID}");
                 }
                 return Json(new { success = true, message = "Updated successfully!" });
             }
@@ -2585,10 +2530,6 @@ namespace IsabellaCateringWebApp.Controllers
                     if (ex.InnerException.InnerException != null)
                         realError = ex.InnerException.InnerException.Message;
                 }
-                Logs(
-                "LETHAL",
-                "Payment Management:",
-                "Attempted to update payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = realError });
             }
         }
@@ -2603,26 +2544,14 @@ namespace IsabellaCateringWebApp.Controllers
                     var record = db.payments_tbl.Find(id);
                     if (record != null)
                     {
-                        Logs(
-                        "INFO",
-                        "Payment Management:",
-                        $"Booking Payment Data has been deleted. paymentID: {record.paymentID}");
-
                         db.payments_tbl.Remove(record);
                         db.SaveChanges();
-
-                        
                         return Json(new { success = true });
                     }
                     return Json(new { success = false });
                 }
             }
-            catch (Exception ex) {
-                Logs(
-                "LETHAL",
-                "Payment Management:",
-                "Attempted to delete payment. "+ex.Message + "" + ex.InnerException);
-                return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
         public JsonResult GetBookingsWithoutPayments()
@@ -2649,10 +2578,6 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
-                Logs(
-                "LETHAL",
-                "Payment Management:",
-                "Attempted to get payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -2690,10 +2615,6 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
-                Logs(
-                "LETHAL",
-                "Payment Management:",
-                "Attempted to get client details. " + ex.Message + "" + ex.InnerException);
                 var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return Json(new { success = false, message = innerMsg }, JsonRequestBehavior.AllowGet);
             }
