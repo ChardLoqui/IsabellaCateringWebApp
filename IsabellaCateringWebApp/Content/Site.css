@@ -1344,14 +1344,19 @@ textarea {
 }
 
 .management-section-card {
-    overflow: hidden;
+    overflow: visible;
     background: #ffffff;
     border: 1px solid var(--surface-border);
     border-radius: var(--surface-radius-lg);
     box-shadow: var(--surface-shadow);
+    position: relative;
+    isolation: isolate;
 }
 
 .management-section-header {
+    position: relative;
+    z-index: 20;
+    overflow: visible;
     padding: 1rem;
     border-bottom: 1px solid #e5e7eb;
     background: #ffffff;
@@ -1417,6 +1422,7 @@ textarea {
 
 .management-pagination-dropdown {
     position: relative;
+    z-index: 30;
 }
 
 .management-pagination-arrow-group {
@@ -1477,6 +1483,7 @@ textarea {
     position: absolute;
     right: 0;
     top: calc(100% + 0.25rem);
+    z-index: 40;
     min-width: 78px;
     overflow: hidden;
     border: 1px solid #e5e7eb;
@@ -1513,7 +1520,10 @@ textarea {
 }
 
 .management-table-scroll {
+    position: relative;
+    z-index: 1;
     overflow-x: auto;
+    overflow-y: visible;
     background: #ffffff;
 }
 
