@@ -10,7 +10,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public int paymentID { get; set; }
         public int bookingID { get; set; }
         public float amountDue { get; set; }
-        public float amountPaid { get; set; }
+        public float amount { get; set; }
         public float remainingBalance {  get; set; }
         public int transactionNum { get; set; }
         public string paymentType { get; set; }

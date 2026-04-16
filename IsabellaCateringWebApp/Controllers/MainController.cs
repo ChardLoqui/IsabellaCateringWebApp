@@ -1976,11 +1976,11 @@ namespace IsabellaCateringWebApp.Controllers
                     {
                         bookingID = newBooking.bookingID,
                         amountDue = paymentInfo.amountDue,
-                        amountPaid = 0,
+                        amount = 0,
                         paymentType = "Initial",
                         remainingBalance = paymentInfo.amountDue,
                         transactionNum = 0,
-                        paymentStatus = "incomplete",
+                        paymentStatus = "Incomplete",
                         dueDate = bookingInfo.bookingDate.AddDays(10),
                         dateCreated = DateTime.Now,
                         dateUpdated = DateTime.Now
@@ -2404,7 +2404,7 @@ namespace IsabellaCateringWebApp.Controllers
                         paymentID = p.paymentID,
                         bookingID = p.bookingID,
                         amountDue = p.amountDue,
-                        amountPaid = p.amountPaid,
+                        amount = p.amount,
                         remainingBalance = p.remainingBalance,
                         transactionNum = p.transactionNum,
                         paymentType = p.paymentType,
@@ -2464,7 +2464,7 @@ namespace IsabellaCateringWebApp.Controllers
                     if (existingPayment != null)
                     {
                         existingPayment.amountDue = paymentData.amountDue;
-                        existingPayment.amountPaid = paymentData.amountPaid;
+                        existingPayment.amount = paymentData.amount;
                         existingPayment.paymentType = paymentData.paymentType;
                         existingPayment.paymentStatus = paymentData.paymentStatus;
                         existingPayment.dueDate = paymentData.dueDate;
@@ -2472,26 +2472,101 @@ namespace IsabellaCateringWebApp.Controllers
                     }
                     else
                     {
-                        var newPayment = new tblPaymentsModel()
+                        var latestPayment = db.payments_tbl
+                                .Where(x => x.bookingID == paymentData.bookingID)
+                                .OrderByDescending(x => x.transactionNum)
+                                .FirstOrDefault();
+
+                        if (paymentData.paymentType == "Payment")
                         {
-                            bookingID = paymentData.bookingID,
-                            amountDue = paymentData.amountDue,
-                            amountPaid = paymentData.amountPaid,
-                            paymentType = paymentData.paymentType,
-                            paymentStatus = paymentData.paymentStatus,
-                            dueDate = paymentData.dueDate,
-                            dateCreated = DateTime.Now,
-                            dateUpdated = DateTime.Now
-                        };
-                        db.payments_tbl.Add(newPayment);
+                            if (paymentData.dueDate == null)
+                            {
+                                return Json(new { success = false, message = "Please select a due date!" }, JsonRequestBehavior.AllowGet);
+                            }
+                            var newPayment = new tblPaymentsModel()
+                            {
+                                bookingID = paymentData.bookingID,
+                                amountDue = latestPayment.paymentType == "Initial" ? latestPayment.amountDue : latestPayment.remainingBalance,
+                                amount = paymentData.amount,
+                                paymentType = paymentData.paymentType,
+                                remainingBalance = paymentData.paymentStatus == "Incomplete" ? ( latestPayment.paymentType == "Initial" ? latestPayment.amountDue : latestPayment.remainingBalance ) : (latestPayment.paymentType == "Initial" ? (latestPayment.amountDue - paymentData.amount) : (latestPayment.remainingBalance - paymentData.amount)),
+                                transactionNum = (latestPayment.transactionNum + 1),
+                                paymentStatus = paymentData.paymentStatus,
+                                dueDate = paymentData.dueDate,
+                                dateCreated = DateTime.Now,
+                                dateUpdated = DateTime.Now
+                            };
+                            db.payments_tbl.Add(newPayment);
+
+                            var initialPayment = db.payments_tbl
+                                .Where(x => x.bookingID == paymentData.bookingID &&
+                                x.transactionNum == 0)
+                                .FirstOrDefault();
+
+                            if (newPayment.remainingBalance == 0)
+                            {
+                                initialPayment.paymentStatus = "Complete";
+                                initialPayment.remainingBalance = newPayment.remainingBalance;
+                            }
+                            else
+                            {
+                                initialPayment.paymentStatus = "Incomplete";
+                                initialPayment.remainingBalance = newPayment.remainingBalance;
+                            }
+                        }
+                        else if (paymentData.paymentType == "Additional")
+                        {
+                            var newPayment = new tblPaymentsModel()
+                            {
+                                bookingID = paymentData.bookingID,
+                                amountDue = latestPayment.paymentType == "Initial" ? latestPayment.amountDue : latestPayment.remainingBalance,
+                                amount = paymentData.amount,
+                                paymentType = paymentData.paymentType,
+                                remainingBalance = latestPayment.paymentType == "Initial" ? (latestPayment.amountDue + paymentData.amount) : (latestPayment.remainingBalance + paymentData.amount),
+                                transactionNum = (latestPayment.transactionNum + 1),
+                                paymentStatus = "Complete",
+                                dueDate = DateTime.Now,
+                                dateCreated = DateTime.Now,
+                                dateUpdated = DateTime.Now
+                            };
+                            db.payments_tbl.Add(newPayment);
+
+                            var initialPayment = db.payments_tbl
+                                .Where(x => x.bookingID == paymentData.bookingID &&
+                                x.transactionNum == 0)
+                                .FirstOrDefault();
+
+                            if (newPayment.remainingBalance == 0)
+                            {
+                                initialPayment.paymentStatus = "Complete";
+                                initialPayment.remainingBalance = newPayment.remainingBalance;
+                            }
+                            else
+                            {
+                                initialPayment.paymentStatus = "Incomplete";
+                                initialPayment.remainingBalance = newPayment.remainingBalance;
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { success = false, message = "Invalid payment type!" }, JsonRequestBehavior.AllowGet);
+                        }
                     }
+                    Logs(
+                        "INFO",
+                        "Payment Management:",
+                        $"Booking Payment Data has been created. Type: {paymentData.paymentType} bookingID: {paymentData.bookingID}");
 
                     db.SaveChanges();
-                    return Json(new { success = true, message = "Saved successfully!" });
+                    return recomputePayment(paymentData.bookingID, "Transaction Created");
                 }
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Payment Management:",
+                "Attempted to get payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -2503,24 +2578,74 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
+                    if (paymentData.dueDate == null)
+                    {
+                        return Json(new { success = false, message = "Please select a due date!" }, JsonRequestBehavior.AllowGet);
+                    }
+
                     var existing = db.payments_tbl
                                      .FirstOrDefault(p => p.paymentID == paymentData.paymentID);
 
                     if (existing == null)
+                    {
+                        Logs(
+                            "WARN",
+                            "Payment Management:",
+                            "Attempted to update payment details. Message : \"Payment not found.\"");
                         return Json(new { success = false, message = "Payment not found." });
+                    }
 
-                    existing.bookingID = paymentData.bookingID;
-                    existing.paymentType = paymentData.paymentType;
-                    existing.amountDue = paymentData.amountDue;
-                    existing.amountPaid = paymentData.amountPaid;
-                    existing.paymentStatus = paymentData.paymentStatus;
-                    existing.dueDate = paymentData.dueDate;
-                    existing.dateUpdated = DateTime.Now;
+                    if (paymentData.paymentType == "Payment")
+                    {
+                        var paymentAbove = db.payments_tbl
+                                .Where(x => x.bookingID == paymentData.bookingID &&
+                                x.transactionNum == (existing.transactionNum - 1))
+                                .FirstOrDefault();
+
+                        existing.bookingID = paymentData.bookingID;
+                        existing.amountDue = paymentAbove.paymentType == "Initial" ? paymentAbove.amountDue : paymentAbove.remainingBalance;
+                        existing.amount = paymentData.amount;
+                        existing.paymentType = paymentData.paymentType;
+                        existing.remainingBalance = paymentData.paymentStatus == "Incomplete"? existing.amountDue : paymentAbove.paymentType == "Initial" ? (paymentAbove.amountDue - paymentData.amount) : (paymentAbove.remainingBalance - paymentData.amount);
+                        existing.paymentStatus = paymentData.paymentStatus;
+                        existing.dueDate = paymentData.dueDate;
+                        existing.dateUpdated = DateTime.Now;
+
+                        db.SaveChanges();
+                    }
+                    else if (paymentData.paymentType == "Additional")
+                    {
+                        var paymentAbove = db.payments_tbl
+                                .Where(x => x.bookingID == paymentData.bookingID &&
+                                x.transactionNum == (existing.transactionNum - 1))
+                                .FirstOrDefault();
+
+                        existing.bookingID = paymentData.bookingID;
+                        existing.amountDue = paymentAbove.paymentType == "Initial" ? paymentAbove.amountDue : paymentAbove.remainingBalance;
+                        existing.amount = paymentData.amount;
+                        existing.paymentType = paymentData.paymentType;
+                        existing.remainingBalance = paymentAbove.paymentType == "Initial" ? (paymentAbove.amountDue + paymentData.amount) : (paymentAbove.remainingBalance + paymentData.amount);
+                        existing.paymentStatus = paymentData.paymentStatus;
+                        existing.dueDate = paymentData.dueDate;
+                        existing.dateUpdated = DateTime.Now;
+
+                        db.SaveChanges();
+                    }
+                    else
+                    {
+                        return Json(new { success = false, message = "Invalid payment type!" }, JsonRequestBehavior.AllowGet);
+                    }
 
                     db.SaveChanges();
+                    Logs(
+                        "INFO",
+                        "Payment Management:",
+                        $"Booking Payment Data has been updated. Type: {paymentData.paymentType} bookingID: {paymentData.bookingID}");
+
+                    return recomputePayment(existing.bookingID, "Transaction Updated");
                 }
-                return Json(new { success = true, message = "Updated successfully!" });
             }
+                
             catch (Exception ex)
             {
                 string realError = ex.Message;
@@ -2530,6 +2655,10 @@ namespace IsabellaCateringWebApp.Controllers
                     if (ex.InnerException.InnerException != null)
                         realError = ex.InnerException.InnerException.Message;
                 }
+                Logs(
+                "LETHAL",
+                "Payment Management:",
+                "Attempted to update payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = realError });
             }
         }
@@ -2541,17 +2670,178 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    var record = db.payments_tbl.Find(id);
-                    if (record != null)
-                    {
-                        db.payments_tbl.Remove(record);
-                        db.SaveChanges();
-                        return Json(new { success = true });
-                    }
-                    return Json(new { success = false });
+                    var existing = db.payments_tbl.Find(id);
+
+                    db.payments_tbl.Remove(existing);
+                    db.SaveChanges();
+
+                    Logs(
+                    "INFO",
+                    "Payment Management:",
+                    $"Booking Payment Data has been deleted. paymentID: {existing.paymentID}");
+
+                    return recomputePayment(existing.bookingID, "Transaction Deleted");
                 }
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Payment Management:",
+                "Attempted to delete payment. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public JsonResult recomputePayment(int bookingID, string message)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var paymentAbove = db.payments_tbl
+                            .Where(x => x.bookingID == bookingID &&
+                            x.transactionNum == 0)
+                            .FirstOrDefault();
+
+                    var paymentBelow = db.payments_tbl
+                        .Where(x => x.bookingID == bookingID &&
+                        x.transactionNum == (paymentAbove.transactionNum + 1))
+                        .FirstOrDefault();
+
+                    if(paymentBelow == null)
+                    {
+                        paymentBelow = db.payments_tbl
+                            .Where(x => x.bookingID == bookingID &&
+                            x.transactionNum == (paymentAbove.transactionNum + 2))
+                            .FirstOrDefault();
+
+                        if(paymentBelow != null)
+                        {
+                            paymentBelow.transactionNum -= 1;
+                            db.SaveChanges();
+                        }else
+                            return Json(new { success = true, message = message + " & Recomputed Successfully!" }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    var currentTransactionNum = paymentBelow.transactionNum;
+                    while(paymentBelow!= null)
+                    {
+                        paymentAbove = db.payments_tbl
+                            .Where(x => x.bookingID == bookingID &&
+                            x.transactionNum == (currentTransactionNum - 1))
+                            .FirstOrDefault();
+
+                        paymentBelow.dateUpdated = DateTime.Now;
+                        paymentBelow.amountDue = paymentAbove.paymentType == "Initial" ? paymentAbove.amountDue : paymentAbove.remainingBalance;
+                        if(paymentBelow.paymentType == "Payment")
+                        {
+                            paymentBelow.remainingBalance = paymentBelow.paymentStatus == "Incomplete" ? paymentBelow.amountDue : (paymentBelow.amountDue - paymentBelow.amount);
+                        }
+                        else if (paymentBelow.paymentType == "Additional")
+                        {
+                            paymentBelow.remainingBalance = paymentBelow.paymentStatus == "Incomplete" ? paymentBelow.amountDue : (paymentBelow.amountDue + paymentBelow.amount);
+                        }
+                        else if (paymentBelow.paymentType == "Excess")
+                        {
+                            paymentBelow.remainingBalance = paymentBelow.paymentStatus == "Incomplete" ? paymentBelow.amountDue : (paymentBelow.amountDue - paymentBelow.amount);
+                        }
+                        else
+                        {
+                            return Json(new { success = false, message = "Invalid payment type!" }, JsonRequestBehavior.AllowGet);
+                        }
+                        
+                        db.SaveChanges();
+                        currentTransactionNum += 1;
+
+                        paymentBelow = db.payments_tbl
+                        .Where(x => x.bookingID == bookingID &&
+                        x.transactionNum == (currentTransactionNum))
+                        .FirstOrDefault();
+
+                        if (paymentBelow == null)
+                        {
+                            currentTransactionNum += 1;
+
+                            paymentBelow = db.payments_tbl
+                                .Where(x => x.bookingID == bookingID &&
+                                x.transactionNum == (currentTransactionNum))
+                                .FirstOrDefault();
+
+                            if (paymentBelow != null)
+                            {
+                                paymentBelow.transactionNum -= 1;
+                                currentTransactionNum -= 1;
+                                db.SaveChanges();
+                            }
+                        }
+                    }
+
+                    var latestPayment = db.payments_tbl
+                            .Where(x => x.bookingID == bookingID)
+                            .OrderByDescending(x => x.transactionNum)
+                            .FirstOrDefault();
+
+                    if (latestPayment.paymentType == "Excess")
+                    {
+                        latestPayment.amountDue = paymentAbove.remainingBalance;
+                        latestPayment.amount = Math.Abs(paymentAbove.remainingBalance);
+                        latestPayment.remainingBalance = paymentAbove.remainingBalance;
+                        latestPayment.dateUpdated = DateTime.Now;
+                        db.SaveChanges();
+                    }else if (latestPayment.remainingBalance < 0)
+                    {
+                        var newPayment = new tblPaymentsModel()
+                        {
+                            bookingID = latestPayment.bookingID,
+                            amountDue = latestPayment.remainingBalance,
+                            amount = Math.Abs(latestPayment.remainingBalance),
+                            paymentType = "Excess",
+                            remainingBalance = latestPayment.remainingBalance,
+                            transactionNum = (latestPayment.transactionNum + 1),
+                            paymentStatus = "Incomplete",
+                            dueDate = DateTime.Now,
+                            dateCreated = DateTime.Now,
+                            dateUpdated = DateTime.Now
+                        };
+                        db.payments_tbl.Add(newPayment);
+                        db.SaveChanges();
+                    }
+                    
+                    if (latestPayment.remainingBalance == 0 && latestPayment.paymentType == "Excess")
+                    {
+                        db.payments_tbl.Remove(latestPayment);
+                        db.SaveChanges();
+                    }
+
+                        var initialPayment = db.payments_tbl
+                                .Where(x => x.bookingID == bookingID &&
+                                x.transactionNum == 0)
+                                .FirstOrDefault();
+
+                    if (latestPayment.remainingBalance == 0)
+                    {
+                        initialPayment.paymentStatus = "Complete";
+                        initialPayment.remainingBalance = latestPayment.remainingBalance;
+                    }
+                    else
+                    {
+                        initialPayment.paymentStatus = "Incomplete";
+                        initialPayment.remainingBalance = latestPayment.remainingBalance;
+                    }
+
+                    db.SaveChanges();
+                    return Json(new { success = true, message = "Payment Group recomputed Successfully" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch(Exception ex)
+            {
+                Logs(
+               "LETHAL",
+               "Payment Management:",
+               "Attempted to recompute payment. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         public JsonResult GetBookingsWithoutPayments()
@@ -2578,6 +2868,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Payment Management:",
+                "Attempted to get payment. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -2615,6 +2909,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Logs(
+                "LETHAL",
+                "Payment Management:",
+                "Attempted to get client details. " + ex.Message + "" + ex.InnerException);
                 var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return Json(new { success = false, message = innerMsg }, JsonRequestBehavior.AllowGet);
             }

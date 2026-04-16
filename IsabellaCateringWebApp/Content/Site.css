@@ -1254,7 +1254,11 @@ textarea {
     color: #dc2626;
 }
 
-.payment-summary-down-payment {
+.payment-summary-excess {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+/*.payment-summary-down-payment {
     background-color: #dbeafe;
     color: #2563eb;
 }
@@ -1267,7 +1271,7 @@ textarea {
 .payment-summary-additional {
     background-color: #ffedd5;
     color: #ea580c;
-}
+}*/
 
 .payment-summary-card .payment-summary-accent {
     color: inherit;
