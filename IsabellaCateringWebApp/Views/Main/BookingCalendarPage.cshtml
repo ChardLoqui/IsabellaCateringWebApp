@@ -10,7 +10,7 @@
     <div class="p-8 mb-5">
         <h1 class="mb-6 text-2xl font-semibold text-black">Booking Calendar</h1>
         <p class="mb-6 text-sm font-medium text-rose-700">
-            Select a date first, then continue to Add Booking.
+            Select an available date first, then continue to Add Booking. Past dates are disabled.
         </p>
 
         <section class="panel-surface management-surface booking-calendar-panel relative rounded-lg">
@@ -66,6 +66,7 @@
                         <button id="addBooking"
                                 type="button"
                                 ng-click="addBooking()"
+                                ng-disabled="isCalendarSelectionUnavailable()"
                                 class="booking-primary-action inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold">
                             <span class="material-icons text-[18px]">add</span>
                             <span>Add Booking</span>

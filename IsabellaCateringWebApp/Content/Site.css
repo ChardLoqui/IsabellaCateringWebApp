@@ -811,6 +811,14 @@ textarea {
     border-color: #d6418b;
 }
 
+.booking-primary-action:disabled {
+    border-color: #f2c7db;
+    background: #f6d7e5;
+    color: rgba(255, 255, 255, 0.88);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
 .booking-calendar-page #datepicker-container {
     border: 0;
     background: transparent;
@@ -859,6 +867,18 @@ textarea {
     box-shadow: inset 0 0 0 1px rgba(236, 72, 153, 0.18);
 }
 
+.booking-calendar-page #days-container .calendar-day.is-past-day {
+    cursor: default;
+    border-color: #ebe4e8 !important;
+    background: #faf8f9;
+    opacity: 0.72;
+}
+
+.booking-calendar-page #days-container .calendar-day.is-past-day:hover {
+    border-color: #ebe4e8 !important;
+    background: #faf8f9;
+}
+
 .booking-calendar-page #days-container .date-block {
     position: relative;
     z-index: 0;
@@ -877,6 +897,12 @@ textarea {
     border-color: #f0d3e1 !important;
     background: #fdf2f8 !important;
     color: #be185d;
+}
+
+.booking-calendar-page #days-container .calendar-day.is-past-day .date-block:hover {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: #9ca3af;
 }
 
 .booking-calendar-page #days-container .date-block.selected {
@@ -906,6 +932,11 @@ textarea {
     background: transparent !important;
 }
 
+.booking-calendar-page #days-container .calendar-day.is-past-day .current {
+    border-color: #efe8ec !important;
+    background: #fcfafb !important;
+}
+
 .booking-calendar-page #days-container .current > div {
     position: relative;
     z-index: 0;
@@ -925,6 +956,11 @@ textarea {
 
 .booking-calendar-page #days-container .current > div:last-child {
     margin-bottom: 0 !important;
+}
+
+.booking-calendar-page #days-container .calendar-day.is-past-day .current > div {
+    background: #d4a8bd !important;
+    border-color: #c58ca8 !important;
 }
 
 .booking-calendar-page .calendar-event-card {

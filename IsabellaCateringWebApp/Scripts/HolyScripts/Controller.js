@@ -526,6 +526,29 @@
         return month + '/' + day + '/' + year;
     }
 
+    function getStartOfCalendarDay(value) {
+        var date = resolveSearchDate(value);
+        if (!date) {
+            return null;
+        }
+
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function getCalendarToday() {
+        var today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    }
+
+    function isPastCalendarDate(value) {
+        var date = getStartOfCalendarDay(value);
+        if (!date) {
+            return false;
+        }
+
+        return date.getTime() < getCalendarToday().getTime();
+    }
+
     function formatCurrencySearch(value) {
         if (value == null || value === '') {
             return '';
@@ -1841,6 +1864,10 @@
         return convertTime(value);
     };
 
+    $scope.isCalendarSelectionUnavailable = function () {
+        return !selectedDate || isPastCalendarDate(selectedDate);
+    };
+
     function updateCalendarSearchDropdownPosition() {
         if (calendarSearchDropdownUpdateToken) {
             window.cancelAnimationFrame(calendarSearchDropdownUpdateToken);
@@ -2056,13 +2083,17 @@
         for (let i = 1; i <= daysInMonth; i++) {
             const dayString = `${year}-${month + 1}-${i}`;
             const isSelectedDay = selectedDate === dayString;
+            const isPastDay = isPastCalendarDate(new Date(year, month, i));
 
-            const dayClass = isSelectedDay
+            const dayClass = isPastDay
+                ? "flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-transparent bg-transparent text-gray-400"
+                : isSelectedDay
                 ? "flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-[#D6418B] hover:bg-[#EC4899] hover:border-2 hover:border-[#D6418B] hover:text-white bg-[#EC4899] text-white"
                 : "flex h-[38px] w-[38px] items-center justify-center rounded-md border-2 border-transparent hover:border-[#D6418B] hover:border-2 ";
 
-            const selectedDayClass = isSelectedDay ? "selected-day" : "";
-            daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full bg-white rounded-md border shadow-inner" data-date="${dayString}"></div></div>`;
+            const selectedDayClass = isSelectedDay && !isPastDay ? "selected-day" : "";
+            const pastDayClass = isPastDay ? "is-past-day" : "";
+            daysContainer.innerHTML += `<div class="calendar-day border-gray-400 border ${selectedDayClass} ${pastDayClass}" data-date="${dayString}"><div class="date-block ${dayClass}" data-date="${dayString}">${i}</div><div class="current w-full bg-white rounded-md border shadow-inner" data-date="${dayString}"></div></div>`;
         }
 
         for (let i = 1; i <= (42 - daysInMonth - firstDayOfMonth); i++) {
@@ -2136,8 +2167,11 @@
 
             if (pendingCalendarSelection) {
                 applyPendingCalendarSelection(Boolean(livePreviewDateKey === null));
-            } else if (selectedDate) {
+            } else if (selectedDate && !isPastCalendarDate(selectedDate)) {
                 applyCalendarSelection(selectedDate, highlightedBookingId, false, selectedDate === livePreviewDateKey);
+            } else if (selectedDate && isPastCalendarDate(selectedDate)) {
+                selectedDate = null;
+                highlightedBookingId = null;
             }
 
             $scope.calendarLoading = false;
@@ -2159,6 +2193,10 @@
         document.querySelectorAll('#days-container .calendar-day').forEach(day => {
             if (day.dataset && day.dataset.date) {
                 day.addEventListener('click', function () {
+                    if (isPastCalendarDate(this.dataset.date)) {
+                        return;
+                    }
+
                     commitCalendarSelectionState();
                     applyCalendarSelection(this.dataset.date, null, false, false);
                 });
@@ -2167,6 +2205,26 @@
     }
 
     $scope.addBooking = function () {
+        if (!selectedDate) {
+            Swal.fire({
+                title: "Select a Date",
+                text: "Please choose an available calendar date first.",
+                icon: "warning",
+                confirmButtonColor: "#EC4899"
+            });
+            return;
+        }
+
+        if (isPastCalendarDate(selectedDate)) {
+            Swal.fire({
+                title: "Date Unavailable",
+                text: "Past dates can no longer be used for new bookings.",
+                icon: "warning",
+                confirmButtonColor: "#EC4899"
+            });
+            return;
+        }
+
         IsabellaCateringWebAppService.checkCalendarAvailabilityService(selectedDate).then(function (response) {
             if (response.data.success) {
                 $scope.redirectToAddBookingPage();
