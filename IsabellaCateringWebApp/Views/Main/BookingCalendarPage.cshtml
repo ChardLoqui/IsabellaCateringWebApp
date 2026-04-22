@@ -141,6 +141,10 @@
                                       title="{{ result.eventName || ('Booking #' + result.bookingID) }}">{{ result.eventName || ('Booking #' + result.bookingID) }}</span>
                                 <span class="booking-calendar-search-item-id"
                                       ng-if="livePreviewBookingId !== (result.bookingID + '')">#{{ result.bookingID }}</span>
+                                <span ng-if="result.requestCancel == 1 && result.bookingCancelled == 0" 
+                                      class="ml-2 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 uppercase">
+                                    Cancellation Requested
+                                </span>
                             </span>
                             <span class="booking-calendar-search-item-meta"
                                   title="{{ result.bookingVenue || 'No venue' }}">{{ result.bookingVenue || 'No venue' }}</span>

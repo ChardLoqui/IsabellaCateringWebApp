@@ -1,0 +1,334 @@
+﻿@{
+    Layout = "~/Views/Shared/_LogInLayout.cshtml";
+    ViewBag.Title = "Isabella Catering - Event Packages";
+}
+
+<div class="min-h-screen bg-gray-50 font-['Montserrat'] text-gray-900" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
+    <!-- Hero Section -->
+    <header class="relative bg-pink-600 py-16 text-white shadow-lg">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-4xl font-bold md:text-5xl lg:text-6xl font-['Josefin_Sans']">Our Special Event Packages</h1>
+            <p class="mt-4 text-xl text-pink-100">Make your moments unforgettable with Isabella Catering</p>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent"></div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="sticky top-0 z-40 bg-white shadow-md">
+        <div class="container mx-auto px-6">
+            <div class="flex justify-center space-x-4 py-4 md:space-x-8">
+                <a href="#regular" class="border-b-2 border-transparent px-3 py-2 text-sm font-semibold uppercase tracking-wide text-gray-600 transition-colors duration-200 hover:border-pink-500 hover:text-pink-600 md:text-base">Regular</a>
+                <a href="#kiddie" class="border-b-2 border-transparent px-3 py-2 text-sm font-semibold uppercase tracking-wide text-gray-600 transition-colors duration-200 hover:border-pink-500 hover:text-pink-600 md:text-base">Kiddie</a>
+                <a href="#debut" class="border-b-2 border-transparent px-3 py-2 text-sm font-semibold uppercase tracking-wide text-gray-600 transition-colors duration-200 hover:border-pink-500 hover:text-pink-600 md:text-base">Debut</a>
+                <a href="#weddings" class="border-b-2 border-transparent px-3 py-2 text-sm font-semibold uppercase tracking-wide text-gray-600 transition-colors duration-200 hover:border-pink-500 hover:text-pink-600 md:text-base">Weddings</a>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-6 py-12">
+        
+        <!-- Regular Section -->
+        <section id="regular" class="mb-24 scroll-mt-24">
+            <div class="mb-8 flex items-center justify-between">
+                <h2 class="text-3xl font-bold text-gray-800 font-['Josefin_Sans'] border-b-4 border-pink-500 pb-2">Regular Packages</h2>
+                <div class="flex space-x-2">
+                    <button onclick="scrollSlider('regular-slider', -1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_left</span>
+                    </button>
+                    <button onclick="scrollSlider('regular-slider', 1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="regular-slider" class="scrollbar-hide flex space-x-6 overflow-x-auto scroll-smooth px-1 pb-4">
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1517457373958-b7bdd458ad20?auto=format&fit=crop&w=800&q=80" alt="Joy Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Joy Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">A delightful choice for simple yet elegant gatherings.</p>
+                        <button ng-click="openPackageCard('Joy (Regular Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1558636508-e0ee452cc4f1?auto=format&fit=crop&w=800&q=80" alt="Grace Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Grace Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">Infuse your event with grace and premium service.</p>
+                        <button ng-click="openPackageCard('Grace (Regular Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kiddie Section -->
+        <section id="kiddie" class="mb-24 scroll-mt-24">
+            <div class="mb-8 flex items-center justify-between">
+                <h2 class="text-3xl font-bold text-gray-800 font-['Josefin_Sans'] border-b-4 border-pink-500 pb-2">Kiddie Packages</h2>
+                <div class="flex space-x-2">
+                    <button onclick="scrollSlider('kiddie-slider', -1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_left</span>
+                    </button>
+                    <button onclick="scrollSlider('kiddie-slider', 1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="kiddie-slider" class="scrollbar-hide flex space-x-6 overflow-x-auto scroll-smooth px-1 pb-4">
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1530103043960-ef38714abb15?auto=format&fit=crop&w=800&q=80" alt="Cheerful Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Cheerful Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">A bright and happy celebration for the little ones.</p>
+                        <button ng-click="openPackageCard('Cheerful (Kiddie Party Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&q=80" alt="Brightest Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Brightest Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">The ultimate celebration for a child's milestone.</p>
+                        <button ng-click="openPackageCard('Brightest (Kiddie Party Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Debut Section -->
+        <section id="debut" class="mb-24 scroll-mt-24">
+            <div class="mb-8 flex items-center justify-between">
+                <h2 class="text-3xl font-bold text-gray-800 font-['Josefin_Sans'] border-b-4 border-pink-500 pb-2">Debut Packages</h2>
+                <div class="flex space-x-2">
+                    <button onclick="scrollSlider('debut-slider', -1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_left</span>
+                    </button>
+                    <button onclick="scrollSlider('debut-slider', 1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="debut-slider" class="scrollbar-hide flex space-x-6 overflow-x-auto scroll-smooth px-1 pb-4">
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&w=800&q=80" alt="Harmony Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Harmony Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">A harmonious transition to a beautiful new chapter.</p>
+                        <button ng-click="openPackageCard('Harmony (Debut Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80" alt="Precious Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Precious Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">For the precious moments of your grand celebration.</p>
+                        <button ng-click="openPackageCard('Precious (Debut Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1541250848049-b4f71413cc30?auto=format&fit=crop&w=800&q=80" alt="Majestic Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Majestic Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">The most grand and majestic celebration of all.</p>
+                        <button ng-click="openPackageCard('Majestic (Debut Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weddings Section -->
+        <section id="weddings" class="mb-24 scroll-mt-24">
+            <div class="mb-8 flex items-center justify-between">
+                <h2 class="text-3xl font-bold text-gray-800 font-['Josefin_Sans'] border-b-4 border-pink-500 pb-2">Wedding Packages</h2>
+                <div class="flex space-x-2">
+                    <button onclick="scrollSlider('wedding-slider', -1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_left</span>
+                    </button>
+                    <button onclick="scrollSlider('wedding-slider', 1)" class="rounded-full bg-white p-2 text-pink-600 shadow transition-colors hover:bg-pink-50">
+                        <span class="material-icons">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="wedding-slider" class="scrollbar-hide flex space-x-6 overflow-x-auto scroll-smooth px-1 pb-4">
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80" alt="Silver Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Silver Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">A classic and beautiful start to your forever.</p>
+                        <button ng-click="openPackageCard('Silver (Wedding Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=800&q=80" alt="Gold Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Gold Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">Add a touch of gold to your special day.</p>
+                        <button ng-click="openPackageCard('Gold (Wedding Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80" alt="Platinum Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Platinum Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">Exquisite luxury for an unforgettable union.</p>
+                        <button ng-click="openPackageCard('Platinum (Wedding Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="group min-w-[300px] overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl md:min-w-[350px]">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80" alt="Platinum High Package" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800">Platinum High Package</h3>
+                        <p class="mt-2 text-sm text-gray-600">The pinnacle of wedding celebrations.</p>
+                        <button ng-click="openPackageCard('Platinum High Class (Wedding Package)')" class="mt-6 w-full rounded-xl bg-pink-600 py-3 font-semibold text-white shadow-lg transition-all hover:bg-pink-700 active:scale-95">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Package Card Modal -->
+    <div ng-if="showPackageCardModal" class="z-[100] fixed inset-0 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="relative w-full max-w-2xl scale-100 overflow-hidden rounded-3xl bg-white opacity-100 shadow-2xl transition-all duration-300">
+            <!-- Close Button -->
+            <button ng-click="closePackageCardModal()" class="absolute right-4 top-4 z-10 rounded-full bg-gray-100 p-2 text-gray-500 transition-colors hover:bg-gray-200">
+                <span class="material-icons">close</span>
+            </button>
+
+            <div class="flex h-full flex-col md:flex-row">
+                <!-- Left Side: Visual -->
+                <div class="relative flex h-48 w-full items-center justify-center overflow-hidden bg-pink-600 md:h-auto md:w-2/5">
+                    <div class="absolute inset-0 z-10 bg-gradient-to-br from-pink-500/80 to-pink-700/80"></div>
+                    <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80" class="absolute inset-0 h-full w-full object-cover opacity-60" alt="Package Visual" />
+                    <div class="relative z-20 p-6 text-center text-white">
+                        <span class="material-icons mb-2 text-6xl">star</span>
+                        <h2 class="text-2xl font-bold font-['Josefin_Sans']">{{selectedPackageDetails.packageName}}</h2>
+                        <p class="mt-2 text-sm text-pink-100">Premium Experience</p>
+                    </div>
+                </div>
+
+                <!-- Right Side: Content -->
+                <div class="max-h-[80vh] flex-1 overflow-y-auto p-8">
+                    <div ng-if="packageCardLoading" class="flex h-64 flex-col items-center justify-center space-y-4">
+                        <div class="h-12 w-12 animate-spin rounded-full border-4 border-pink-500 border-t-transparent"></div>
+                        <p class="font-medium text-gray-500">Fetching details...</p>
+                    </div>
+
+                    <div ng-if="!packageCardLoading">
+                        <h3 class="text-2xl font-bold text-gray-800 font-['Josefin_Sans'] mb-4">Package Details</h3>
+                        
+                        <h4 class="mb-3 flex items-center text-lg font-semibold text-gray-800">
+                            <span class="material-icons mr-2 text-pink-500">list</span> Inclusions
+                        </h4>
+                        <ul class="grid grid-cols-1 gap-3">
+                            <li ng-repeat="item in selectedPackageDetails.inclusions" class="flex items-start rounded-xl border border-pink-100 bg-pink-50/50 p-3 transition-all hover:border-pink-300">
+                                <span class="material-icons mr-2 mt-0.5 text-sm text-pink-500">check_circle</span>
+                                <span class="text-sm font-medium text-gray-700">{{item}}</span>
+                            </li>
+                        </ul>
+
+                        <div class="mt-8 flex gap-3">
+                            <button ng-click="closePackageCardModal()" class="flex-1 rounded-xl bg-gray-100 py-3 font-semibold text-gray-600 transition-all hover:bg-gray-200 active:scale-95">
+                                Close
+                            </button>
+                            <a href="/Main/AddBookingPage" class="flex-1 rounded-xl bg-pink-600 py-3 text-center font-semibold text-white shadow-lg shadow-pink-200 transition-all hover:bg-pink-700 active:scale-95">
+                                Book Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 py-12 text-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-2xl font-bold font-['Josefin_Sans']">Isabella Catering</h2>
+            <p class="mt-2 text-gray-400">Exquisite catering for your life's best moments.</p>
+            <div class="mt-8 flex justify-center space-x-6">
+                <a href="#" class="text-gray-400 transition-colors hover:text-white"><span class="material-icons">facebook</span></a>
+                <a href="#" class="text-gray-400 transition-colors hover:text-white"><span class="material-icons">camera_alt</span></a>
+                <a href="#" class="text-gray-400 transition-colors hover:text-white"><span class="material-icons">email</span></a>
+            </div>
+            <div class="mt-8 border-t border-gray-800 pt-8 text-sm text-gray-500">
+                &copy; @DateTime.Now.Year Isabella Catering. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    function scrollSlider(id, direction) {
+        const slider = document.getElementById(id);
+        const cardWidth = slider.querySelector('div').offsetWidth + 24; // Width + spacing
+        slider.scrollLeft += direction * cardWidth;
+    }
+</script>
+
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+</style>

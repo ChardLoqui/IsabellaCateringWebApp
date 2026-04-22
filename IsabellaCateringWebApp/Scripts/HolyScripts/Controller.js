@@ -86,7 +86,7 @@
                     $scope.redirectToCustomerViewPage();
                 else
                     $scope.redirectToBookingCalendarPage();
-            }
+    th        }
         });
     }
     //======================================================== LOGIN START =======================================================
@@ -1176,6 +1176,13 @@
                             paxCount: res.data.paxCount,
                             addAdult: res.data.addAdult,
                             addKid: res.data.addKid,
+                            requestCancel: res.data.requestCancel,
+                            bookingCancelled: res.data.bookingCancelled,
+                            cancelNote: res.data.cancelNote,
+                            acceptedCancelNote: res.data.acceptedCancelNote,
+                            customerNote: res.data.customerNote,
+                            dateDeletion: convertDate(res.data.dateDeletion),
+                            dateCancelled: convertDate(res.data.dateCancelled)
                         };
 
                         $scope.steps = [
@@ -1363,24 +1370,131 @@
                     title: packageInfo.packageID ? ('Package ' + packageInfo.packageID) : '',
                     items: packageItems
                 };
-
-                $scope.recei
-
-                
             })
             .catch(function (err) {
                 console.error('Error loading booking', err);
                 $scope.order = null;
                 $scope.client = null;
                 $scope.package = null;
-            })
-            .finally(function () {
+            }).finally(function () {
                 $scope.orderLoading = false;
             });
+            };
+
+    $scope.requestCancellation = function () {
+        if (!$scope.editBookingID) {
+            Swal.fire({
+                title: 'Error',
+                text: 'No booking ID found.',
+                icon: 'error',
+                confirmButtonColor: '#EC4899'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Request Cancellation?',
+            text: "Please provide a reason for your cancellation request:",
+            input: 'textarea',
+            inputPlaceholder: 'Enter your reason here...',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ec4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Submit Request',
+            cancelButtonText: 'Cancel', width: '500px',
+            padding: '2em',
+
+            inputAttributes: {
+                style: 'width:100%; max-width:100%; margin:0 auto; display:block; box-sizing:border-box;'
+            }
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.requestCancellationService($scope.editBookingID, result.value).then(function (response) {
+                    if (response.data.success) {
+                        Swal.fire({
+                            title: 'Requested!',
+                            text: response.data.message || 'Cancellation request sent successfully.',
+                            icon: 'success',
+                            confirmButtonColor: '#ec4899'
+                        }).then(function () {
+                            $scope.getOrderInfo();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.data.message || 'Failed to send cancellation request.',
+                            icon: 'error',
+                            confirmButtonColor: '#ec4899'
+                        });
+                    }
+                }).catch(function (error) {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'An error occurred while sending the request.',
+                        icon: 'error',
+                        confirmButtonColor: '#ec4899'
+                    });
+                });
+            }
+        });
     };
 
+    $scope.approveCancellation = function () {
+        Swal.fire({
+            title: 'Approve Cancellation?',
+            text: "Are you sure you want to approve this cancellation? This will mark the booking as cancelled.",
+            input: 'textarea',
+            inputPlaceholder: 'Enter admin note (optional)...',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Approve',
+            cancelButtonText: 'Close'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.approveCancellationService($scope.editBookingID, result.value).then(function (response) {
+                    if (response.data.success) {
+                        Swal.fire('Approved!', response.data.message, 'success').then(function () {
+                            $scope.getOrderInfo();
+                        });
+                    } else {
+                        Swal.fire('Error!', response.data.message, 'error');
+                    }
+                });
+            }
+        });
+    };
 
-    //future Dates
+    $scope.rejectCancellation = function () {
+        Swal.fire({
+            title: 'Reject Cancellation?',
+            text: "Please provide a reason for rejecting the cancellation request:",
+            input: 'textarea',
+            inputPlaceholder: 'Enter reason for rejection...',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#4b5563',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Reject Request',
+            cancelButtonText: 'Close'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.rejectCancellationService($scope.editBookingID, result.value).then(function (response) {
+                    if (response.data.success) {
+                        Swal.fire('Rejected!', response.data.message, 'success').then(function () {
+                            $scope.getOrderInfo();
+                        });
+                    } else {
+                        Swal.fire('Error!', response.data.message, 'error');
+                    }
+                });
+            }
+        });
+    };
+
+            //future Dates
     var tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -4733,7 +4847,7 @@
     };
 
 
-    $scope.buffetOpt = ['None', 'Elegant Buffet Set - up and Buffet Centerpiece']
+    $scope.buffetOpt = ['None', 'f Buffet Set - up and Buffet Centerpiece']
     $scope.selectBuffetType = function (type, id) {
         $scope.buffetType = type;
         $scope.activeDropdown = null;
@@ -5221,6 +5335,103 @@
     
 
     //====================================================== CLICK OUTSIDE DIRECTIVE END ======================================================
+
+    //====================================================== PACKAGE CARD START ======================================================
+
+    $scope.showPackageCardModal = false;
+    $scope.selectedPackageDetails = null;
+    $scope.packageCardLoading = false;
+
+    $scope.openPackageCard = function (packageName) {
+        $scope.packageCardLoading = true;
+        $scope.showPackageCardModal = true;
+        $scope.selectedPackageDetails = { packageName: packageName };
+
+        IsabellaCateringWebAppService.getPackageCardDetailsService(packageName).then(function (returnedData) {
+            if (returnedData.data.success) {
+                $scope.selectedPackageDetails = returnedData.data;
+            } else {
+                Swal.fire({
+                    title: "Error",
+                    text: returnedData.data.message || "Failed to load package details.",
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
+                });
+                $scope.closePackageCardModal();
+            }
+            $scope.packageCardLoading = false;
+        }, function () {
+            Swal.fire({
+                title: "Error",
+                text: "An unexpected error occurred.",
+                icon: "error",
+                confirmButtonColor: "#EC4899"
+            });
+            $scope.packageCardLoading = false;
+            $scope.closePackageCardModal();
+        });
+    };
+
+    $scope.closePackageCardModal = function () {
+        $scope.showPackageCardModal = false;
+        $scope.selectedPackageDetails = null;
+    };
+
+    //====================================================== PACKAGE CARD END ======================================================
+
+    //======================================================== LANDING PAGE START ========================================================
+
+    $scope.eventPackages = [];
+    $scope.regularPackages = [];
+    $scope.kiddiePackages = [];
+    $scope.weddingPackages = [];
+    $scope.debutPackages = [];
+
+    $scope.initLandingPage = function () {
+        IsabellaCateringWebAppService.getEventPackagesService().then(function (response) {
+            $scope.eventPackages = response.data;
+            $scope.regularPackages = $scope.eventPackages.filter(p => p.Category === 'regular');
+            $scope.kiddiePackages = $scope.eventPackages.filter(p => p.Category === 'kiddie');
+            $scope.weddingPackages = $scope.eventPackages.filter(p => p.Category === 'wedding');
+            $scope.debutPackages = $scope.eventPackages.filter(p => p.Category === 'debut');
+        }, function (error) {
+            console.error("Error loading packages:", error);
+        });
+    };
+
+    $scope.scrollPackages = function (id, direction) {
+        const slider = document.getElementById(id);
+        if (slider) {
+            const card = slider.querySelector('div');
+            if (card) {
+                const cardWidth = card.offsetWidth + 24; // Width + spacing
+                slider.scrollLeft += direction * cardWidth;
+            }
+        }
+    };
+
+    $scope.selectedPackage = null;
+    $scope.isModalOpen = false;
+
+    $scope.openPackageModal = function (pkg) {
+        $scope.selectedPackage = pkg;
+        $scope.isModalOpen = true;
+        document.body.style.overflow = 'hidden';
+    };
+
+    $scope.closePackageModal = function () {
+        $scope.isModalOpen = false;
+        $scope.selectedPackage = null;
+        document.body.style.overflow = 'auto';
+    };
+
+    $scope.handleModalBackgroundClick = function (event) {
+        if (event.target.id === 'packageModal') {
+            $scope.closePackageModal();
+        }
+    };
+
+    //======================================================== LANDING PAGE END ========================================================
 
 
 });

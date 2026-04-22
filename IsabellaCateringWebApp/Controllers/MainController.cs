@@ -58,6 +58,8 @@ namespace IsabellaCateringWebApp.Controllers
             public int PaxCount { get; set; }
             public int AddAdult { get; set; }
             public int AddKid { get; set; }
+            public int RequestCancel { get; set; }
+            public int BookingCancelled { get; set; }
         }
 
         private static string NormalizeCalendarSearchValue(string value)
@@ -196,6 +198,22 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+
+        public ActionResult LandingPage()
+        {
+            return View();
+        }
+
+        public class EventPackage
+        {
+            public string Category { get; set; }
+            public string Title { get; set; }
+            public string Description { get; set; }
+            public string Image { get; set; }
+            public List<string> Features { get; set; }
+        }
+
+
         public ActionResult LoginPage()
         {
             return View();
@@ -1309,37 +1327,42 @@ namespace IsabellaCateringWebApp.Controllers
                                         CelebrantTwoLastName = client != null ? client.cCeleb2LName : string.Empty,
                                         PaxCount = booking.paxCount,
                                         AddAdult = booking.addAdult,
-                                        AddKid = booking.addKid
-                                    })
-                                    .ToList();
+                                        AddKid = booking.addKid,
+                                        RequestCancel = booking.requestCancel,
+                                        BookingCancelled = booking.bookingCancelled
+                                        })
+                                        .ToList();
 
-                    var results = bookings
-                        .Select(booking => new
-                        {
-                            booking.BookingID,
-                            booking.BookingDate,
-                            booking.BookingVenue,
-                            booking.EventName,
-                            booking.EventTime,
-                            Score = GetCalendarSearchScore(booking, normalizedQuery)
-                        })
-                        .Where(booking => booking.Score > 0)
-                        .OrderByDescending(booking => booking.Score)
-                        .ThenBy(booking => Math.Abs((booking.BookingDate.Date - DateTime.Today).Days))
-                        .ThenBy(booking => booking.BookingDate)
-                        .ThenBy(booking => booking.BookingID)
-                        .Take(8)
-                        .Select(booking => new
-                        {
-                            bookingID = booking.BookingID,
-                            bookingDate = booking.BookingDate,
-                            dateKey = booking.BookingDate.Year + "-" + booking.BookingDate.Month + "-" + booking.BookingDate.Day,
-                            bookingVenue = booking.BookingVenue,
-                            eventName = booking.EventName,
-                            eventTime = booking.EventTime
-                        })
-                        .ToList();
-
+                                        var results = bookings
+                                        .Select(booking => new
+                                        {
+                                        booking.BookingID,
+                                        booking.BookingDate,
+                                        booking.BookingVenue,
+                                        booking.EventName,
+                                        booking.EventTime,
+                                        booking.RequestCancel,
+                                        booking.BookingCancelled,
+                                        Score = GetCalendarSearchScore(booking, normalizedQuery)
+                                        })
+                                        .Where(booking => booking.Score > 0)
+                                        .OrderByDescending(booking => booking.Score)
+                                        .ThenBy(booking => Math.Abs((booking.BookingDate.Date - DateTime.Today).Days))
+                                        .ThenBy(booking => booking.BookingDate)
+                                        .ThenBy(booking => booking.BookingID)
+                                        .Take(8)
+                                        .Select(booking => new
+                                        {
+                                        bookingID = booking.BookingID,
+                                        bookingDate = booking.BookingDate,
+                                        dateKey = booking.BookingDate.Year + "-" + booking.BookingDate.Month + "-" + booking.BookingDate.Day,
+                                        bookingVenue = booking.BookingVenue,
+                                        eventName = booking.EventName,
+                                        eventTime = booking.EventTime,
+                                        requestCancel = booking.RequestCancel,
+                                        bookingCancelled = booking.BookingCancelled
+                                        })
+                                        .ToList();
                     return Json(new { success = true, bookingData = results }, JsonRequestBehavior.AllowGet);
                 }
             }
@@ -1664,6 +1687,100 @@ namespace IsabellaCateringWebApp.Controllers
                 "Booking Management:",
                 "Attempted to get package option. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult getPackageCardDetails(string packageName)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    // 1. Find the package type by name (packageTypDesc)
+                    var packageType = db.packagetypes_tbl
+                        .FirstOrDefault(x => x.packageTypDesc.Equals(packageName, StringComparison.OrdinalIgnoreCase));
+
+                    if (packageType == null)
+                    {
+                        return Json(new { success = false, message = "Package not found in database." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // 2. Get the corresponding package details from packages_tbl
+                    var packageDetails = db.packages_tbl
+                        .FirstOrDefault(x => x.packageTypID == packageType.packageTypID);
+
+                    if (packageDetails == null)
+                    {
+                        return Json(new { success = false, message = "Package details not found in database." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // 3. Fetch descriptions from linked tables to build dynamic inclusions
+                    var inclusions = new List<string>();
+
+                    // Main Course
+                    if (packageDetails.mainCourseTypID.HasValue)
+                    {
+                        var mainCourse = db.maincoursetypes_tbl.Find(packageDetails.mainCourseTypID);
+                        if (mainCourse != null) inclusions.Add("Main Course: " + mainCourse.mainCourseTypDesc);
+                    }
+
+                    // Centerpiece
+                    if (packageDetails.centerPieceTypID.HasValue)
+                    {
+                        var cp = db.centerpiecetypes_tbl.Find(packageDetails.centerPieceTypID);
+                        if (cp != null) inclusions.Add("Centerpiece: " + cp.centerPieceTypDesc);
+                    }
+
+                    // Seating
+                    if (packageDetails.seatingTypID.HasValue)
+                    {
+                        var seat = db.seatingtypes_tbl.Find(packageDetails.seatingTypID);
+                        if (seat != null) inclusions.Add("Seating: " + seat.seatingTypDesc);
+                    }
+
+                    // Backdrop
+                    if (packageDetails.backdropTypID.HasValue)
+                    {
+                        var bd = db.backdroptypes_tbl.Find(packageDetails.backdropTypID);
+                        if (bd != null) inclusions.Add("Backdrop: " + bd.backdropTypDesc);
+                    }
+
+                    // Couch
+                    if (packageDetails.couchTypID.HasValue)
+                    {
+                        var couch = db.couchtypes_tbl.Find(packageDetails.couchTypID);
+                        if (couch != null) inclusions.Add("Couch: " + couch.couchTypDesc);
+                    }
+
+                    // Entrance
+                    if (packageDetails.entranceTypID.HasValue)
+                    {
+                        var ent = db.entrancetypes_tbl.Find(packageDetails.entranceTypID);
+                        if (ent != null) inclusions.Add("Entrance: " + ent.entranceTypDesc);
+                    }
+
+                    // Standard string-based inclusions from packages_tbl
+                    if (!string.IsNullOrEmpty(packageDetails.incStaples)) inclusions.Add(packageDetails.incStaples);
+                    if (!string.IsNullOrEmpty(packageDetails.incStyling)) inclusions.Add(packageDetails.incStyling);
+                    if (!string.IsNullOrEmpty(packageDetails.incTableSet)) inclusions.Add(packageDetails.incTableSet);
+                    if (!string.IsNullOrEmpty(packageDetails.incDnrWare)) inclusions.Add(packageDetails.incDnrWare);
+                    if (!string.IsNullOrEmpty(packageDetails.incBftSet)) inclusions.Add(packageDetails.incBftSet);
+
+                    return Json(new
+                    {
+                        success = true,
+                        packageName = packageType.packageTypDesc,
+                        description = packageType.packageSet ?? "Exquisite catering for your special event.",
+                        inclusions = inclusions,
+                        message = "Package details retrieved successfully from database!"
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs("ERROR", "Package Card:", "Error fetching package details: " + ex.Message);
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -2189,6 +2306,117 @@ namespace IsabellaCateringWebApp.Controllers
                 "Bookings Management:",
                 "Attempted to delete bookings. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RequestCancellation(int bookingID, string customerNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 1;
+                    booking.customerNote = customerNote;
+                    booking.dateCancelled = DateTime.Now;
+
+                    var newTask = new tblTasksModel()
+                    {
+                        bookingID = bookingID,
+                        task = "Cancellation Request",
+                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
+                        dueDate = DateTime.Now.AddDays(1),
+                        status = "Pending",
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.tasks_tbl.Add(newTask);
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation requested for bookingID: {bookingID}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request sent successfully. Our team will contact you soon." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to request cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ApproveCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.bookingCancelled = 1;
+                    booking.requestCancel = 0;
+                    booking.acceptedCancelNote = adminNote;
+                    booking.dateDeletion = DateTime.Now;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation APPROVED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation approved successfully." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to approve cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RejectCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 0;
+                    booking.cancelNote = adminNote;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation REJECTED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request rejected." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
             }
         }
 

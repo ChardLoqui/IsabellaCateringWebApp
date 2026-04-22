@@ -18,6 +18,54 @@
         </div>
 
         <div ng-if="!orderLoading && order" class="management-content-fade">
+            <!-- Cancellation Request Alert -->
+            <section ng-if="order.requestCancel == 1 && order.bookingCancelled == 0" class="mb-4 rounded-lg border-2 border-red-200 bg-red-50 p-5 shadow-sm">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
+                            <span class="material-symbols-outlined text-2xl">event_busy</span>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-red-900">Cancellation Requested</h2>
+                            <p class="text-sm text-red-700">
+                                The customer has requested to cancel this booking.
+                            </p>
+                            <p ng-if="order.customerNote" class="mt-2 rounded bg-white p-2 text-sm italic text-gray-700 border border-red-100">
+                                " {{ order.customerNote }} "
+                            </p>
+                            <p class="mt-1 text-xs text-red-500">
+                                Requested on: {{ order.dateCancelled }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button"
+                                ng-click="approveCancellation()"
+                                class="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-red-700 active:scale-95">
+                            <span class="material-symbols-outlined text-base">check_circle</span>
+                            Approve
+                        </button>
+                        <button type="button"
+                                ng-click="rejectCancellation()"
+                                class="flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-gray-700 border border-gray-200 transition-all hover:bg-gray-50 active:scale-95">
+                            <span class="material-symbols-outlined text-base">cancel</span>
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cancellation Confirmed Status -->
+            <section ng-if="order.bookingCancelled == 1" class="mb-4 rounded-lg border border-gray-300 bg-gray-100 p-5 opacity-75">
+                <div class="flex items-center gap-4 text-gray-600">
+                    <span class="material-symbols-outlined text-3xl">block</span>
+                    <div>
+                        <h2 class="text-lg font-bold">Booking Cancelled</h2>
+                        <p class="text-sm">This booking was cancelled on {{ order.dateDeletion }}.</p>
+                    </div>
+                </div>
+            </section>
+
         <section class="management-surface mt-4 rounded-lg p-5">
             <div class="flex flex-col gap-2 border-b border-gray-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>

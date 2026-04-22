@@ -116,6 +116,12 @@
         return $http.get("/Main/getPackageBookingOptions");
     }
 
+    this.getPackageCardDetailsService = function (packageName) {
+        return $http.get("/Main/getPackageCardDetails", {
+            params: { packageName: packageName }
+        });
+    }
+
     this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
         return $http.post("/Main/insertPackage", {
             clientInfo: clientInfo,
@@ -159,6 +165,27 @@
     this.loadPackagePreOptionService = function (packageID) {
         return $http.get("/Main/loadPackagePreOption", {
             params: { packageID: packageID }
+        });
+    }
+
+    this.requestCancellationService = function (bookingID, customerNote) {
+        return $http.post("/Main/RequestCancellation", {
+            bookingID: bookingID,
+            customerNote: customerNote
+        });
+    }
+
+    this.approveCancellationService = function (bookingID, adminNote) {
+        return $http.post("/Main/ApproveCancellation", {
+            bookingID: bookingID,
+            adminNote: adminNote
+        });
+    }
+
+    this.rejectCancellationService = function (bookingID, adminNote) {
+        return $http.post("/Main/RejectCancellation", {
+            bookingID: bookingID,
+            adminNote: adminNote
         });
     }
 
@@ -252,5 +279,9 @@
 
 
     //========================================================PAYMENT REMINDER END=======================================================
+
+    this.getEventPackagesService = function () {
+        return $http.get("/Main/GetEventPackages");
+    }
 });
 
