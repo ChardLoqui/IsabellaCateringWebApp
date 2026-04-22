@@ -86,7 +86,7 @@
                     $scope.redirectToCustomerViewPage();
                 else
                     $scope.redirectToBookingCalendarPage();
-    th        }
+            }
         });
     }
     //======================================================== LOGIN START =======================================================

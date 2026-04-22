@@ -28,14 +28,69 @@ namespace IsabellaCateringWebApp.Controllers
 {
     public class MainController : Controller
     {
-        private class PasswordResetRequestResult
+     
+
+        //===================================================================Pages Start==================================================================
+        public ActionResult HomePage()
         {
-            public bool Success { get; set; }
-            public bool HasActiveToken { get; set; }
-            public int? OwnerId { get; set; }
-            public string Message { get; set; }
+            return View();
         }
 
+        public ActionResult LandingPage()
+        {
+            return View();
+        }
+
+
+        public ActionResult LoginPage()
+        {
+            return View();
+        }
+        public ActionResult AccountsPage()
+        {
+            return View();
+        }
+        public ActionResult LogsPage()
+        {
+            return View();
+        }
+
+        public ActionResult ChangePassPage()
+        {
+            return View();
+        }
+
+        public ActionResult ForgetPassPage()
+        {
+            return View();
+        }
+
+        public ActionResult CustomerViewPage()
+        {
+            return View();
+        }
+
+        public ActionResult AddBookingPage()
+        {
+            return View();
+        }
+        public ActionResult BookingCalendarPage()
+        {
+            return View();
+        }
+
+        public ActionResult PaymentReminderPage()
+        {
+            return View();
+        }
+        public ActionResult AdminViewPage()
+        {
+            return View();
+        }
+
+        //===================================================================Pages End==================================================================
+
+        //===================================================================Booking Calendar Start==================================================================
         private class CalendarSearchBookingRow
         {
             public int BookingID { get; set; }
@@ -193,354 +248,6 @@ namespace IsabellaCateringWebApp.Controllers
             return haystack.Contains(query) ? 10 : 0;
         }
 
-        // GET: Main
-        public ActionResult HomePage()
-        {
-            return View();
-        }
-
-        public ActionResult LandingPage()
-        {
-            return View();
-        }
-
-        public class EventPackage
-        {
-            public string Category { get; set; }
-            public string Title { get; set; }
-            public string Description { get; set; }
-            public string Image { get; set; }
-            public List<string> Features { get; set; }
-        }
-
-
-        public ActionResult LoginPage()
-        {
-            return View();
-        }
-        public ActionResult AccountsPage()
-        {
-            return View();
-        }
-        public ActionResult LogsPage()
-        {
-            return View();
-        }
-
-        public ActionResult ChangePassPage()
-        {
-            return View();
-        }
-
-        public ActionResult ForgetPassPage()
-        {
-            return View();
-        }
-
-        public ActionResult CustomerViewPage()
-        {
-            return View();
-        }
-
-        public ActionResult AddBookingPage()
-        {
-            return View();
-        }
-        public ActionResult BookingCalendarPage()
-        {
-            return View();
-        }
-
-        public ActionResult PaymentReminderPage()
-        {
-            return View();
-        }
-        public ActionResult AdminViewPage()
-        {
-            return View();
-        }
-        public JsonResult Logs(string level, string processService, string processDesc)
-        {
-            try
-            {
-                string traceId = Guid.NewGuid().ToString();
-                string email = "";
-                if (Session["currentLog"]?.ToString() != "" && Session["currentLog"]?.ToString() != null)
-                {
-                    int uID = int.Parse(Session["currentLog"].ToString());
-                    int pID = int.Parse(Session["currentPerm"].ToString());
-                    using (var db = new IsabellaCateringContext())
-                    {
-                        
-                        var permission = db.permissions_tbl.Where(x => x.permissionID == pID).FirstOrDefault();
-                        if (Session["currentPerm"].ToString() == "3")
-                        {
-                            var client = db.clients_tbl.Where(x => x.clientID == uID).FirstOrDefault();
-                            if (client != null)
-                            {
-                                email = client.cEmail;
-
-                                return Json(new { succes = setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "Logs has been added!" }, JsonRequestBehavior.AllowGet);
-                            }
-                            else
-                            {
-                                uID = 0;
-                                email = "blank";
-                                level = "WARN";
-                                processDesc = "Accessed without credentials!";
-
-                                return Json(new { succes = setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
-                            }
-                        }
-                        else
-                        {
-                            var user = db.users_tbl.Where(x => x.userID == uID).FirstOrDefault();
-                            if (user != null)
-                            {
-                                email = user.email;
-
-                                return Json(new { succes = !setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "Logs has been added!" }, JsonRequestBehavior.AllowGet);
-                            }
-                            else
-                            {
-                                uID = 0;
-                                email = "blank";
-                                level = "WARN";
-                                processDesc = "Accessed without credentials!";
-
-                                return Json(new { succes = !setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    int uID = 0;
-                    string permission = "NULL";
-                    email = "blank";
-                    level = "WARN";
-                    processDesc = "Accessed without credentials!" + processDesc;
-
-                    return Json(new { succes = !setLog(uID, permission, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
-                }
-            }
-            catch (Exception ex)
-            {
-
-                return Json(new { succes = false, message = "Logs failed!"+ex.Message }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        public Boolean setLog(int uID, string permission, string uEmail, string level, string procServ, string procDesc, string trace)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-
-
-                    var newLog = new tblActivityLogsModel()
-                    {
-                        userID = uID,
-                        permission = permission,
-                        userEmail = uEmail,
-                        level = level,
-                        processService = procServ,
-                        processDesc = procDesc,
-                        traceID = trace,
-                        dateCreated = DateTime.UtcNow
-                    };
-
-                    db.activitylogs_tbl.Add(newLog);
-                    db.SaveChanges();
-                }
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        // get creds for login
-        public JsonResult JsonLogGetCreds(tblUsersModel userInfo, tblClientsModel clientInfo, string isGuest)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    if (isGuest == "True")
-                    {
-
-
-                        var verify = db.clients_tbl.Where(x => x.entryCode.Equals(clientInfo.entryCode)).FirstOrDefault();
-                        if (verify == null)
-                        {
-                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet);
-                        }
-
-                        if (verify.password == "0")
-                        {
-                            var resetResult = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
-                            var detailMessage = resetResult.Success
-                                ? "Check your email for a password reset link!"
-                                : resetResult.HasActiveToken
-                                    ? "A reset link is already active. Please check your email."
-                                    : resetResult.Message ?? "We could not send a reset link. Please contact us.";
-
-                            return Json(new
-                            {
-                                success = false,
-                                requiresPasswordChange = true,
-                                message = "Please change your password first!",
-                                detail = detailMessage
-                            }, JsonRequestBehavior.AllowGet);
-                        }
-
-                        if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
-                        {
-                            var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
-
-                            waitTime = waitTime == 0 ? 1 : waitTime;
-
-                            return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
-                        }
-                        else if (verify.password == clientInfo.password)
-                        {
-                            verify.attempts = 0;
-                            verify.lockoutEnd = null;
-                            db.SaveChanges();
-
-                            var creds = new tblClientsModel()
-                            {
-                                clientID = verify.clientID,
-                                permissionID = verify.permissionID,
-                                receiptID = verify.receiptID
-                            };
-
-                            var receipt = db.bookingreceipts_tbl.Where(x => x.receiptID.Equals(creds.receiptID)).FirstOrDefault();
-                            if (receipt != null)
-                            {
-                                Session["currentLog"] = creds.clientID.ToString();
-                                Session["currentPerm"] = creds.permissionID.ToString();
-                                Session["isGuest"] = "True";
-                                Session["currentBooking"] = receipt.bookingID.ToString();
-
-                                Logs(
-                                "INFO",
-                                "ICMS Login:",
-                                "Account Logged In");
-                                return Json(new { success = true, data = creds, isGuest = true }, JsonRequestBehavior.AllowGet);
-                            }
-                            else
-                            {
-                                return Json(new { success = false, message = "Receipt not found! Please contact us!" }, JsonRequestBehavior.AllowGet);
-                            }
-                        }
-                        else
-                        {
-                            verify.attempts += 1;
-
-                            if (verify.attempts >= 3)
-                            {
-                                verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
-                                db.SaveChanges();
-
-                                Logs(
-                                "WARN",
-                                "ICMS Login:",
-                                "Attempted to Login with multiple incorrect attempts. \"Account Locked\"");
-                                return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
-                            }
-
-                            db.SaveChanges();
-                            
-                            int attemptsLeft = 3 - verify.attempts;
-                            Logs(
-                                "WARN",
-                                "ICMS Login:",
-                                $"Attempted to Login with incorrect attempts. Invalid password. {attemptsLeft} attempts remaining.");
-                            return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
-                        }
-                    }
-                    else
-                    {
-
-                        var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
-
-                        if (verify.isActive != 1)
-                        {
-                            return Json(new { success = false, message = "Account Disabled! Please contact the administrators for account activation" }, JsonRequestBehavior.AllowGet);
-                        }
-
-                        if (verify == null)
-                        {
-                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet);
-                        }
-
-                        if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
-                        {
-                            var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
-
-                            waitTime = waitTime == 0 ? 1 : waitTime;
-
-                            return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
-                        }
-                        else if (verify.password == userInfo.password)
-                        {
-                            verify.attempts = 0;
-                            verify.lockoutEnd = null;
-                            db.SaveChanges();
-
-                            var creds = new tblUsersModel()
-                            {
-                                userID = verify.userID,
-                                permissionID = verify.permissionID
-                            };
-                            Session["currentLog"] = creds.userID.ToString();
-                            Session["currentPerm"] = creds.permissionID.ToString();
-                            Session["isGuest"] = "False";
-
-                            Logs(
-                                "INFO",
-                                "ICMS Login:",
-                                "Account Logged In");
-                            return Json(new { success = true, data = creds, isGuest = false }, JsonRequestBehavior.AllowGet);
-                        }
-                        else
-                        {
-                            verify.attempts += 1;
-
-                            if (verify.attempts >= 3)
-                            {
-                                verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
-                                db.SaveChanges();
-                                Logs(
-                                "WARN",
-                                "ICMS Login:",
-                                "Attempted to Login with multiple incorrect attempts. \"Account Locked\"");
-                                return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
-                            }
-
-                            db.SaveChanges();
-
-                            int attemptsLeft = 3 - verify.attempts;
-                            Logs(
-                                "WARN",
-                                "ICMS Login:",
-                                $"Attempted to Login with incorrect attempts. Invalid password. {attemptsLeft} attempts remaining.");
-                            return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentException($"There is an ERROR while upserting in database +++{ex.Message}+++ : +++{ex.StackTrace}+++ : +++{ex.InnerException}+++");
-            }
-        }
-        //get current session
-
         public JsonResult setBookingView(int bookingID)
         {
             try
@@ -558,592 +265,11 @@ namespace IsabellaCateringWebApp.Controllers
                 "LETHAL",
                 "Booking View:",
                 "Attempted to request set booking view. " + ex.Message + "" + ex.InnerException);
-                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
             }
 
         }
-        public JsonResult getCurrentSession()
-        {
-            try
-            {
-                var creds = new
-                {
-                    userID = Session["currentLog"]?.ToString() ?? string.Empty,
-                    permID = Session["currentPerm"]?.ToString() ?? string.Empty,
-                    selectedDate = Session["bookingSelectedDate"]?.ToString() ?? string.Empty,
-                    isGuest = Session["isGuest"]?.ToString() ?? string.Empty,
-                    bookingID = Session["currentBooking"]?.ToString() ?? string.Empty
-                };
-                return Json(creds, JsonRequestBehavior.AllowGet);
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                "LETHAL",
-                "ICMS:",
-                "Attempted to get session. " + ex.Message + "" + ex.InnerException);
-                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
-            }
-        }
 
-        //for navbar (test)
-        public JsonResult getCurrentSessionNav()
-        {
-            var uID = Session["currentLog"]?.ToString();
-            var pID = Session["currentPerm"]?.ToString() ?? "";
-            var isG = Session["isGuest"]?.ToString();
-            string uName = "Loading..";
-
-            if (!string.IsNullOrEmpty(uID))
-            {
-                if (isG == "True")
-                {
-                    int id = int.Parse(uID);
-                    using (var db = new IsabellaCateringContext())
-                    {
-                        var user = db.clients_tbl.FirstOrDefault(x => x.clientID == id);
-                        if (user != null) uName = $"{user.cFName} {user.cLName}";
-                    }
-                }
-                else
-                {
-                    int id = int.Parse(uID);
-                    using (var db = new IsabellaCateringContext())
-                    {
-                        var user = db.users_tbl.FirstOrDefault(x => x.userID == id);
-                        if (user != null) uName = $"{user.firstName} {user.lastName}";
-                    }
-                }
-
-            }
-            return Json(new
-            {
-                userID = uID,
-                userName = uName,
-                permID = pID,
-                isGuest = isG
-            }, JsonRequestBehavior.AllowGet);
-        }
-
-        //bago, to add user
-        [HttpPost]
-        public JsonResult usrInfo(tblUsersModel userData)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var userInfo = new tblUsersModel()
-                    {
-                        permissionID = userData.permissionID,
-                        firstName = userData.firstName,
-                        lastName = userData.lastName,
-                        email = userData.email,
-                        password = userData.password,
-                        isActive = userData.isActive,
-                        dateCreated = DateTime.Now,
-                        dateUpdated = DateTime.Now
-                    };
-
-                    db.users_tbl.Add(userInfo);
-                    db.SaveChanges();
-                    Logs(
-                    "INFO",
-                    "Account Management:",
-                    $"New account has been registered with userID: {userInfo.userID}");
-                }
-
-                return Json(new { success = true, message = "Saved successfully!" }, JsonRequestBehavior.AllowGet);
-            }
-            catch (Exception ex)
-            {
-                string realError = ex.Message;
-                if (ex.InnerException != null)
-                {
-                    realError = ex.InnerException.Message;
-                    if (ex.InnerException.InnerException != null)
-                    {
-                        realError = ex.InnerException.InnerException.Message;
-                    }
-                }
-
-                return Json(new { success = false, message = realError }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        public JsonResult GetUsers()
-        {
-            using (var db = new IsabellaCateringContext())
-            {
-                // Project into an anonymous object first
-                var data = db.users_tbl.Select(u => new
-                {
-                    userID = u.userID,
-                    permissionID = u.permissionID,
-                    firstName = u.firstName,
-                    lastName = u.lastName,
-                    email = u.email,
-                    isActive = u.isActive,
-                    dateCreated = u.dateCreated,
-                    dateUpdated = u.dateUpdated
-                }).ToList(); // Execution happens here
-
-                return Json(data, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        public JsonResult logOut()
-        {
-            try
-            {
-                Logs(
-                    "INFO",
-                    "ICMS:",
-                    "Account Logged Out.");
-
-                Session.Clear();
-                Session.Abandon();
-                return Json(new { success = true, message = "Logout Success" }, JsonRequestBehavior.AllowGet);
-
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                    "LETHAL",
-                    "ICMS:",
-                    "Attempted to log out. "+ex.Message+" "+ex.InnerException);
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
-            }
-        }
-
-        //token generation
-        public string GenerateToken()
-        {
-            byte[] bytes = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(bytes);
-            }
-            return Convert.ToBase64String(bytes);
-        }
-
-        public string HashToken(string token)
-        {
-            using (var sha = SHA256.Create())
-            {
-                byte[] bytes = Encoding.UTF8.GetBytes(token);
-                byte[] hash = sha.ComputeHash(bytes);
-                return Convert.ToBase64String(hash);
-            }
-        }
-
-        private string NormalizePasswordResetToken(string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                return null;
-            }
-
-            return token.Trim().Replace(" ", "+");
-        }
-
-        private void RemoveExpiredPasswordResetTokens(IsabellaCateringContext db, DateTime now)
-        {
-            var expiredTokens = db.passwordtokens_tbl
-                .Where(x => x.dateExpiry < now)
-                .ToList();
-
-            if (expiredTokens.Any())
-            {
-                db.passwordtokens_tbl.RemoveRange(expiredTokens);
-                db.SaveChanges();
-            }
-        }
-
-        private string BuildPasswordResetLink(string token)
-        {
-            if (Request != null && Request.Url != null)
-            {
-                return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
-            }
-
-            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
-        }
-
-        private void SendPasswordResetEmail(string recipientEmail, string token)
-        {
-            if (string.IsNullOrWhiteSpace(recipientEmail))
-            {
-                throw new InvalidOperationException("No email address is available for password reset.");
-            }
-
-            var pickupDirectory = @"C:\Emails";
-            Directory.CreateDirectory(pickupDirectory);
-
-            using (var smtp = new SmtpClient())
-            using (var mail = new MailMessage())
-            {
-                smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-                smtp.PickupDirectoryLocation = pickupDirectory;
-
-                mail.From = new MailAddress("no-reply@localhost");
-                mail.To.Add(recipientEmail);
-                mail.Subject = "Reset Password";
-                mail.Body = "Your Password Reset Link " + BuildPasswordResetLink(token);
-
-                smtp.Send(mail);
-            }
-            Logs(
-                "INFO",
-                "Password Reset:",
-                "Request password token created.");
-            Logs(
-                "INFO",
-                "Password Reset:",
-                $"Request password link created and sent to email. Email Address: {recipientEmail}");
-        }
-
-        private PasswordResetRequestResult CreatePasswordResetRequest(IsabellaCateringContext db, int userId, int clientId, string recipientEmail)
-        {
-            if (userId <= 0 && clientId <= 0)
-            {
-                return new PasswordResetRequestResult
-                {
-                    Success = false,
-                    Message = "No account was found for password reset."
-                };
-            }
-            
-
-            if (string.IsNullOrWhiteSpace(recipientEmail))
-            {
-                return new PasswordResetRequestResult
-                {
-                    Success = false,
-                    OwnerId = userId > 0 ? userId : clientId,
-                    Message = "The account does not have a valid email address."
-                };
-            }
-
-            var now = DateTime.UtcNow;
-            RemoveExpiredPasswordResetTokens(db, now);
-
-            var hasActiveToken = userId > 0
-                ? db.passwordtokens_tbl.Any(x => x.userID == userId && x.dateExpiry > now)
-                : db.passwordtokens_tbl.Any(x => x.clientID == clientId && x.dateExpiry > now);
-
-            Logs(
-                "WARN",
-                "Password Reset:",
-                "Expired password reset token has been removed.");
-
-            if (hasActiveToken)
-            {
-                return new PasswordResetRequestResult
-                {
-                    Success = false,
-                    HasActiveToken = true,
-                    OwnerId = userId > 0 ? userId : clientId,
-                    Message = "A reset link is already active. Please check your email."
-                };
-            }
-
-            var token = GenerateToken();
-            var tokenHash = HashToken(token);
-
-            var passwordToken = new tblPasswordTokensModel
-            {
-                userID = userId,
-                clientID = clientId,
-                hashedToken = tokenHash,
-                dateCreated = now,
-                dateExpiry = now.AddMinutes(10)
-            };
-
-            db.passwordtokens_tbl.Add(passwordToken);
-            db.SaveChanges();
-
-            try
-            {
-                SendPasswordResetEmail(recipientEmail, token);
-            }
-            catch
-            {
-                db.passwordtokens_tbl.Remove(passwordToken);
-                db.SaveChanges();
-                throw;
-            }
-
-            return new PasswordResetRequestResult
-            {
-                Success = true,
-                OwnerId = userId > 0 ? userId : clientId,
-                Message = "Password reset link sent."
-            };
-        }
-
-        private bool IsPasswordResetTokenValid(IsabellaCateringContext db, string token)
-        {
-            var normalizedToken = NormalizePasswordResetToken(token);
-            if (string.IsNullOrWhiteSpace(normalizedToken))
-            {
-                return false;
-            }
-
-            var hash = HashToken(normalizedToken);
-            var verify = db.passwordtokens_tbl.FirstOrDefault(x => x.hashedToken.Equals(hash));
-
-            return verify != null && verify.dateExpiry >= DateTime.UtcNow;
-        }
-
-        public JsonResult ForgetVerifyEmail(string userEmail)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var normalizedEmail = (userEmail ?? string.Empty).Trim();
-                    var verify = db.users_tbl.FirstOrDefault(x => x.email.Equals(normalizedEmail));
-                    if (verify == null)
-                    {
-                        return Json(new
-                        {
-                            success = false,
-                            hasActiveToken = false,
-                            ownerId = (int?)null,
-                            message = "The email you entered is not registered in our system."
-                        }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    var result = CreatePasswordResetRequest(db, verify.userID, 0, verify.email);
-                    return Json(new
-                    {
-                        success = result.Success,
-                        hasActiveToken = result.HasActiveToken,
-                        ownerId = result.OwnerId,
-                        message = result.Message
-                    }, JsonRequestBehavior.AllowGet);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                    "LETHAL",
-                    "Password Reset:",
-                    "Attempted to request password reset link. " + ex.Message + " " + ex.InnerException);
-                    
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
-            }
-        }
-
-        public JsonResult ForgetVerifyEmailClient(string userEmail, string entryCode)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var normalizedEntryCode = (entryCode ?? string.Empty).Trim();
-                    var verify = db.clients_tbl.FirstOrDefault(x => x.entryCode.Equals(normalizedEntryCode));
-                    if (verify == null)
-                    {
-                        return Json(new
-                        {
-                            success = false,
-                            hasActiveToken = false,
-                            ownerId = (int?)null,
-                            message = "The entry code you entered is not registered in our system."
-                        }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    var result = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
-                    return Json(new
-                    {
-                        success = result.Success,
-                        hasActiveToken = result.HasActiveToken,
-                        ownerId = result.OwnerId,
-                        message = result.Message
-                    }, JsonRequestBehavior.AllowGet);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                    "LETHAL",
-                    "Password Reset:",
-                    "Attempted to request password reset link. " + ex.Message + " " + ex.InnerException);
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
-            }
-        }
-
-        public JsonResult VerifyForgetToken(string token)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    return Json(new
-                    {
-                        valid = IsPasswordResetTokenValid(db, token)
-                    }, JsonRequestBehavior.AllowGet);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                    "LETHAL",
-                    "Password Reset:",
-                    "Attempted to verify password reset token. " + ex.Message + " " + ex.InnerException);
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
-            }
-        }
-
-        public JsonResult changeForgotPassword(string unhashedToken, string newPassword)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var correctedToken = NormalizePasswordResetToken(unhashedToken);
-                    if (string.IsNullOrWhiteSpace(correctedToken) || string.IsNullOrWhiteSpace(newPassword))
-                    {
-                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    string hash = HashToken(correctedToken);
-
-                    var verify = db.passwordtokens_tbl.FirstOrDefault(x => x.hashedToken.Equals(hash));
-                    if (verify == null || verify.dateExpiry < DateTime.UtcNow)
-                    {
-                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    if (verify.clientID == 0)
-                    {
-                        var userData = db.users_tbl.FirstOrDefault(x => x.userID.Equals(verify.userID));
-                        if (userData == null)
-                        {
-                            return Json(new { success = false }, JsonRequestBehavior.AllowGet);
-                        }
-
-                        userData.password = newPassword;
-                        userData.attempts = 0;
-                        userData.lockoutEnd = null;
-                        userData.dateUpdated = DateTime.Now;
-                    }
-                    else if (verify.userID == 0)
-                    {
-                        var clientData = db.clients_tbl.FirstOrDefault(x => x.clientID.Equals(verify.clientID));
-                        if (clientData == null)
-                        {
-                            return Json(new { success = false }, JsonRequestBehavior.AllowGet);
-                        }
-
-                        clientData.password = newPassword;
-                        clientData.attempts = 0;
-                        clientData.lockoutEnd = null;
-                        clientData.dateUpdated = DateTime.Now;
-
-                        Logs(
-                        "WARN",
-                        "Password Reset:",
-                        $"Password has been changed for customer account. clientID: {clientData.clientID}");
-                        Logs(
-                        "WARN",
-                        "Password Reset:",
-                        $"Password token deleted for customer account. clientID: {clientData.clientID}");
-                    }
-                    else
-                    {
-                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    db.passwordtokens_tbl.Remove(verify);
-                    db.SaveChanges();
-                    
-                    return Json(new { success = true }, JsonRequestBehavior.AllowGet);
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                    "LETHAL",
-                    "Password Reset:",
-                    "Attempted to log out. " + ex.Message + " " + ex.InnerException);
-                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
-            }
-        }
-
-        // for delete
-        [HttpPost]
-        public JsonResult DeleteUser(int id)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var user = db.users_tbl.Find(id);
-                    if (user != null)
-                    {
-                        db.users_tbl.Remove(user);
-                        db.SaveChanges();
-
-                        return Json(new { success = true });
-                    }
-                    Logs(
-                    "WARN",
-                    "Account Management:",
-                    "Attempted to delete user details. Message : \"User not found.\"");
-                    return Json(new { success = false, message = "User not found." });
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                "LETHAL",
-                "Account Management:",
-                "Attempted to delete user details. " + ex.Message + "" + ex.InnerException);
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // for update
-        [HttpPost]
-        public JsonResult UpdateUser(tblUsersModel userInfo)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var user = db.users_tbl.Find(userInfo.userID);
-                    if (user != null)
-                    {
-                        user.permissionID = userInfo.permissionID;
-                        user.firstName = userInfo.firstName;
-                        user.lastName = userInfo.lastName;
-                        user.isActive = userInfo.isActive;
-                        user.dateUpdated = DateTime.Now;
-
-                        db.SaveChanges();
-                        return Json(new { success = true });
-                    }
-                    Logs(
-                    "WARN",
-                    "Account Management:",
-                    "Attempted to update user details. Message : \"User not found.\"");
-                    return Json(new { success = false, message = "User not found." });
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs(
-                "LETHAL",
-                "Account Management:",
-                "Attempted to update user details. " + ex.Message + "" + ex.InnerException);
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-        
         public JsonResult getBooking(tblBookingsModel booking)
         {
             try
@@ -1330,39 +456,39 @@ namespace IsabellaCateringWebApp.Controllers
                                         AddKid = booking.addKid,
                                         RequestCancel = booking.requestCancel,
                                         BookingCancelled = booking.bookingCancelled
-                                        })
+                                    })
                                         .ToList();
 
-                                        var results = bookings
-                                        .Select(booking => new
-                                        {
-                                        booking.BookingID,
-                                        booking.BookingDate,
-                                        booking.BookingVenue,
-                                        booking.EventName,
-                                        booking.EventTime,
-                                        booking.RequestCancel,
-                                        booking.BookingCancelled,
-                                        Score = GetCalendarSearchScore(booking, normalizedQuery)
-                                        })
-                                        .Where(booking => booking.Score > 0)
-                                        .OrderByDescending(booking => booking.Score)
-                                        .ThenBy(booking => Math.Abs((booking.BookingDate.Date - DateTime.Today).Days))
-                                        .ThenBy(booking => booking.BookingDate)
-                                        .ThenBy(booking => booking.BookingID)
-                                        .Take(8)
-                                        .Select(booking => new
-                                        {
-                                        bookingID = booking.BookingID,
-                                        bookingDate = booking.BookingDate,
-                                        dateKey = booking.BookingDate.Year + "-" + booking.BookingDate.Month + "-" + booking.BookingDate.Day,
-                                        bookingVenue = booking.BookingVenue,
-                                        eventName = booking.EventName,
-                                        eventTime = booking.EventTime,
-                                        requestCancel = booking.RequestCancel,
-                                        bookingCancelled = booking.BookingCancelled
-                                        })
-                                        .ToList();
+                    var results = bookings
+                    .Select(booking => new
+                    {
+                        booking.BookingID,
+                        booking.BookingDate,
+                        booking.BookingVenue,
+                        booking.EventName,
+                        booking.EventTime,
+                        booking.RequestCancel,
+                        booking.BookingCancelled,
+                        Score = GetCalendarSearchScore(booking, normalizedQuery)
+                    })
+                    .Where(booking => booking.Score > 0)
+                    .OrderByDescending(booking => booking.Score)
+                    .ThenBy(booking => Math.Abs((booking.BookingDate.Date - DateTime.Today).Days))
+                    .ThenBy(booking => booking.BookingDate)
+                    .ThenBy(booking => booking.BookingID)
+                    .Take(8)
+                    .Select(booking => new
+                    {
+                        bookingID = booking.BookingID,
+                        bookingDate = booking.BookingDate,
+                        dateKey = booking.BookingDate.Year + "-" + booking.BookingDate.Month + "-" + booking.BookingDate.Day,
+                        bookingVenue = booking.BookingVenue,
+                        eventName = booking.EventName,
+                        eventTime = booking.EventTime,
+                        requestCancel = booking.RequestCancel,
+                        bookingCancelled = booking.BookingCancelled
+                    })
+                    .ToList();
                     return Json(new { success = true, bookingData = results }, JsonRequestBehavior.AllowGet);
                 }
             }
@@ -1375,6 +501,1014 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
+        //===================================================================Booking Calendar End==================================================================
+
+        //===================================================================Landing Page Start==================================================================
+        public class EventPackage
+        {
+            public string Category { get; set; }
+            public string Title { get; set; }
+            public string Description { get; set; }
+            public string Image { get; set; }
+            public List<string> Features { get; set; }
+        }
+
+        [HttpGet]
+        public JsonResult getPackageCardDetails(string packageName)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    // 1. Find the package type by name (packageTypDesc)
+                    var packageType = db.packagetypes_tbl
+                        .FirstOrDefault(x => x.packageTypDesc.Equals(packageName, StringComparison.OrdinalIgnoreCase));
+
+                    if (packageType == null)
+                    {
+                        return Json(new { success = false, message = "Package not found in database." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // 2. Get the corresponding package details from packages_tbl
+                    var packageDetails = db.packages_tbl
+                        .FirstOrDefault(x => x.packageTypID == packageType.packageTypID);
+
+                    if (packageDetails == null)
+                    {
+                        return Json(new { success = false, message = "Package details not found in database." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    // 3. Fetch descriptions from linked tables to build dynamic inclusions
+                    var inclusions = new List<string>();
+
+                    // Main Course
+                    if (packageDetails.mainCourseTypID.HasValue)
+                    {
+                        var mainCourse = db.maincoursetypes_tbl.Find(packageDetails.mainCourseTypID);
+                        if (mainCourse != null) inclusions.Add("Main Course: " + mainCourse.mainCourseTypDesc);
+                    }
+
+                    // Centerpiece
+                    if (packageDetails.centerPieceTypID.HasValue)
+                    {
+                        var cp = db.centerpiecetypes_tbl.Find(packageDetails.centerPieceTypID);
+                        if (cp != null) inclusions.Add("Centerpiece: " + cp.centerPieceTypDesc);
+                    }
+
+                    // Seating
+                    if (packageDetails.seatingTypID.HasValue)
+                    {
+                        var seat = db.seatingtypes_tbl.Find(packageDetails.seatingTypID);
+                        if (seat != null) inclusions.Add("Seating: " + seat.seatingTypDesc);
+                    }
+
+                    // Backdrop
+                    if (packageDetails.backdropTypID.HasValue)
+                    {
+                        var bd = db.backdroptypes_tbl.Find(packageDetails.backdropTypID);
+                        if (bd != null) inclusions.Add("Backdrop: " + bd.backdropTypDesc);
+                    }
+
+                    // Couch
+                    if (packageDetails.couchTypID.HasValue)
+                    {
+                        var couch = db.couchtypes_tbl.Find(packageDetails.couchTypID);
+                        if (couch != null) inclusions.Add("Couch: " + couch.couchTypDesc);
+                    }
+
+                    // Entrance
+                    if (packageDetails.entranceTypID.HasValue)
+                    {
+                        var ent = db.entrancetypes_tbl.Find(packageDetails.entranceTypID);
+                        if (ent != null) inclusions.Add("Entrance: " + ent.entranceTypDesc);
+                    }
+
+                    // Standard string-based inclusions from packages_tbl
+                    if (!string.IsNullOrEmpty(packageDetails.incStaples)) inclusions.Add(packageDetails.incStaples);
+                    if (!string.IsNullOrEmpty(packageDetails.incStyling)) inclusions.Add(packageDetails.incStyling);
+                    if (!string.IsNullOrEmpty(packageDetails.incTableSet)) inclusions.Add(packageDetails.incTableSet);
+                    if (!string.IsNullOrEmpty(packageDetails.incDnrWare)) inclusions.Add(packageDetails.incDnrWare);
+                    if (!string.IsNullOrEmpty(packageDetails.incBftSet)) inclusions.Add(packageDetails.incBftSet);
+
+                    return Json(new
+                    {
+                        success = true,
+                        packageName = packageType.packageTypDesc,
+                        description = packageType.packageSet ?? "Exquisite catering for your special event.",
+                        inclusions = inclusions,
+                        message = "Package details retrieved successfully from database!"
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs("ERROR", "Package Card:", "Error fetching package details: " + ex.Message);
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //===================================================================Landing Page End==================================================================
+
+        //===================================================================Logs Start==================================================================
+        public JsonResult Logs(string level, string processService, string processDesc)
+        {
+            try
+            {
+                string traceId = Guid.NewGuid().ToString();
+                string email = "";
+                if (Session["currentLog"]?.ToString() != "" && Session["currentLog"]?.ToString() != null)
+                {
+                    int uID = int.Parse(Session["currentLog"].ToString());
+                    int pID = int.Parse(Session["currentPerm"].ToString());
+                    using (var db = new IsabellaCateringContext())
+                    {
+                        
+                        var permission = db.permissions_tbl.Where(x => x.permissionID == pID).FirstOrDefault();
+                        if (Session["currentPerm"].ToString() == "3")
+                        {
+                            var client = db.clients_tbl.Where(x => x.clientID == uID).FirstOrDefault();
+                            if (client != null)
+                            {
+                                email = client.cEmail;
+
+                                return Json(new { succes = setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "Logs has been added!" }, JsonRequestBehavior.AllowGet);
+                            }
+                            else
+                            {
+                                uID = 0;
+                                email = "blank";
+                                level = "WARN";
+                                processDesc = "Accessed without credentials!";
+
+                                return Json(new { succes = setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                        else
+                        {
+                            var user = db.users_tbl.Where(x => x.userID == uID).FirstOrDefault();
+                            if (user != null)
+                            {
+                                email = user.email;
+
+                                return Json(new { succes = !setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "Logs has been added!" }, JsonRequestBehavior.AllowGet);
+                            }
+                            else
+                            {
+                                uID = 0;
+                                email = "blank";
+                                level = "WARN";
+                                processDesc = "Accessed without credentials!";
+
+                                return Json(new { succes = !setLog(uID, permission.permissionDesc, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    int uID = 0;
+                    string permission = "NULL";
+                    email = "blank";
+                    level = "WARN";
+                    processDesc = "Accessed without credentials!" + processDesc;
+
+                    return Json(new { succes = !setLog(uID, permission, email, level, processService, processDesc, traceId), message = "No login!" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { succes = false, message = "Logs failed!"+ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public Boolean setLog(int uID, string permission, string uEmail, string level, string procServ, string procDesc, string trace)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+
+
+                    var newLog = new tblActivityLogsModel()
+                    {
+                        userID = uID,
+                        permission = permission,
+                        userEmail = uEmail,
+                        level = level,
+                        processService = procServ,
+                        processDesc = procDesc,
+                        traceID = trace,
+                        dateCreated = DateTime.UtcNow
+                    };
+
+                    db.activitylogs_tbl.Add(newLog);
+                    db.SaveChanges();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public JsonResult GetLogs()
+        {
+            using (var db = new IsabellaCateringContext())
+            {
+                var data = (from log in db.activitylogs_tbl
+                            select new
+                            {
+                                logID = log.logID + ": " + log.userID + " [" + log.permission + "]",
+                                action = " [" + log.level + "] " + " {" + log.processService + ": " + log.processDesc + "} " + log.traceID,
+                                dateUpdated = log.dateCreated,
+                                userName = log.userEmail,
+                            }).ToList();
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
+        //===================================================================Logs End==================================================================
+
+        //===================================================================Login/Register/Reset/Logout Start==================================================================
+
+        // get creds for login
+        public JsonResult JsonLogGetCreds(tblUsersModel userInfo, tblClientsModel clientInfo, string isGuest)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    if (isGuest == "True")
+                    {
+
+
+                        var verify = db.clients_tbl.Where(x => x.entryCode.Equals(clientInfo.entryCode)).FirstOrDefault();
+                        if (verify == null)
+                        {
+                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        if (verify.password == "0")
+                        {
+                            var resetResult = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                            var detailMessage = resetResult.Success
+                                ? "Check your email for a password reset link!"
+                                : resetResult.HasActiveToken
+                                    ? "A reset link is already active. Please check your email."
+                                    : resetResult.Message ?? "We could not send a reset link. Please contact us.";
+
+                            return Json(new
+                            {
+                                success = false,
+                                requiresPasswordChange = true,
+                                message = "Please change your password first!",
+                                detail = detailMessage
+                            }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
+                        {
+                            var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
+
+                            waitTime = waitTime == 0 ? 1 : waitTime;
+
+                            return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
+                        }
+                        else if (verify.password == clientInfo.password)
+                        {
+                            verify.attempts = 0;
+                            verify.lockoutEnd = null;
+                            db.SaveChanges();
+
+                            var creds = new tblClientsModel()
+                            {
+                                clientID = verify.clientID,
+                                permissionID = verify.permissionID,
+                                receiptID = verify.receiptID
+                            };
+
+                            var receipt = db.bookingreceipts_tbl.Where(x => x.receiptID.Equals(creds.receiptID)).FirstOrDefault();
+                            if (receipt != null)
+                            {
+                                Session["currentLog"] = creds.clientID.ToString();
+                                Session["currentPerm"] = creds.permissionID.ToString();
+                                Session["isGuest"] = "True";
+                                Session["currentBooking"] = receipt.bookingID.ToString();
+
+                                Logs(
+                                "INFO",
+                                "ICMS Login:",
+                                "Account Logged In");
+                                return Json(new { success = true, data = creds, isGuest = true }, JsonRequestBehavior.AllowGet);
+                            }
+                            else
+                            {
+                                return Json(new { success = false, message = "Receipt not found! Please contact us!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                        else
+                        {
+                            verify.attempts += 1;
+
+                            if (verify.attempts >= 3)
+                            {
+                                verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
+                                db.SaveChanges();
+
+                                Logs(
+                                "WARN",
+                                "ICMS Login:",
+                                "Attempted to Login with multiple incorrect attempts. \"Account Locked\"");
+                                return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
+                            }
+
+                            db.SaveChanges();
+                            
+                            int attemptsLeft = 3 - verify.attempts;
+                            Logs(
+                                "WARN",
+                                "ICMS Login:",
+                                $"Attempted to Login with incorrect attempts. Invalid password. {attemptsLeft} attempts remaining.");
+                            return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+                    else
+                    {
+
+                        var verify = db.users_tbl.Where(x => x.email.Equals(userInfo.email)).FirstOrDefault();
+
+                        if (verify.isActive != 1)
+                        {
+                            return Json(new { success = false, message = "Account Disabled! Please contact the administrators for account activation" }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        if (verify == null)
+                        {
+                            return Json(new { success = false, message = "Invalid Credentials" }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        if (verify.lockoutEnd.HasValue && verify.lockoutEnd.Value > DateTime.Now)
+                        {
+                            var waitTime = (verify.lockoutEnd.Value - DateTime.Now).Minutes;
+
+                            waitTime = waitTime == 0 ? 1 : waitTime;
+
+                            return Json(new { success = false, message = $"Account locked. Try again in {waitTime} minutes." }, JsonRequestBehavior.AllowGet);
+                        }
+                        else if (verify.password == userInfo.password)
+                        {
+                            verify.attempts = 0;
+                            verify.lockoutEnd = null;
+                            db.SaveChanges();
+
+                            var creds = new tblUsersModel()
+                            {
+                                userID = verify.userID,
+                                permissionID = verify.permissionID
+                            };
+                            Session["currentLog"] = creds.userID.ToString();
+                            Session["currentPerm"] = creds.permissionID.ToString();
+                            Session["isGuest"] = "False";
+
+                            Logs(
+                                "INFO",
+                                "ICMS Login:",
+                                "Account Logged In");
+                            return Json(new { success = true, data = creds, isGuest = false }, JsonRequestBehavior.AllowGet);
+                        }
+                        else
+                        {
+                            verify.attempts += 1;
+
+                            if (verify.attempts >= 3)
+                            {
+                                verify.lockoutEnd = DateTime.Now.AddMinutes(15); // Lock account for 15 minutes
+                                db.SaveChanges();
+                                Logs(
+                                "WARN",
+                                "ICMS Login:",
+                                "Attempted to Login with multiple incorrect attempts. \"Account Locked\"");
+                                return Json(new { success = false, message = "Account Locked" }, JsonRequestBehavior.AllowGet);
+                            }
+
+                            db.SaveChanges();
+
+                            int attemptsLeft = 3 - verify.attempts;
+                            Logs(
+                                "WARN",
+                                "ICMS Login:",
+                                $"Attempted to Login with incorrect attempts. Invalid password. {attemptsLeft} attempts remaining.");
+                            return Json(new { success = false, message = $"Invalid password. {attemptsLeft} attempts remaining." }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult logOut()
+        {
+            try
+            {
+                Logs(
+                    "INFO",
+                    "ICMS:",
+                    "Account Logged Out.");
+
+                Session.Clear();
+                Session.Abandon();
+                return Json(new { success = true, message = "Logout Success" }, JsonRequestBehavior.AllowGet);
+
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS:",
+                    "Attempted to log out. " + ex.Message + " " + ex.InnerException);
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        private class PasswordResetRequestResult
+        {
+            public bool Success { get; set; }
+            public bool HasActiveToken { get; set; }
+            public int? OwnerId { get; set; }
+            public string Message { get; set; }
+        }
+
+        public string GenerateToken()
+        {
+            byte[] bytes = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(bytes);
+            }
+            return Convert.ToBase64String(bytes);
+        }
+
+        public string HashToken(string token)
+        {
+            using (var sha = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(token);
+                byte[] hash = sha.ComputeHash(bytes);
+                return Convert.ToBase64String(hash);
+            }
+        }
+
+        private string NormalizePasswordResetToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return null;
+            }
+
+            return token.Trim().Replace(" ", "+");
+        }
+
+        private void RemoveExpiredPasswordResetTokens(IsabellaCateringContext db, DateTime now)
+        {
+            var expiredTokens = db.passwordtokens_tbl
+                .Where(x => x.dateExpiry < now)
+                .ToList();
+
+            if (expiredTokens.Any())
+            {
+                db.passwordtokens_tbl.RemoveRange(expiredTokens);
+                db.SaveChanges();
+            }
+        }
+
+        private string BuildPasswordResetLink(string token)
+        {
+            if (Request != null && Request.Url != null)
+            {
+                return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
+            }
+
+            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
+        }
+
+        private void SendPasswordResetEmail(string recipientEmail, string token)
+        {
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                throw new InvalidOperationException("No email address is available for password reset.");
+            }
+
+            var pickupDirectory = @"C:\Emails";
+            Directory.CreateDirectory(pickupDirectory);
+
+            using (var smtp = new SmtpClient())
+            using (var mail = new MailMessage())
+            {
+                smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                smtp.PickupDirectoryLocation = pickupDirectory;
+
+                mail.From = new MailAddress("no-reply@localhost");
+                mail.To.Add(recipientEmail);
+                mail.Subject = "Reset Password";
+                mail.Body = "Your Password Reset Link " + BuildPasswordResetLink(token);
+
+                smtp.Send(mail);
+            }
+            Logs(
+                "INFO",
+                "Password Reset:",
+                "Request password token created.");
+            Logs(
+                "INFO",
+                "Password Reset:",
+                $"Request password link created and sent to email. Email Address: {recipientEmail}");
+        }
+
+        private PasswordResetRequestResult CreatePasswordResetRequest(IsabellaCateringContext db, int userId, int clientId, string recipientEmail)
+        {
+            if (userId <= 0 && clientId <= 0)
+            {
+                return new PasswordResetRequestResult
+                {
+                    Success = false,
+                    Message = "No account was found for password reset."
+                };
+            }
+
+
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                return new PasswordResetRequestResult
+                {
+                    Success = false,
+                    OwnerId = userId > 0 ? userId : clientId,
+                    Message = "The account does not have a valid email address."
+                };
+            }
+
+            var now = DateTime.UtcNow;
+            RemoveExpiredPasswordResetTokens(db, now);
+
+            var hasActiveToken = userId > 0
+                ? db.passwordtokens_tbl.Any(x => x.userID == userId && x.dateExpiry > now)
+                : db.passwordtokens_tbl.Any(x => x.clientID == clientId && x.dateExpiry > now);
+
+            Logs(
+                "WARN",
+                "Password Reset:",
+                "Expired password reset token has been removed.");
+
+            if (hasActiveToken)
+            {
+                return new PasswordResetRequestResult
+                {
+                    Success = false,
+                    HasActiveToken = true,
+                    OwnerId = userId > 0 ? userId : clientId,
+                    Message = "A reset link is already active. Please check your email."
+                };
+            }
+
+            var token = GenerateToken();
+            var tokenHash = HashToken(token);
+
+            var passwordToken = new tblPasswordTokensModel
+            {
+                userID = userId,
+                clientID = clientId,
+                hashedToken = tokenHash,
+                dateCreated = now,
+                dateExpiry = now.AddMinutes(10)
+            };
+
+            db.passwordtokens_tbl.Add(passwordToken);
+            db.SaveChanges();
+
+            try
+            {
+                SendPasswordResetEmail(recipientEmail, token);
+            }
+            catch
+            {
+                db.passwordtokens_tbl.Remove(passwordToken);
+                db.SaveChanges();
+                throw;
+            }
+
+            return new PasswordResetRequestResult
+            {
+                Success = true,
+                OwnerId = userId > 0 ? userId : clientId,
+                Message = "Password reset link sent."
+            };
+        }
+
+        private bool IsPasswordResetTokenValid(IsabellaCateringContext db, string token)
+        {
+            var normalizedToken = NormalizePasswordResetToken(token);
+            if (string.IsNullOrWhiteSpace(normalizedToken))
+            {
+                return false;
+            }
+
+            var hash = HashToken(normalizedToken);
+            var verify = db.passwordtokens_tbl.FirstOrDefault(x => x.hashedToken.Equals(hash));
+
+            return verify != null && verify.dateExpiry >= DateTime.UtcNow;
+        }
+
+        public JsonResult ForgetVerifyEmail(string userEmail)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var normalizedEmail = (userEmail ?? string.Empty).Trim();
+                    var verify = db.users_tbl.FirstOrDefault(x => x.email.Equals(normalizedEmail));
+                    if (verify == null)
+                    {
+                        return Json(new
+                        {
+                            success = false,
+                            hasActiveToken = false,
+                            ownerId = (int?)null,
+                            message = "The email you entered is not registered in our system."
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    var result = CreatePasswordResetRequest(db, verify.userID, 0, verify.email);
+                    return Json(new
+                    {
+                        success = result.Success,
+                        hasActiveToken = result.HasActiveToken,
+                        ownerId = result.OwnerId,
+                        message = result.Message
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Password Reset:",
+                    "Attempted to request password reset link. " + ex.Message + " " + ex.InnerException);
+
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult ForgetVerifyEmailClient(string userEmail, string entryCode)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var normalizedEntryCode = (entryCode ?? string.Empty).Trim();
+                    var verify = db.clients_tbl.FirstOrDefault(x => x.entryCode.Equals(normalizedEntryCode));
+                    if (verify == null)
+                    {
+                        return Json(new
+                        {
+                            success = false,
+                            hasActiveToken = false,
+                            ownerId = (int?)null,
+                            message = "The entry code you entered is not registered in our system."
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    var result = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                    return Json(new
+                    {
+                        success = result.Success,
+                        hasActiveToken = result.HasActiveToken,
+                        ownerId = result.OwnerId,
+                        message = result.Message
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Password Reset:",
+                    "Attempted to request password reset link. " + ex.Message + " " + ex.InnerException);
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult VerifyForgetToken(string token)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    return Json(new
+                    {
+                        valid = IsPasswordResetTokenValid(db, token)
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Password Reset:",
+                    "Attempted to verify password reset token. " + ex.Message + " " + ex.InnerException);
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult changeForgotPassword(string unhashedToken, string newPassword)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var correctedToken = NormalizePasswordResetToken(unhashedToken);
+                    if (string.IsNullOrWhiteSpace(correctedToken) || string.IsNullOrWhiteSpace(newPassword))
+                    {
+                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    string hash = HashToken(correctedToken);
+
+                    var verify = db.passwordtokens_tbl.FirstOrDefault(x => x.hashedToken.Equals(hash));
+                    if (verify == null || verify.dateExpiry < DateTime.UtcNow)
+                    {
+                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    if (verify.clientID == 0)
+                    {
+                        var userData = db.users_tbl.FirstOrDefault(x => x.userID.Equals(verify.userID));
+                        if (userData == null)
+                        {
+                            return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        userData.password = newPassword;
+                        userData.attempts = 0;
+                        userData.lockoutEnd = null;
+                        userData.dateUpdated = DateTime.Now;
+                    }
+                    else if (verify.userID == 0)
+                    {
+                        var clientData = db.clients_tbl.FirstOrDefault(x => x.clientID.Equals(verify.clientID));
+                        if (clientData == null)
+                        {
+                            return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        clientData.password = newPassword;
+                        clientData.attempts = 0;
+                        clientData.lockoutEnd = null;
+                        clientData.dateUpdated = DateTime.Now;
+
+                        Logs(
+                        "WARN",
+                        "Password Reset:",
+                        $"Password has been changed for customer account. clientID: {clientData.clientID}");
+                        Logs(
+                        "WARN",
+                        "Password Reset:",
+                        $"Password token deleted for customer account. clientID: {clientData.clientID}");
+                    }
+                    else
+                    {
+                        return Json(new { success = false }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    db.passwordtokens_tbl.Remove(verify);
+                    db.SaveChanges();
+
+                    return Json(new { success = true }, JsonRequestBehavior.AllowGet);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Password Reset:",
+                    "Attempted to log out. " + ex.Message + " " + ex.InnerException);
+                throw new ArgumentException($"There is an ERROR while upserting in database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        //===================================================================Login/Register/Reset/Logout End==================================================================
+
+        //===================================================================Session Fetch Start==================================================================
+        public JsonResult getCurrentSession()
+        {
+            try
+            {
+                var creds = new
+                {
+                    userID = Session["currentLog"]?.ToString() ?? string.Empty,
+                    permID = Session["currentPerm"]?.ToString() ?? string.Empty,
+                    selectedDate = Session["bookingSelectedDate"]?.ToString() ?? string.Empty,
+                    isGuest = Session["isGuest"]?.ToString() ?? string.Empty,
+                    bookingID = Session["currentBooking"]?.ToString() ?? string.Empty
+                };
+                return Json(creds, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "ICMS:",
+                "Attempted to get session. " + ex.Message + "" + ex.InnerException);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.StackTrace}:{ex.InnerException}");
+            }
+        }
+
+        //for navbar (test)
+        public JsonResult getCurrentSessionNav()
+        {
+            var uID = Session["currentLog"]?.ToString();
+            var pID = Session["currentPerm"]?.ToString() ?? "";
+            var isG = Session["isGuest"]?.ToString();
+            string uName = "Loading..";
+
+            if (!string.IsNullOrEmpty(uID))
+            {
+                if (isG == "True")
+                {
+                    int id = int.Parse(uID);
+                    using (var db = new IsabellaCateringContext())
+                    {
+                        var user = db.clients_tbl.FirstOrDefault(x => x.clientID == id);
+                        if (user != null) uName = $"{user.cFName} {user.cLName}";
+                    }
+                }
+                else
+                {
+                    int id = int.Parse(uID);
+                    using (var db = new IsabellaCateringContext())
+                    {
+                        var user = db.users_tbl.FirstOrDefault(x => x.userID == id);
+                        if (user != null) uName = $"{user.firstName} {user.lastName}";
+                    }
+                }
+
+            }
+            return Json(new
+            {
+                userID = uID,
+                userName = uName,
+                permID = pID,
+                isGuest = isG
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        //===================================================================Session Fetch End==================================================================
+
+        //===================================================================Account Page Start==================================================================
+
+        //bago, to add user
+        [HttpPost]
+        public JsonResult usrInfo(tblUsersModel userData)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var userInfo = new tblUsersModel()
+                    {
+                        permissionID = userData.permissionID,
+                        firstName = userData.firstName,
+                        lastName = userData.lastName,
+                        email = userData.email,
+                        password = userData.password,
+                        isActive = userData.isActive,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.users_tbl.Add(userInfo);
+                    db.SaveChanges();
+                    Logs(
+                    "INFO",
+                    "Account Management:",
+                    $"New account has been registered with userID: {userInfo.userID}");
+                }
+
+                return Json(new { success = true, message = "Saved successfully!" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                string realError = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    realError = ex.InnerException.Message;
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        realError = ex.InnerException.InnerException.Message;
+                    }
+                }
+
+                return Json(new { success = false, message = realError }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult GetUsers()
+        {
+            using (var db = new IsabellaCateringContext())
+            {
+                var data = db.users_tbl.Select(u => new
+                {
+                    userID = u.userID,
+                    permissionID = u.permissionID,
+                    firstName = u.firstName,
+                    lastName = u.lastName,
+                    email = u.email,
+                    isActive = u.isActive,
+                    dateCreated = u.dateCreated,
+                    dateUpdated = u.dateUpdated
+                }).ToList();
+
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
+        // for delete
+        [HttpPost]
+        public JsonResult DeleteUser(int id)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.Find(id);
+                    if (user != null)
+                    {
+                        db.users_tbl.Remove(user);
+                        db.SaveChanges();
+
+                        return Json(new { success = true });
+                    }
+                    Logs(
+                    "WARN",
+                    "Account Management:",
+                    "Attempted to delete user details. Message : \"User not found.\"");
+                    return Json(new { success = false, message = "User not found." });
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Account Management:",
+                "Attempted to delete user details. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // for update
+        [HttpPost]
+        public JsonResult UpdateUser(tblUsersModel userInfo)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var user = db.users_tbl.Find(userInfo.userID);
+                    if (user != null)
+                    {
+                        user.permissionID = userInfo.permissionID;
+                        user.firstName = userInfo.firstName;
+                        user.lastName = userInfo.lastName;
+                        user.isActive = userInfo.isActive;
+                        user.dateUpdated = DateTime.Now;
+
+                        db.SaveChanges();
+                        return Json(new { success = true });
+                    }
+                    Logs(
+                    "WARN",
+                    "Account Management:",
+                    "Attempted to update user details. Message : \"User not found.\"");
+                    return Json(new { success = false, message = "User not found." });
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Account Management:",
+                "Attempted to update user details. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        //===================================================================Account Page End==================================================================
+
+        //===================================================================Display Booking Start==================================================================
 
         public JsonResult getBookingDetails(int bookingID)
         {
@@ -1633,6 +1767,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+
+        //===================================================================Display Booking Start==================================================================
+
+        //===================================================================Create/Edit/Delete Booking Start==================================================================
         public JsonResult getPackageBookingOptions()
         {
             try
@@ -1687,100 +1825,6 @@ namespace IsabellaCateringWebApp.Controllers
                 "Booking Management:",
                 "Attempted to get package option. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        [HttpGet]
-        public JsonResult getPackageCardDetails(string packageName)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    // 1. Find the package type by name (packageTypDesc)
-                    var packageType = db.packagetypes_tbl
-                        .FirstOrDefault(x => x.packageTypDesc.Equals(packageName, StringComparison.OrdinalIgnoreCase));
-
-                    if (packageType == null)
-                    {
-                        return Json(new { success = false, message = "Package not found in database." }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    // 2. Get the corresponding package details from packages_tbl
-                    var packageDetails = db.packages_tbl
-                        .FirstOrDefault(x => x.packageTypID == packageType.packageTypID);
-
-                    if (packageDetails == null)
-                    {
-                        return Json(new { success = false, message = "Package details not found in database." }, JsonRequestBehavior.AllowGet);
-                    }
-
-                    // 3. Fetch descriptions from linked tables to build dynamic inclusions
-                    var inclusions = new List<string>();
-
-                    // Main Course
-                    if (packageDetails.mainCourseTypID.HasValue)
-                    {
-                        var mainCourse = db.maincoursetypes_tbl.Find(packageDetails.mainCourseTypID);
-                        if (mainCourse != null) inclusions.Add("Main Course: " + mainCourse.mainCourseTypDesc);
-                    }
-
-                    // Centerpiece
-                    if (packageDetails.centerPieceTypID.HasValue)
-                    {
-                        var cp = db.centerpiecetypes_tbl.Find(packageDetails.centerPieceTypID);
-                        if (cp != null) inclusions.Add("Centerpiece: " + cp.centerPieceTypDesc);
-                    }
-
-                    // Seating
-                    if (packageDetails.seatingTypID.HasValue)
-                    {
-                        var seat = db.seatingtypes_tbl.Find(packageDetails.seatingTypID);
-                        if (seat != null) inclusions.Add("Seating: " + seat.seatingTypDesc);
-                    }
-
-                    // Backdrop
-                    if (packageDetails.backdropTypID.HasValue)
-                    {
-                        var bd = db.backdroptypes_tbl.Find(packageDetails.backdropTypID);
-                        if (bd != null) inclusions.Add("Backdrop: " + bd.backdropTypDesc);
-                    }
-
-                    // Couch
-                    if (packageDetails.couchTypID.HasValue)
-                    {
-                        var couch = db.couchtypes_tbl.Find(packageDetails.couchTypID);
-                        if (couch != null) inclusions.Add("Couch: " + couch.couchTypDesc);
-                    }
-
-                    // Entrance
-                    if (packageDetails.entranceTypID.HasValue)
-                    {
-                        var ent = db.entrancetypes_tbl.Find(packageDetails.entranceTypID);
-                        if (ent != null) inclusions.Add("Entrance: " + ent.entranceTypDesc);
-                    }
-
-                    // Standard string-based inclusions from packages_tbl
-                    if (!string.IsNullOrEmpty(packageDetails.incStaples)) inclusions.Add(packageDetails.incStaples);
-                    if (!string.IsNullOrEmpty(packageDetails.incStyling)) inclusions.Add(packageDetails.incStyling);
-                    if (!string.IsNullOrEmpty(packageDetails.incTableSet)) inclusions.Add(packageDetails.incTableSet);
-                    if (!string.IsNullOrEmpty(packageDetails.incDnrWare)) inclusions.Add(packageDetails.incDnrWare);
-                    if (!string.IsNullOrEmpty(packageDetails.incBftSet)) inclusions.Add(packageDetails.incBftSet);
-
-                    return Json(new
-                    {
-                        success = true,
-                        packageName = packageType.packageTypDesc,
-                        description = packageType.packageSet ?? "Exquisite catering for your special event.",
-                        inclusions = inclusions,
-                        message = "Package details retrieved successfully from database!"
-                    }, JsonRequestBehavior.AllowGet);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logs("ERROR", "Package Card:", "Error fetching package details: " + ex.Message);
-                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -2309,117 +2353,6 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        [HttpPost]
-        public JsonResult RequestCancellation(int bookingID, string customerNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.requestCancel = 1;
-                    booking.customerNote = customerNote;
-                    booking.dateCancelled = DateTime.Now;
-
-                    var newTask = new tblTasksModel()
-                    {
-                        bookingID = bookingID,
-                        task = "Cancellation Request",
-                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
-                        dueDate = DateTime.Now.AddDays(1),
-                        status = "Pending",
-                        dateCreated = DateTime.Now,
-                        dateUpdated = DateTime.Now
-                    };
-                    db.tasks_tbl.Add(newTask);
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation requested for bookingID: {bookingID}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation request sent successfully. Our team will contact you soon." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to request cancellation: " + ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public JsonResult ApproveCancellation(int bookingID, string adminNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.bookingCancelled = 1;
-                    booking.requestCancel = 0;
-                    booking.acceptedCancelNote = adminNote;
-                    booking.dateDeletion = DateTime.Now;
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation APPROVED for bookingID: {bookingID}. Note: {adminNote}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation approved successfully." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to approve cancellation: " + ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public JsonResult RejectCancellation(int bookingID, string adminNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.requestCancel = 0;
-                    booking.cancelNote = adminNote;
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation REJECTED for bookingID: {bookingID}. Note: {adminNote}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation request rejected." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
-            }
-        }
-
         public JsonResult loadPackagePreOption(int packageID)
         {
             try
@@ -2619,7 +2552,124 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        //===================================================================Create/Edit/Delete Booking End==================================================================
 
+        //===================================================================Request Booking Cancellation Start==================================================================
+        [HttpPost]
+        public JsonResult RequestCancellation(int bookingID, string customerNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 1;
+                    booking.customerNote = customerNote;
+                    booking.dateCancelled = DateTime.Now;
+
+                    var newTask = new tblTasksModel()
+                    {
+                        bookingID = bookingID,
+                        task = "Cancellation Request",
+                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
+                        dueDate = DateTime.Now.AddDays(1),
+                        status = "Pending",
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.tasks_tbl.Add(newTask);
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation requested for bookingID: {bookingID}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request sent successfully. Our team will contact you soon." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to request cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ApproveCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.bookingCancelled = 1;
+                    booking.requestCancel = 0;
+                    booking.acceptedCancelNote = adminNote;
+                    booking.dateDeletion = DateTime.Now;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation APPROVED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation approved successfully." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to approve cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RejectCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 0;
+                    booking.cancelNote = adminNote;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation REJECTED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request rejected." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
+            }
+        }
+
+        //===================================================================Request Booking Cancellation End==================================================================
+        
+        //===================================================================Payment Management Start==================================================================
+        
         //start for payments
         public JsonResult GetPayments()
         {
@@ -3183,20 +3233,7 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        public JsonResult GetLogs()
-        {
-            using (var db = new IsabellaCateringContext())
-            {
-                var data = (from log in db.activitylogs_tbl
-                            select new
-                            {
-                                logID = log.logID + ": " + log.userID + " [" + log.permission + "]",
-                                action = " [" + log.level + "] "+" {" + log.processService + ": " + log.processDesc+"} "+log.traceID,
-                                dateUpdated = log.dateCreated,
-                                userName = log.userEmail,
-                            }).ToList();
-                return Json(data, JsonRequestBehavior.AllowGet);
-            }
-        }
+        //===================================================================Payment Management Start==================================================================
+
     }
 }
