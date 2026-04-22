@@ -36,5 +36,13 @@ namespace IsabellaCateringWebApp.Models.Models
         public int paxCount { get; set; }
         public int addAdult { get; set; }
         public int addKid { get; set; }
+
+        public DateTime? dateDeletion { get; set; }
+        public DateTime? dateCancelled { get; set; }
+        public int requestCancel { get; set; }
+        public int bookingCancelled { get; set; }
+        public string cancelNote { get; set; }
+        public string acceptedCancelNote { get; set; }
+        public string customerNote { get; set; }
     }
 }
