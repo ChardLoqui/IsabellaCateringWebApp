@@ -2133,13 +2133,37 @@ namespace IsabellaCateringWebApp.Controllers
                        "Booking Management:",
                        $"New Receipt Data has been created. receiptID: {newReceipt.receiptID}");
 
+                    float downPayment = 5000;
+                    float subtractedDownPayment = paymentInfo.amountDue - downPayment;
+                    float halfPayment = subtractedDownPayment / 2;
+                    float quarterPayment = subtractedDownPayment / 4;
+
+                    DateTime today = DateTime.Today;
+                    DateTime bookingDate = bookingInfo.bookingDate.Date;
+
+                    DateTime firstHalfDate;
+                    DateTime lastQuarterDate;
+
+                    int totalDays = (int)(bookingDate - today).TotalDays;
+
+                    if (totalDays < 120)
+                    {
+                        firstHalfDate = today.AddDays(totalDays / 2);
+                        lastQuarterDate = bookingDate.AddDays(-(totalDays / 4));
+                    }
+                    else
+                    {
+                        firstHalfDate = bookingDate.AddDays(-120);
+                        lastQuarterDate = bookingDate.AddDays(-14);
+                    }
+
                     var newPayment = new tblPaymentsModel()
                     {
                         bookingID = newBooking.bookingID,
                         amountDue = paymentInfo.amountDue,
                         amount = 0,
                         paymentType = "Initial",
-                        remainingBalance = paymentInfo.amountDue,
+                        remainingBalance = subtractedDownPayment,
                         transactionNum = 0,
                         paymentStatus = "Incomplete",
                         dueDate = bookingInfo.bookingDate.AddDays(10),
@@ -2148,6 +2172,72 @@ namespace IsabellaCateringWebApp.Controllers
                     };
 
                     db.payments_tbl.Add(newPayment);
+
+                    newPayment = new tblPaymentsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        amountDue = paymentInfo.amountDue,
+                        amount = 5000,
+                        paymentType = "Payment",
+                        remainingBalance = subtractedDownPayment,
+                        transactionNum = 1,
+                        paymentStatus = "Complete",
+                        dueDate = DateTime.Now,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.payments_tbl.Add(newPayment);
+
+                    newPayment = new tblPaymentsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        amountDue = subtractedDownPayment,
+                        amount = halfPayment,
+                        paymentType = "Payment",
+                        remainingBalance = subtractedDownPayment,
+                        transactionNum = 2,
+                        paymentStatus = "Incomplete",
+                        dueDate = firstHalfDate,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.payments_tbl.Add(newPayment);
+
+                    newPayment = new tblPaymentsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        amountDue = subtractedDownPayment,
+                        amount = quarterPayment,
+                        paymentType = "Payment",
+                        remainingBalance = subtractedDownPayment,
+                        transactionNum = 3,
+                        paymentStatus = "Incomplete",
+                        dueDate = lastQuarterDate,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.payments_tbl.Add(newPayment);
+
+                    newPayment = new tblPaymentsModel()
+                    {
+                        bookingID = newBooking.bookingID,
+                        amountDue = subtractedDownPayment,
+                        amount = quarterPayment,
+                        paymentType = "Payment",
+                        remainingBalance = subtractedDownPayment,
+                        transactionNum = 4,
+                        paymentStatus = "Incomplete",
+                        dueDate = bookingInfo.bookingDate.Date,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+
+                    db.payments_tbl.Add(newPayment);
+
+
                     db.SaveChanges();
 
                     Logs(

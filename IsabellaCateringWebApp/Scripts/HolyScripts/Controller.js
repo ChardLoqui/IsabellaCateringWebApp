@@ -2487,7 +2487,7 @@
                 g.totalPaid += amount
             }
             //g.totalDue += p.amountDue != null ? Number(p.amountDue) : 0;
-            //g.totalPaid += p.amount != null ? Number(p.amount) : 0;
+            
             if (g.totalRemBalance == 0) {
                 g.overallStatus = 'Fully Paid'
             } else if (g.totalDue == g.totalRemBalance) {
@@ -2497,7 +2497,7 @@
             }else{
                 g.overallStatus = 'Partially Paid'
             }
-            
+            g.totalPaid = g.totalDue - g.totalRemBalance;
             if (p.dateUpdated && (!g.dateUpdated || new Date(p.dateUpdated) > new Date(g.dateUpdated))) {
                 g.dateUpdated = p.dateUpdated;
             }
