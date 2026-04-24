@@ -982,12 +982,12 @@
                         </div>
                     </div>
 
-                    <div class="col-span-3 flex flex-col md:col-span-1">
+                    <div class="col-span-3 flex flex-col md:col-span-1" ng-hide="addDebutInput">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                             Debut Additionals <i class="font-label text-red-500">*</i>
                         </label>
                         <div class="relative dropdown-container">
-                            <input type="text" ng-disabled="addDebutInput"
+                            <input type="text"
                                    class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                                    readonly
                                    ng-click="toggleDropdown('debutOpt', $event)"
@@ -1076,7 +1076,7 @@
                                 <li><b>Entertainment:</b> {{entertainmentType || "-"}}</li>
                                 <li><b>Photo Operations:</b> {{photoType || "-"}}</li>
                                 <li><b>Keepsakes:</b> {{keepsakesType || "-"}}</li>
-                                <li><b>Debut Additionals:</b> {{debutType || "-"}}</li>
+                                <li ng-hide="addDebutInput"><b>Debut Additionals:</b> {{debutType || "-"}}</li>
                             </ul>
                         </div>
                     </div>
@@ -1143,11 +1143,11 @@
                                            ng-model="addAdult"
                                            name="adult">
                                 </div>
-                                <div class="col-span-3 flex flex-col md:col-span-1">
+                                <div class="col-span-3 flex flex-col md:col-span-1" ng-hide="addKdInput">
                                     <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                                         Kid Additional
                                     </label>
-                                    <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3" ng-disabled="addKdInput"
+                                    <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3"
                                            placeholder="Kid Count"
                                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                            ng-change="computeFinalPrice()"
