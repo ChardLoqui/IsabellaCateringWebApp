@@ -449,7 +449,7 @@
                 $scope.sessionInfo.name = returnedData.data.userName;
                 $scope.sessionInfo.permission = returnedData.data.permID;
 
-                const roles = { "1": "Admin", "2": "Staff", "3": "User" };
+                const roles = { "1": "Admin", "2": "Staff", "3": "Customer" };
                 $scope.sessionInfo.role = roles[returnedData.data.permID] || "";
 
                 console.log("Logged in as User ID:", $scope.currentUserID);
@@ -592,7 +592,7 @@
         var query = normalizeSearchValue($scope.searchState.account);
 
         $scope.filteredAccountsData = $scope.usersData.filter(function (user) {
-            var role = user.permissionID == 1 ? 'admin' : user.permissionID == 2 ? 'staff' : 'user';
+            var role = user.permissionID == 1 ? 'admin' : user.permissionID == 2 ? 'staff' : 'customer';
             var status = user.isActive == 1 || user.isActive === true ? 'active' : 'inactive';
 
             return matchesSearchValues(query, [
@@ -4156,6 +4156,7 @@
             $scope.addAdult = bookingData.addAdult ? bookingData.addAdult.toString() : '';
             $scope.addKid = bookingData.addKid ? bookingData.addKid.toString() : '';
             $scope.computeFinalPrice();
+            disableBookingInput();
         });
     }
 
@@ -4529,16 +4530,14 @@
         });
     };
     function disableBookingInput() {
-        if ($scope.packageTypeID < 3 || $scope.packageTypeID > 4) 
-            $scope.addKdInput = true;
-        else
-            $scope.addKdInput = false;
+        var pkg = ($scope.packageType || "").toLowerCase();
+        var evt = ($scope.eventType || "").toLowerCase();
 
-        if ($scope.packageTypeID < 5 || $scope.packageTypeID > 7) 
-            $scope.addDebutInput = true;
-        else
-            $scope.addDebutInput = false;
-        
+        var isKiddie = pkg.indexOf("kid") !== -1 || evt.indexOf("kid") !== -1;
+        var isDebut = pkg.indexOf("debut") !== -1 || evt.indexOf("debut") !== -1;
+
+        $scope.addKdInput = !isKiddie;
+        $scope.addDebutInput = !isDebut;
     }
 
     $scope.changeSummaryDateOutput = function () {
@@ -4689,6 +4688,7 @@
         $scope.eventType = type;
         $scope.eventTypeID = id;
         $scope.activeDropdown = null;
+        disableBookingInput();
     };
 
     $scope.getEventDisplayText = function () {
