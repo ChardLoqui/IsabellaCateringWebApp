@@ -731,6 +731,238 @@ namespace IsabellaCateringWebApp.Controllers
         }
         //===================================================================Logs End==================================================================
 
+        //===================================================================Email Start===============================================================
+
+        private string BuildPasswordResetLink(string token)
+        {
+            if (Request != null && Request.Url != null)
+            {
+                return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
+            }
+
+            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
+        }
+
+        public JsonResult SendEmail(string toEmail, string token, string purpose)
+        {
+            try
+            {
+                // SMTP Configuration 
+                string smtpHost = "smtp.gmail.com";
+                int smtpPort = 587;
+                string smtpUser = System.Configuration.ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = System.Configuration.ConfigurationManager.AppSettings["SmtpPass"];
+
+                using (var client = new SmtpClient(smtpHost, smtpPort))
+                {
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+
+                    var mailMessage = new MailMessage();
+                    mailMessage.From = new MailAddress(smtpUser, "Isabell Catering and Events Service");
+                    mailMessage.To.Add(toEmail);
+
+                    
+                    switch (purpose.ToLower())
+                    {
+                        case "registration":
+                            mailMessage.Subject = "Verify Your Registration - Isabella Catering Services";
+                            mailMessage.Body = $@"
+Welcome to Isabella Catering Services!
+                                
+To verify your registration a password reset is required.
+                                
+Your Password Reset Link is: " + BuildPasswordResetLink(token) +
+$@"
+
+This link will expire in 10 minutes.
+
+If you didn't request this, please ignore this email.
+
+Best regards,
+Isabella Catering and Events  Service
+";
+                            break;
+
+                        case "forgot_password":
+                            mailMessage.Subject = "Password Reset Link - Isabella Catering Services";
+                            mailMessage.Body = $@"
+Hello!
+
+Your Password Reset Link is: " + BuildPasswordResetLink(token) +
+$@"
+
+This code will expire in 10 minutes.
+
+If you didn't request this, please ignore this email.
+
+Best regards,
+Isabella Catering and Events Service
+";
+                            break;
+
+                        default:
+                            mailMessage.Subject = "Password Reset Link - Isabella Catering Services";
+                            mailMessage.Body = "Your Password Reset Link is: " + BuildPasswordResetLink(token);
+                            break;
+                    }
+
+                    mailMessage.IsBodyHtml = false;
+
+                    client.Send(mailMessage);
+
+                    Logs(
+                        "INFO",
+                        "Password Reset:",
+                        "Request password token created.");
+                    Logs(
+                        "INFO",
+                        "Password Reset:",
+                        $"Request password link created and sent to email. Email Address: {toEmail}");
+                    return Json(new { success = true, message = $"Succesfully to sent Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS Email:",
+                    $"Attempted to send Email to {toEmail}.");
+                return Json(new { success = false, message = $"Failed to send Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult SendReminder(string toEmail, string paymentLines, string fullName, string eventName, string purpose)
+        {
+            try
+            {
+                // SMTP Configuration 
+                string smtpHost = "smtp.gmail.com";
+                int smtpPort = 587;
+                string smtpUser = System.Configuration.ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = System.Configuration.ConfigurationManager.AppSettings["SmtpPass"];
+
+                using (var client = new SmtpClient(smtpHost, smtpPort))
+                {
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+
+                    var mailMessage = new MailMessage();
+                    mailMessage.From = new MailAddress(smtpUser, "Isabell Catering Service");
+                    mailMessage.To.Add(toEmail);
+
+
+                    switch (purpose.ToLower())
+                    {
+                        case "reminder":
+                            mailMessage.Subject = "Verify Your Registration - Isabella Catering Services";
+                            mailMessage.Body = $@"
+Dear " + fullName +
+$@"
+
+We are Isabella Catering and Events. We hope this message finds you well.
+
+This is a friendly reminder regarding your upcoming payment for Booking" + eventName + $@":
+
+" +
+paymentLines + $@"
+
+Please settle your balance on or before the due date to avoid any inconvenience.
+
+── Payment Options ──
+GCash: 0912345678 (Isabella Catering and Events)
+
+If you have already made a payment, please disregard this notice.
+
+For inquiries, please contact us directly.
+
+Warm regards,
+Isabella Catering and Events 
+";
+                            break;
+
+                        case "reminder_due":
+                            mailMessage.Subject = "Password Reset Link - Isabella Catering Services";
+                            mailMessage.Body = $@"
+Dear " + fullName +
+$@"
+
+We are Isabella Catering and Events. We hope this message finds you well.
+
+This is a friendly reminder regarding your outstanding payment(s) for Booking " + eventName + $@":
+
+" +
+paymentLines + $@"
+
+Please settle your balance at your earliest convenience.
+
+── Payment Options ──
+GCash: 0912345678 (Isabella Catering and Events)
+
+If you have already made a payment, please disregard this notice.
+
+For inquiries, please contact us directly.
+
+Warm regards,
+Isabella Catering and Events 
+";
+                            break;
+
+                        default:
+                            mailMessage.Subject = "Password Reset Link - Isabella Catering Services";
+                            mailMessage.Body = $@"
+Dear " + fullName +
+$@"
+
+We are Isabella Catering and Events. We hope this message finds you well.
+
+
+This is a friendly reminder regarding your upcoming payment for Booking " + eventName + $@":
+
+" +
+paymentLines + $@"
+
+Please settle your balance on or before the due date to avoid any inconvenience.
+
+── Payment Options ──
+GCash: 0912345678 (Isabella Catering and Events)
+
+If you have already made a payment, please disregard this notice.
+
+For inquiries, please contact us directly.
+
+Warm regards,
+Isabella Catering and Events 
+";
+                            break;
+                    }
+
+                    mailMessage.IsBodyHtml = false;
+
+                    client.Send(mailMessage);
+
+                    Logs(
+                        "INFO",
+                        "Payment Reminder:",
+                        $"Payment reminder created and sent to email. Email Address: {toEmail}");
+                    return Json(new { success = true, message = $"Succesfully to sent Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS Email:",
+                    $"Attempted to send Email to {toEmail}.");
+                return Json(new { success = false, message = $"Failed to send Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
+
+        //===================================================================Email End=================================================================
+
         //===================================================================Login/Register/Reset/Logout Start==================================================================
 
         // get creds for login
@@ -752,7 +984,7 @@ namespace IsabellaCateringWebApp.Controllers
 
                         if (verify.password == "0")
                         {
-                            var resetResult = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                            var resetResult = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail, "registration");
                             var detailMessage = resetResult.Success
                                 ? "Check your email for a password reset link!"
                                 : resetResult.HasActiveToken
@@ -986,50 +1218,7 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        private string BuildPasswordResetLink(string token)
-        {
-            if (Request != null && Request.Url != null)
-            {
-                return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
-            }
-
-            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
-        }
-
-        private void SendPasswordResetEmail(string recipientEmail, string token)
-        {
-            if (string.IsNullOrWhiteSpace(recipientEmail))
-            {
-                throw new InvalidOperationException("No email address is available for password reset.");
-            }
-
-            var pickupDirectory = @"C:\Emails";
-            Directory.CreateDirectory(pickupDirectory);
-
-            using (var smtp = new SmtpClient())
-            using (var mail = new MailMessage())
-            {
-                smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-                smtp.PickupDirectoryLocation = pickupDirectory;
-
-                mail.From = new MailAddress("no-reply@localhost");
-                mail.To.Add(recipientEmail);
-                mail.Subject = "Reset Password";
-                mail.Body = "Your Password Reset Link " + BuildPasswordResetLink(token);
-
-                smtp.Send(mail);
-            }
-            Logs(
-                "INFO",
-                "Password Reset:",
-                "Request password token created.");
-            Logs(
-                "INFO",
-                "Password Reset:",
-                $"Request password link created and sent to email. Email Address: {recipientEmail}");
-        }
-
-        private PasswordResetRequestResult CreatePasswordResetRequest(IsabellaCateringContext db, int userId, int clientId, string recipientEmail)
+        private PasswordResetRequestResult CreatePasswordResetRequest(IsabellaCateringContext db, int userId, int clientId, string recipientEmail, string purpose)
         {
             if (userId <= 0 && clientId <= 0)
             {
@@ -1091,7 +1280,7 @@ namespace IsabellaCateringWebApp.Controllers
 
             try
             {
-                SendPasswordResetEmail(recipientEmail, token);
+                SendEmail(recipientEmail, token, purpose);
             }
             catch
             {
@@ -1141,7 +1330,7 @@ namespace IsabellaCateringWebApp.Controllers
                         }, JsonRequestBehavior.AllowGet);
                     }
 
-                    var result = CreatePasswordResetRequest(db, verify.userID, 0, verify.email);
+                    var result = CreatePasswordResetRequest(db, verify.userID, 0, verify.email, "forgot_password");
                     return Json(new
                     {
                         success = result.Success,
@@ -1181,7 +1370,7 @@ namespace IsabellaCateringWebApp.Controllers
                         }, JsonRequestBehavior.AllowGet);
                     }
 
-                    var result = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                    var result = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail, "forgot_password");
                     return Json(new
                     {
                         success = result.Success,
@@ -3192,13 +3381,32 @@ namespace IsabellaCateringWebApp.Controllers
                         initialPayment.paymentStatus = "Complete";
                         initialPayment.remainingBalance = latestPayment.remainingBalance;
                     }
+                    else if (latestPayment.remainingBalance > 0)
+                    {
+                        initialPayment.paymentStatus = "Incomplete";
+                        initialPayment.remainingBalance = latestPayment.remainingBalance;
+
+                        var excessPayments = db.payments_tbl
+                                .Where(x => x.bookingID == bookingID &&
+                                x.paymentType == "Excess")
+                                .FirstOrDefault();
+
+                        if (excessPayments != null)
+                        {
+                            db.payments_tbl.Remove(excessPayments);
+                            db.SaveChanges();
+                            recomputePayment(bookingID, message);
+                        }                        
+                    }
                     else
                     {
                         initialPayment.paymentStatus = "Incomplete";
                         initialPayment.remainingBalance = latestPayment.remainingBalance;
                     }
 
-                    db.SaveChanges();
+                        db.SaveChanges();
+
+
                     return Json(new { success = true, message = "Payment Group recomputed Successfully" }, JsonRequestBehavior.AllowGet);
                 }
             }
@@ -3271,6 +3479,7 @@ namespace IsabellaCateringWebApp.Controllers
                         email = client.cEmail,
                         firstName = client.cFName,
                         lastName = client.cLName,
+                        eventName = client.eventName,
                         bookingID = bookingID
                     }, JsonRequestBehavior.AllowGet);
                 }
