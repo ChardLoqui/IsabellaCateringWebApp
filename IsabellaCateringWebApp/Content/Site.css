@@ -355,6 +355,20 @@ textarea {
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
+.login-field[type="password"]::-ms-reveal,
+.login-field[type="password"]::-ms-clear {
+    display: none;
+}
+
+.login-field[type="password"]::-webkit-credentials-auto-fill-button,
+.login-field[type="password"]::-webkit-contacts-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}
+
 .login-field:hover {
     border-color: #eca1c2;
 }
