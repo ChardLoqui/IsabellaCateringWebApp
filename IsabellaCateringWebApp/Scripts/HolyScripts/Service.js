@@ -277,6 +277,12 @@
         });
     }
 
+    this.sendReminderService = function (toEmail, paymentLines, fullName, eventName, purpose) {
+        return $http.get('/Main/SendReminder', {
+            params: { toEmail: toEmail, paymentLines: paymentLines, fullName: fullName, eventName: eventName, purpose: purpose }
+        });
+    }
+
 
     //========================================================PAYMENT REMINDER END=======================================================
 

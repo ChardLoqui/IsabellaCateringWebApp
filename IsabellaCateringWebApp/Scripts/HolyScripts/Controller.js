@@ -2492,10 +2492,12 @@
                 g.overallStatus = 'Fully Paid'
             } else if (g.totalDue == g.totalRemBalance) {
                 g.overallStatus = 'Unpaid'
+                g.hasUnpaid = true
             } else if(g.totalRemBalance < 0){
                 g.overallStatus = 'With Excess'
             }else{
                 g.overallStatus = 'Partially Paid'
+                g.hasUnpaid = true
             }
             g.totalPaid = g.totalDue - g.totalRemBalance;
             if (p.dateUpdated && (!g.dateUpdated || new Date(p.dateUpdated) > new Date(g.dateUpdated))) {
@@ -3279,8 +3281,8 @@
                 }
 
                 var email = res.data.email;
-                var firstName = res.data.firstName;
-                var lastName = res.data.lastName;
+                var fullName = res.data.firstName + " " + res.data.lastName;
+                var eventName = res.data.eventName;
 
                 var pendingPayments = group.payments.filter(function (p) {
                     return p.paymentStatus !== 'Paid';
@@ -3300,72 +3302,59 @@
                         + ' | Due: ' + date;
                 }).join('\n');
 
-                var types = pendingPayments.map(function (p) { return p.paymentType; }).join(', ');
-                var subject = encodeURIComponent('Payment Reminder — ' + types + ' | Booking #' + group.bookingID);
-                var body = encodeURIComponent(
-                    'Dear ' + firstName + ' ' + lastName + ',\n\n' +
-                    'We are Isabella Catering and Events. We hope this message finds you well.\n\n' +
-                    'This is a friendly reminder regarding your outstanding payment(s) for Booking #' + group.bookingID + ':\n\n' +
-                    paymentLines + '\n\n' +
-                    'Please settle your balance on or before the due date to avoid any inconvenience.\n\n' +
-                    '── Payment Options ──\n' +
-                    'GCash: 0912345678 (Isabella Catering and Events)\n\n' +
-                    'If you have already made a payment, please disregard this notice.\n\n' +
-                    'For inquiries, please contact us directly.\n\n' +
-                    'Warm regards,\n' +
-                    'Isabella Catering and Events Team'
-                );
+                IsabellaCateringWebAppService.sendReminderService(email, paymentLines, fullName, eventName, "reminder")
+                    .then(function (res) {
 
-                var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
-                    + '&to=' + encodeURIComponent(email)
-                    + '&su=' + subject
-                    + '&body=' + body;
+                        if (res.data.success === true) {
+                            Swal.fire({
+                                title: 'Process Complete',
+                                text: 'Reminder for Booking ' + eventName + ' has been processed.',
+                                icon: 'success',
+                                confirmButtonColor: '#ec4899'
+                            }).then(function () {
 
-                window.open(gmailUrl, '_blank');
+                                var sentAt = new Date().toISOString();
+                                var noteText = 'Payment reminder sent via Gmail | Booking #' + group.bookingID +
+                                    ' (' + pendingPayments.length + ' payments)';
 
-                var hasReturned = false;
-                window.onfocus = function () {
-                    if (!hasReturned) {
-                        hasReturned = true;
+                                pendingPayments.forEach(function (p) {
+                                    IsabellaCateringWebAppService.logPaymentReminder({
+                                        paymentID: p.paymentID,
+                                        sentBy: $scope.currentUserID,
+                                        sentAt: sentAt,
+                                        note: noteText,
+                                        dateCreated: sentAt,
+                                        dateUpdated: sentAt
+                                    }).catch(function () {
+                                        console.warn('Could not log reminder for paymentID ' + p.paymentID);
+                                    });
+                                });
+                                Swal.fire({
+                                    title: 'Action Logged',
+                                    text: 'The reminder attempt for Booking ' + eventName + ' has been recorded.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#ec4899'
+                                });
 
-                        Swal.fire({
-                            title: 'Action Logged',
-                            text: 'The reminder attempt for Booking #' + group.bookingID + ' has been recorded.',
-                            icon: 'success',
-                            confirmButtonColor: '#ec4899'
-                        });
+                            });
 
-                        window.onfocus = null;
-                    }
-                };
-
-                var sentAt = new Date().toISOString();
-                var noteText = 'Payment reminder sent via Gmail | Booking #' + group.bookingID +
-                    ' (' + pendingPayments.length + ' payments)';
-
-                pendingPayments.forEach(function (p) {
-                    IsabellaCateringWebAppService.logPaymentReminder({
-                        paymentID: p.paymentID,
-                        sentBy: $scope.currentUserID,
-                        sentAt: sentAt,
-                        note: noteText,
-                        dateCreated: sentAt,
-                        dateUpdated: sentAt
-                    }).catch(function () {
-                        console.warn('Could not log reminder for paymentID ' + p.paymentID);
+                        } else {
+                            Swal.fire({
+                                title: 'Process Incomplete',
+                                text: 'Reminder for Booking ' + eventName + ' has not been processed.',
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                        }
                     });
-                });
-            })
-            .catch(function (error) {
-                Swal.fire({ title: 'Server Error', text: 'Check console for details.', icon: 'error' });
             });
     };
 
     //payment reminder in DUE payments table
     $scope.sendDuePaymentReminder = function (payment) {
-        $http.get('/Main/GetClientEmailByBooking?bookingID=' + payment.bookingID)
-            .then(function (response) {
-                if (!response.data.success) {
+        IsabellaCateringWebAppService.getClientEmailByBooking(payment.bookingID)
+            .then(function (res) {
+                if (!res.data.success) {
                     Swal.fire({
                         title: 'Error', text: 'Client email not found.', icon: 'error',
                         confirmButtonColor: "#EC4899"
@@ -3373,66 +3362,62 @@
                     return;
                 }
 
-                var email = response.data.email;
-                var name = response.data.firstName + ' ' + response.data.lastName;
-                var balance = Math.max(0,
-                    Number(payment.amountDue) - Number(payment.amount)
-                ).toLocaleString('en-PH', { minimumFractionDigits: 2 });
-
-                var subject = encodeURIComponent('Payment Reminder - Booking #' + payment.bookingID);
-                var body = encodeURIComponent(
-                    'Dear ' + name + ',\n\n' +
-                    'This is a friendly reminder regarding your upcoming payment:\n\n' +
-                    '  Type    : ' + payment.paymentType + '\n' +
+                var email = res.data.email;
+                var fullName = res.data.firstName + " " + res.data.lastName;
+                var eventName = res.data.eventName;
+                var paymentLines = '  Type    : ' + payment.paymentType + '\n' +
                     '  Due Date: ' + payment.dueDate + '\n' +
-                    '  Balance : ₱' + balance + '\n\n' +
-                    'Please settle your balance at your earliest convenience.\n\n' +
-                    '── Payment Options ──\n' +
-                    'GCash: 0912345678 (Isabella Catering and Events)\n\n' +
-                    'If you have already made a payment, please disregard this notice.\n\n' +
-                    'For inquiries, please contact us directly.\n\n' +
-                    'Warm regards,\n' +
-                    'Isabella Catering and Events'
-                );
+                    '  Balance : ₱' + payment.remainingBalance ;
 
-                window.open(
-                    'https://mail.google.com/mail/?view=cm&fs=1' +
-                    '&to=' + encodeURIComponent(email) +
-                    '&su=' + subject +
-                    '&body=' + body,
-                    '_blank'
-                );
+                IsabellaCateringWebAppService.sendReminderService(email, paymentLines, fullName, eventName, "reminder_due")
+                    .then(function (res) {
 
-                var returnedToTab = false;
-                window.onfocus = function () {
-                    if (!returnedToTab) {
-                        returnedToTab = true;
+                        if (res.data.success === true) {
+                            Swal.fire({
+                                title: 'Process Complete',
+                                text: 'Reminder for Booking ' + eventName + ' has been processed.',
+                                icon: 'success',
+                                confirmButtonColor: '#ec4899'
+                            }).then(function () {
+                                var sentAt = new Date().toISOString();
+                                var noteText = 'Payment reminder sent via Gmail | Booking #' + payment.bookingID;
 
-                        Swal.fire({
-                            title: 'Process Complete',
-                            text: 'Reminder for Booking #' + payment.bookingID + ' processed.',
-                            icon: 'success',
-                            confirmButtonColor: '#ec4899'
-                        });
-
-                        window.onfocus = null;
-                    }
-                };
-
-                var sentAt = new Date().toISOString();
-                var noteText = 'Due payment reminder sent via Gmail — '
-                    + payment.paymentType + ' | Booking #' + payment.bookingID;
-
-                IsabellaCateringWebAppService.logPaymentReminder({
-                    paymentID: payment.paymentID,
-                    sentBy: $scope.currentUserID,
-                    sentAt: sentAt,
-                    note: noteText,
-                    dateCreated: sentAt,
-                    dateUpdated: sentAt
-                }).catch(function () {
-                    console.warn('Could not log reminder for paymentID ' + payment.paymentID);
-                });
+                                IsabellaCateringWebAppService.logPaymentReminder({
+                                    paymentID: payment.paymentID,
+                                    sentBy: $scope.currentUserID,
+                                    sentAt: sentAt,
+                                    note: noteText,
+                                    dateCreated: sentAt,
+                                    dateUpdated: sentAt
+                                }).then(function (res) {
+                                    if (res.data.success == true) {
+                                        Swal.fire({
+                                            title: 'Action Logged',
+                                            text: 'The reminder attempt for Booking ' + eventName + ' has been recorded.',
+                                            icon: 'success',
+                                            confirmButtonColor: '#ec4899'
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Failed to Log Action',
+                                            text: 'The reminder attempt for Booking ' + eventName + ' has not been recorded.',
+                                            icon: 'error',
+                                            confirmButtonColor: '#ec4899'
+                                        });
+                                    }
+                                }).catch(function () {
+                                    console.warn('Could not log reminder for paymentID ' + payment.paymentID);
+                                });
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Process Incomplete',
+                                text: 'Reminder for Booking ' + eventName + ' has not been processed.',
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                        }
+                    });
             });
     };
 
