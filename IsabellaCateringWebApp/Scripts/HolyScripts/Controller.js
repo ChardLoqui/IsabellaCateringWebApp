@@ -1727,6 +1727,7 @@
 
     let currentDate = new Date();
     let selectedDate = null;
+    let hasResolvedInitialCalendarSelection = false;
     let activeCalendarRequestId = 0;
     let activeCalendarSearchRequestId = 0;
     let highlightedBookingId = null;
@@ -1891,6 +1892,31 @@
 
         currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
         return true;
+    }
+
+    function resolveInitialCalendarSelection() {
+        if (hasResolvedInitialCalendarSelection) {
+            return;
+        }
+
+        hasResolvedInitialCalendarSelection = true;
+
+        if (selectedDate || pendingCalendarSelection || calendarSearchPreviewOrigin || livePreviewDateKey || livePreviewBookingId) {
+            return;
+        }
+
+        const today = getCalendarToday();
+        if (currentDate.getFullYear() !== today.getFullYear() || currentDate.getMonth() !== today.getMonth()) {
+            return;
+        }
+
+        const todayDateKey = getCalendarDateKey(today);
+        if (!todayDateKey || isPastCalendarDate(todayDateKey)) {
+            return;
+        }
+
+        selectedDate = todayDateKey;
+        highlightedBookingId = null;
     }
 
     function formatCalendarSearchResultLabel(result) {
@@ -2176,6 +2202,7 @@
         const month = currentDate.getMonth();
         const requestId = ++activeCalendarRequestId;
         $scope.calendarLoading = true;
+        resolveInitialCalendarSelection();
 
         currentMonthElement.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
