@@ -88,6 +88,11 @@ namespace IsabellaCateringWebApp.Controllers
             return View();
         }
 
+        public ActionResult CancelTab()
+        {
+            return View();
+        }
+
         //===================================================================Pages End==================================================================
 
         //===================================================================Booking Calendar Start==================================================================
@@ -607,14 +612,10 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
-        public ActionResult CancelTab()
-        {
-            return View();
-        }
         //===================================================================Landing Page End==================================================================
 
         //===================================================================Logs Start==================================================================
+
         public JsonResult Logs(string level, string processService, string processDesc)
         {
             try
