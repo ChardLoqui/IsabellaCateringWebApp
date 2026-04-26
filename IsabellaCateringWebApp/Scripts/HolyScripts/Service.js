@@ -238,6 +238,22 @@
 
     //========================================================BOOKING CALENDAR END=======================================================
 
+    //========================================================REQUEST BOOKING CALENDAR START=======================================================
+
+    this.getRequestCalendarMonthService = function (year, month) {
+        return $http.get("/Main/getRequestCalendarMonth", {
+            params: { year: year, month: month }
+        });
+    };
+
+    this.validateRequestDateService = function (formattedDate) {
+        return $http.get("/Main/validateRequestDate", {
+            params: { formattedDate: formattedDate }
+        });
+    };
+
+    //========================================================REQUEST BOOKING CALENDAR END=======================================================
+
     //========================================================PAYMENT REMINDER START=======================================================
 
     //for getting the data for payments

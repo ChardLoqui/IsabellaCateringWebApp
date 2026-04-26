@@ -72,6 +72,10 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+        public ActionResult RequestCalendarPage()
+        {
+            return View();
+        }
         public ActionResult PaymentReminderTabPage()
         {
             return View();
@@ -500,6 +504,105 @@ namespace IsabellaCateringWebApp.Controllers
         }
 
         //===================================================================Booking Calendar End==================================================================
+
+        //===================================================================Request Booking Calendar Start==================================================================
+
+        public JsonResult getRequestCalendarMonth(int year, int month)
+        {
+            try
+            {
+                if (month < 1 || month > 12)
+                {
+                    return Json(new { success = false, message = "Invalid month." }, JsonRequestBehavior.AllowGet);
+                }
+
+                var today = DateTime.Today;
+                var minimumDate = today.AddDays(4);
+                var maximumDate = today.AddYears(3);
+
+                var monthStart = new DateTime(year, month, 1);
+                var monthEnd = monthStart.AddMonths(1);
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingCounts = db.bookings_tbl
+                        .Where(b => b.bookingDate >= monthStart && b.bookingDate < monthEnd)
+                        .GroupBy(b => b.bookingDate)
+                        .Select(g => new
+                        {
+                            bookingDate = g.Key,
+                            count = g.Count()
+                        })
+                        .ToList()
+                        .ToDictionary(
+                            x => x.bookingDate.Year + "-" + x.bookingDate.Month + "-" + x.bookingDate.Day,
+                            x => x.count
+                        );
+
+                    return Json(new { bookingCounts = bookingCounts, success = true }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Request Calendar:",
+                    "Attempted to get request calendar month. " + ex.Message + " " + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult validateRequestDate(string formattedDate)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(formattedDate))
+                {
+                    return Json(new { success = false, message = "Please select a date first!" }, JsonRequestBehavior.AllowGet);
+                }
+
+                DateTime selectedDate = DateTime.Parse(formattedDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+                DateTime today = DateTime.Today;
+                DateTime minimumDate = today.AddDays(4);
+                DateTime maximumDate = today.AddYears(3);
+
+                // Check if date is within allowed range
+                if (selectedDate < minimumDate)
+                {
+                    return Json(new { success = false, message = "Bookings must be requested at least 4 days in advance." }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (selectedDate > maximumDate)
+                {
+                    return Json(new { success = false, message = "Bookings can only be requested up to 3 years in advance." }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingCount = db.bookings_tbl
+                        .Where(b => b.bookingDate == selectedDate)
+                        .Count();
+
+                    if (bookingCount >= 3)
+                    {
+                        return Json(new { success = false, message = "This date already has 3 bookings and is no longer available." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    Session["requestSelectedDate"] = formattedDate;
+                    return Json(new { success = true, selectedDate = formattedDate, message = "Date confirmed!" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Request Calendar:",
+                    "Attempted to validate request date. " + ex.Message + " " + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //===================================================================Request Booking Calendar End==================================================================
 
         //===================================================================Landing Page Start==================================================================
         public class EventPackage
@@ -3609,7 +3712,7 @@ Isabella Catering and Events
             }
         }
 
-        //===================================================================Payment Management Start==================================================================
+        //===================================================================Payment Management End==================================================================
 
     }
 }

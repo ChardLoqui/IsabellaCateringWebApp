@@ -1131,6 +1131,7 @@
     <Content Include="Views\Main\AdminViewTabPage.cshtml" />
     <Content Include="Views\Main\LandingPage.cshtml" />
     <Content Include="Views\Main\CancelRequestTabPage.cshtml" />
+    <Content Include="Views\Main\RequestCalendarPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

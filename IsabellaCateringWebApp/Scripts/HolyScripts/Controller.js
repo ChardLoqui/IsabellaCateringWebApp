@@ -36,9 +36,9 @@
         return currentPath.indexOf(("/main/" + pageName).toLowerCase()) !== -1;
     }
 
-    var isAccountsPage = isCurrentPage("AccountsPage");
-    var isLogsPage = isCurrentPage("LogsPage");
-    var isPaymentReminderPage = isCurrentPage("PaymentReminderPage");
+    var isAccountsPage = isCurrentPage("AccountsTabPage");
+    var isLogsPage = isCurrentPage("LogsTabPage");
+    var isPaymentReminderPage = isCurrentPage("PaymentReminderTabPage");
 
     $scope.accountsLoading = isAccountsPage;
     $scope.logsLoading = isLogsPage;
@@ -65,7 +65,7 @@
                 } else {
                     $scope.displayNavOptions = false;
                     $scope.navStateResolved = true;
-                    if (!isCurrentPage("CustomerViewPage")) {
+                    if (!isCurrentPage("CustomerViewTabPage")) {
                         $scope.redirectToCustomerViewPage();
                     }
                 }
@@ -952,7 +952,7 @@
         $scope.getLogsData();
     }
 
-    if (isCurrentPage("CustomerViewPage")) {
+    if (isCurrentPage("CustomerViewTabPage")) {
         $scope.authenticateLoginCredentials();
     }
 
@@ -2420,6 +2420,332 @@
         });
     }
     //====================================================== BOOKING CALENDAR END ======================================================
+
+    //====================================================== REQUEST BOOKING CALENDAR START ======================================================
+    // Request Booking Calendar Variables
+    const requestDatepickerContainer = document.getElementById('request-datepicker-container');
+    const requestDaysContainer = document.getElementById('request-days-container');
+    const requestCurrentMonthLabel = document.getElementById('requestCurrentMonthLabel');
+
+    let requestCurrentDate = new Date();
+    let requestSelectedDateKey = null;
+    let requestActiveRequestId = 0;
+    let requestMinimumDate = new Date();
+    let requestMaximumDate = new Date();
+
+    $scope.requestCalendarLoading = false;
+    $scope.requestMonthBookingCounts = {};
+
+    // Initialize request calendar
+    function initializeRequestDateLimits() {
+        const today = new Date();
+        requestMinimumDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 4);
+        requestMaximumDate = new Date(today.getFullYear() + 3, today.getMonth(), today.getDate());
+
+        // Set initial current date to the minimum selectable date's month
+        requestCurrentDate = new Date(requestMinimumDate.getFullYear(), requestMinimumDate.getMonth(), 1);
+    }
+
+    function getRequestDateKey(dateValue) {
+        if (!dateValue) return "";
+        const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+        if (isNaN(date.getTime())) return "";
+        return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    }
+
+    function isRequestDateSelectable(dateKey) {
+        if (!dateKey) return false;
+
+        const parts = dateKey.split('-');
+        if (parts.length !== 3) return false;
+
+        const checkDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+
+        // Check if date is within allowed range
+        if (checkDate < requestMinimumDate || checkDate > requestMaximumDate) {
+            return false;
+        }
+
+        // Check if date has 3 or more bookings
+        const bookingCount = $scope.requestMonthBookingCounts[dateKey] || 0;
+        if (bookingCount >= 3) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function clearRequestDateSelection() {
+        document.querySelectorAll('#request-days-container .request-calendar-day').forEach(function (day) {
+            day.classList.remove('selected-request-day');
+        });
+
+        document.querySelectorAll('#request-days-container .request-date-cell').forEach(function (dateCell) {
+            dateCell.classList.remove('bg-[#EC4899]', 'text-white', 'border-[#D6418B]');
+            dateCell.classList.remove('scale-105', 'shadow-md');
+        });
+    }
+
+    function applyRequestDateSelection(dateKey) {
+        if (!dateKey) return false;
+
+        requestSelectedDateKey = dateKey;
+        clearRequestDateSelection();
+
+        let matchedDay = null;
+        document.querySelectorAll('#request-days-container .request-calendar-day').forEach(function (day) {
+            if (day.dataset && day.dataset.requestDate === dateKey) {
+                matchedDay = day;
+            }
+        });
+
+        if (!matchedDay) return false;
+
+        matchedDay.classList.add('selected-request-day');
+        const dateCell = matchedDay.querySelector('.request-date-cell');
+        if (dateCell) {
+            dateCell.classList.add('bg-[#EC4899]', 'text-white', 'border-[#D6418B]', 'scale-105', 'shadow-md');
+        }
+
+        return true;
+    }
+
+    $scope.canNavigateToPrevMonth = function () {
+        const prevMonth = new Date(requestCurrentDate.getFullYear(), requestCurrentDate.getMonth() - 1, 1);
+        return prevMonth >= new Date(requestMinimumDate.getFullYear(), requestMinimumDate.getMonth(), 1);
+    };
+
+    $scope.canNavigateToNextMonth = function () {
+        const nextMonth = new Date(requestCurrentDate.getFullYear(), requestCurrentDate.getMonth() + 1, 1);
+        return nextMonth <= new Date(requestMaximumDate.getFullYear(), requestMaximumDate.getMonth(), 1);
+    };
+
+    $scope.navigateToPreviousMonth = function () {
+        if (!$scope.canNavigateToPrevMonth()) return;
+        requestCurrentDate.setMonth(requestCurrentDate.getMonth() - 1);
+        $scope.renderRequestCalendar();
+    };
+
+    $scope.navigateToNextMonth = function () {
+        if (!$scope.canNavigateToNextMonth()) return;
+        requestCurrentDate.setMonth(requestCurrentDate.getMonth() + 1);
+        $scope.renderRequestCalendar();
+    };
+
+    $scope.isRequestDateSelected = function () {
+        return requestSelectedDateKey !== null && isRequestDateSelectable(requestSelectedDateKey);
+    };
+
+    $scope.initializeRequestCalendar = function () {
+        initializeRequestDateLimits();
+        $scope.renderRequestCalendar();
+    };
+
+    $scope.renderRequestCalendar = function () {
+        if (!requestDaysContainer || !requestCurrentMonthLabel) {
+            return;
+        }
+
+        const year = requestCurrentDate.getFullYear();
+        const month = requestCurrentDate.getMonth();
+        const requestId = ++requestActiveRequestId;
+        $scope.requestCalendarLoading = true;
+        $scope.requestMonthBookingCounts = {};
+
+        requestCurrentMonthLabel.textContent = requestCurrentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        requestDaysContainer.innerHTML = '';
+
+        let firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        // Previous month's days
+        for (let i = (daysInPrevMonth - firstDayOfMonth + 1); i <= daysInPrevMonth; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'request-empty-day flex items-center justify-center';
+            emptyCell.innerHTML = `<div class="text-gray-300 flex h-10 w-10 items-center justify-center rounded-md text-sm font-medium">${i}</div>`;
+            requestDaysContainer.appendChild(emptyCell);
+        }
+
+        // Current month's days
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dayString = `${year}-${month + 1}-${i}`;
+            const dayDate = new Date(year, month, i);
+            const isSelectable = isRequestDateSelectable(dayString);
+            const isSelected = requestSelectedDateKey === dayString;
+
+            const dayDiv = document.createElement('div');
+            dayDiv.className = `request-calendar-day flex flex-col items-center ${isSelected ? 'selected-request-day' : ''}`;
+            dayDiv.dataset.requestDate = dayString;
+
+            let cellClass = 'request-date-cell flex h-10 w-10 items-center justify-center rounded-md text-base font-semibold transition-all duration-200';
+
+            if (!isSelectable) {
+                cellClass += ' text-gray-300 bg-gray-50 cursor-not-allowed border border-gray-200';
+            } else if (isSelected) {
+                cellClass += ' bg-[#EC4899] text-white border-2 border-[#D6418B] cursor-pointer scale-105 shadow-md';
+            } else {
+                cellClass += ' border-2 border-transparent hover:border-[#D6418B] hover:scale-105 cursor-pointer text-gray-700';
+            }
+
+            const dateCell = document.createElement('div');
+            dateCell.className = cellClass;
+            dateCell.dataset.requestDate = dayString;
+            dateCell.textContent = i;
+
+            if (isSelectable) {
+                dateCell.addEventListener('click', function () {
+                    applyRequestDateSelection(this.dataset.requestDate);
+                    $scope.$apply();
+                });
+            }
+
+            dayDiv.appendChild(dateCell);
+            requestDaysContainer.appendChild(dayDiv);
+        }
+
+        // Next month's days
+        const totalCells = firstDayOfMonth + daysInMonth;
+        const remainingCells = totalCells <= 35 ? 35 - totalCells : 42 - totalCells;
+
+        for (let i = 1; i <= remainingCells; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'request-empty-day flex items-center justify-center';
+            emptyCell.innerHTML = `<div class="text-gray-300 flex h-10 w-10 items-center justify-center rounded-md text-sm font-medium">${i}</div>`;
+            requestDaysContainer.appendChild(emptyCell);
+        }
+
+        // Fetch booking counts for this month
+        IsabellaCateringWebAppService.getRequestCalendarMonthService(year, month + 1).then(function (response) {
+            if (requestId !== requestActiveRequestId) {
+                return;
+            }
+
+            if (!response.data.success) {
+                $scope.requestCalendarLoading = false;
+                Swal.fire({
+                    title: "Error",
+                    text: response.data.message || "Could not load calendar data.",
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
+                });
+                return;
+            }
+
+            const bookingCounts = response.data.bookingCounts || {};
+            $scope.requestMonthBookingCounts = bookingCounts;
+
+            // Re-render calendar with booking counts
+            document.querySelectorAll('#request-days-container .request-calendar-day').forEach(function (dayDiv) {
+                const dateKey = dayDiv.dataset.requestDate;
+                if (!dateKey) return;
+
+                const bookingCount = bookingCounts[dateKey] || 0;
+                const dateCell = dayDiv.querySelector('.request-date-cell');
+
+                if (!dateCell) return;
+
+                const isCurrentlySelectable = isRequestDateSelectable(dateKey);
+
+                // Update cell styling based on booking count
+                dateCell.className = 'request-date-cell flex h-10 w-10 items-center justify-center rounded-md text-base font-semibold transition-all duration-200';
+
+                if (!isCurrentlySelectable) {
+                    dateCell.className += ' text-gray-300 bg-gray-50 cursor-not-allowed border border-gray-200';
+                    dateCell.removeEventListener('click', dateCell._clickHandler);
+                } else if (dateKey === requestSelectedDateKey) {
+                    dateCell.className += ' bg-[#EC4899] text-white border-2 border-[#D6418B] cursor-pointer scale-105 shadow-md';
+                } else {
+                    dateCell.className += ' border-2 border-transparent hover:border-[#D6418B] hover:scale-105 cursor-pointer text-gray-700';
+                }
+
+                // Add booking count indicator if there are bookings
+                if (bookingCount > 0 && isCurrentlySelectable) {
+                    const existingIndicator = dayDiv.querySelector('.booking-count-indicator');
+                    if (existingIndicator) {
+                        existingIndicator.remove();
+                    }
+
+                    const indicator = document.createElement('div');
+                    indicator.className = 'booking-count-indicator text-[10px] text-center font-medium mt-0.5';
+                    indicator.style.color = dateKey === requestSelectedDateKey ? '#FFF' : '#6B7280';
+                    indicator.textContent = `${bookingCount}/3`;
+                    dayDiv.appendChild(indicator);
+                } else if (bookingCount >= 3) {
+                    const existingIndicator = dayDiv.querySelector('.booking-count-indicator');
+                    if (existingIndicator) {
+                        existingIndicator.remove();
+                    }
+
+                    const indicator = document.createElement('div');
+                    indicator.className = 'booking-count-indicator text-[10px] text-center text-gray-400 font-medium mt-0.5';
+                    indicator.textContent = 'Full';
+                    dayDiv.appendChild(indicator);
+                }
+            });
+
+            $scope.requestCalendarLoading = false;
+        }).catch(function () {
+            if (requestId !== requestActiveRequestId) {
+                return;
+            }
+
+            $scope.requestCalendarLoading = false;
+            Swal.fire({
+                title: "Error",
+                text: "Could not load calendar data.",
+                icon: "error",
+                confirmButtonColor: "#EC4899"
+            });
+        });
+    };
+
+    $scope.submitBookingRequest = function () {
+        if (!requestSelectedDateKey) {
+            Swal.fire({
+                title: "Select a Date",
+                text: "Please choose an available date first.",
+                icon: "warning",
+                confirmButtonColor: "#EC4899"
+            });
+            return;
+        }
+
+        if (!isRequestDateSelectable(requestSelectedDateKey)) {
+            Swal.fire({
+                title: "Date Unavailable",
+                text: "This date is not available for booking.",
+                icon: "warning",
+                confirmButtonColor: "#EC4899"
+            });
+            return;
+        }
+
+        IsabellaCateringWebAppService.validateRequestDateService(requestSelectedDateKey).then(function (response) {
+            if (response.data.success) {
+                // Store selected date and proceed
+                Swal.fire({
+                    title: "Date Confirmed",
+                    text: "Proceeding to booking request form...",
+                    icon: "success",
+                    confirmButtonColor: "#EC4899"
+                }).then(function () {
+                    // Redirect to booking request form page
+                    window.location.href = "/Main/BookingRequestForm";
+                });
+            } else {
+                Swal.fire({
+                    title: "Error",
+                    text: response.data.message || "Unable to confirm this date.",
+                    icon: "error",
+                    confirmButtonColor: "#EC4899"
+                });
+            }
+        });
+    };
+
+    //====================================================== REQUEST BOOKING CALENDAR END ======================================================
 
     //====================================================== PAYMENT REMINDER START ======================================================
     $scope.showIfAdd = true;
