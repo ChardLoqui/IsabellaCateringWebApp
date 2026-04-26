@@ -88,6 +88,11 @@ namespace IsabellaCateringWebApp.Controllers
             return View();
         }
 
+        public ActionResult CancelTab()
+        {
+            return View();
+        }
+
         //===================================================================Pages End==================================================================
 
         //===================================================================Booking Calendar Start==================================================================
@@ -584,27 +589,13 @@ namespace IsabellaCateringWebApp.Controllers
                         if (ent != null) inclusions.Add("Entrance: " + ent.entranceTypDesc);
                     }
 
-                    // Standard string-based inclusions from packages_tbl
-                    if (!string.IsNullOrEmpty(packageDetails.incStaples)) inclusions.Add(packageDetails.incStaples);
-                    if (!string.IsNullOrEmpty(packageDetails.incStyling)) inclusions.Add(packageDetails.incStyling);
-                    if (!string.IsNullOrEmpty(packageDetails.incTableSet)) inclusions.Add(packageDetails.incTableSet);
-                    if (!string.IsNullOrEmpty(packageDetails.incDnrWare)) inclusions.Add(packageDetails.incDnrWare);
-                    if (!string.IsNullOrEmpty(packageDetails.incBftSet)) inclusions.Add(packageDetails.incBftSet);
 
-                    return Json(new
-                    {
-                        success = true,
-                        packageName = packageType.packageTypDesc,
-                        description = packageType.packageSet ?? "Exquisite catering for your special event.",
-                        inclusions = inclusions,
-                        message = "Package details retrieved successfully from database!"
-                    }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
             {
-                Logs("ERROR", "Package Card:", "Error fetching package details: " + ex.Message);
-                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
+
+                return Json(new { succes = false, message = "Logs failed!" + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -614,7 +605,6 @@ namespace IsabellaCateringWebApp.Controllers
         }
         //===================================================================Landing Page End==================================================================
 
-        //===================================================================Logs Start==================================================================
         public JsonResult Logs(string level, string processService, string processDesc)
         {
             try
