@@ -3291,6 +3291,7 @@
 
     //payment reminder in PAYMENTS table
     $scope.sendPaymentReminder = function (group) {
+        $scope.paymentLoading = true;
         if (!group) {
             console.warn("sendPaymentReminder called with no group data.");
             return;
@@ -3362,7 +3363,7 @@
                                     icon: 'success',
                                     confirmButtonColor: '#ec4899'
                                 });
-
+                                $scope.paymentLoading = false;
                             });
 
                         } else {
@@ -3372,6 +3373,7 @@
                                 icon: 'error',
                                 confirmButtonColor: '#ec4899'
                             });
+                            $scope.paymentLoading = false;
                         }
                     });
             });
@@ -3379,6 +3381,7 @@
 
     //payment reminder in DUE payments table
     $scope.sendDuePaymentReminder = function (payment) {
+        $scope.paymentLoading = true;
         IsabellaCateringWebAppService.getClientEmailByBooking(payment.bookingID)
             .then(function (res) {
                 if (!res.data.success) {
@@ -3386,6 +3389,7 @@
                         title: 'Error', text: 'Client email not found.', icon: 'error',
                         confirmButtonColor: "#EC4899"
                     });
+                    $scope.paymentLoading = false;
                     return;
                 }
 
@@ -3424,6 +3428,7 @@
                                             icon: 'success',
                                             confirmButtonColor: '#ec4899'
                                         });
+                                        $scope.paymentLoading = false;
                                     } else {
                                         Swal.fire({
                                             title: 'Failed to Log Action',
@@ -3431,9 +3436,11 @@
                                             icon: 'error',
                                             confirmButtonColor: '#ec4899'
                                         });
+                                        $scope.paymentLoading = false;
                                     }
                                 }).catch(function () {
                                     console.warn('Could not log reminder for paymentID ' + payment.paymentID);
+                                    $scope.paymentLoading = false;
                                 });
                             });
                         } else {
@@ -3443,6 +3450,7 @@
                                 icon: 'error',
                                 confirmButtonColor: '#ec4899'
                             });
+                            $scope.paymentLoading = false;
                         }
                     });
             });
