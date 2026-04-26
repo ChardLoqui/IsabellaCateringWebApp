@@ -154,8 +154,7 @@
                                     class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500">
                                 <option value="">Select a role</option>
                                 <option value="1">Admin</option>
-                                <option value="2">Staff</option>
-                                <option value="3">User</option>
+                                <option value="3">Customer</option>
                             </select>
                         </div>
 
@@ -316,8 +315,7 @@
                             <select ng-model="selectedUser.permissionID"
                                     class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                                 <option ng-value="1">Admin</option>
-                                <option ng-value="2">Staff</option>
-                                <option ng-value="3">User</option>
+                                <option ng-value="3">Customer</option>
                             </select>
                         </div>
 
@@ -477,7 +475,7 @@
                             <td class="p-4">
                                 <span ng-if="user.permissionID == 1">Admin</span>
                                 <span ng-if="user.permissionID == 2">Staff</span>
-                                <span ng-if="user.permissionID == 3">User</span>
+                                <span ng-if="user.permissionID == 3">Customer</span>
                             </td>
 
                             <td class="p-4">{{ user.firstName }}</td>
