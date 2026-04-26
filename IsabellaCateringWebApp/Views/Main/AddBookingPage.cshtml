@@ -982,12 +982,12 @@
                         </div>
                     </div>
 
-                    <div class="col-span-3 flex flex-col md:col-span-1">
+                    <div class="col-span-3 flex flex-col md:col-span-1" ng-hide="addDebutInput">
                         <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                             Debut Additionals <i class="font-label text-red-500">*</i>
                         </label>
                         <div class="relative dropdown-container">
-                            <input type="text" ng-disabled="addDebutInput"
+                            <input type="text"
                                    class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                                    readonly
                                    ng-click="toggleDropdown('debutOpt', $event)"
@@ -1076,7 +1076,7 @@
                                 <li><b>Entertainment:</b> {{entertainmentType || "-"}}</li>
                                 <li><b>Photo Operations:</b> {{photoType || "-"}}</li>
                                 <li><b>Keepsakes:</b> {{keepsakesType || "-"}}</li>
-                                <li><b>Debut Additionals:</b> {{debutType || "-"}}</li>
+                                <li ng-hide="addDebutInput"><b>Debut Additionals:</b> {{debutType || "-"}}</li>
                             </ul>
                         </div>
                     </div>
@@ -1104,35 +1104,49 @@
                                 Finalize guest count, adjust add-ons, and confirm the booking amount before submission.
                             </p>
                         </div>
-                        <div class="col-span-3 flex flex-col md:col-span-1">
-                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                                Guest Count <i class="font-label text-red-500">*</i>
-                            </label>
-                            <div class="relative dropdown-container">
-                                <input type="text"
-                                       class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                       readonly
-                                       ng-click="toggleDropdown('pricePax', $event)"
-                                       ng-value="getPricePaxDisplayText()"
-                                       ng-class="{'booking-field-invalid': shouldShowBookingFieldError('guestCount')}"> 
-                                <p class="booking-error" ng-if="shouldShowBookingFieldError('guestCount')">
-                                    {{ getBookingFieldErrorMessage('guestCount') }}
-                                </p>
-                                <div ng-if="activeDropdown ==='pricePax'" ng-click="$event.stopPropagation()"
-                                     class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                    <div ng-repeat="price in pricePaxOpt"
-                                         ng-click="selectPricePaxType(price.pricePaxID, price.pricePaxDesc, price.pricePaxPrice)"
-                                         class="px-3 py-2 cursor-pointer hover:bg-pink-100"
-                                         ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': priceType===price.pricePaxDesc}">
-                                        {{price.pricePaxDesc}}
+                        <div class="col-span-3 booking-form-shell">
+                            <div class="booking-form-two-column">
+                                <div class="booking-form-field booking-form-field--wide">
+                                    <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                        Guest Count <i class="font-label text-red-500">*</i>
+                                    </label>
+                                    <div class="relative dropdown-container">
+                                        <input type="text"
+                                               class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                               readonly
+                                               ng-click="toggleDropdown('pricePax', $event)"
+                                               ng-value="getPricePaxDisplayText()"
+                                               ng-class="{'booking-field-invalid': shouldShowBookingFieldError('guestCount')}">
+                                        <p class="booking-error" ng-if="shouldShowBookingFieldError('guestCount')">
+                                            {{ getBookingFieldErrorMessage('guestCount') }}
+                                        </p>
+                                        <div ng-if="activeDropdown ==='pricePax'" ng-click="$event.stopPropagation()"
+                                             class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                            <div ng-repeat="price in pricePaxOpt"
+                                                 ng-click="selectPricePaxType(price.pricePaxID, price.pricePaxDesc, price.pricePaxPrice)"
+                                                 class="px-3 py-2 cursor-pointer hover:bg-pink-100"
+                                                 ng-class="{'bg-pink-300 border border-pink-500 rounded-lg': priceType===price.pricePaxDesc}">
+                                                {{price.pricePaxDesc}}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div class="col-span-3 flex flex-col md:col-span-1">
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="col-span-3 flex flex-col md:col-span-1">
+                                <div class="booking-form-field">
+                                    <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                        Final Price
+                                    </label>
+                                    <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="11"
+                                           placeholder="Final Price"
+                                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base booking-final-total-input"
+                                           ng-model="bookingFinalPrice"
+                                           name="finalPrice">
+                                    <p class="booking-inline-note">
+                                        Includes package base price, per-pax additions, and custom charges.
+                                    </p>
+                                </div>
+
+                                <div class="booking-form-field">
                                     <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                                         Adult Additional
                                     </label>
@@ -1143,40 +1157,109 @@
                                            ng-model="addAdult"
                                            name="adult">
                                 </div>
-                                <div class="col-span-3 flex flex-col md:col-span-1">
+
+                                <div class="booking-form-field" ng-hide="addKdInput">
                                     <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                                         Kid Additional
                                     </label>
-                                    <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3" ng-disabled="addKdInput"
+                                    <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3"
                                            placeholder="Kid Count"
                                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                            ng-change="computeFinalPrice()"
                                            ng-model="addKid"
                                            name="kid">
                                 </div>
-                            </div>
-                        </div>
 
-                        <div class="col-span-3 flex flex-col md:col-span-1">
-                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                                Final Price
-                            </label>
-                            <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="11"
-                                   placeholder="Final Price"
-                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                                   ng-model="bookingFinalPrice"
-                                   name="finalPrice">
-                        </div>
+                                <div class="booking-form-field booking-form-field--full">
+                                    <div class="booking-rate-strip">
+                                        <div class="booking-rate-strip__item">
+                                            <span>Adult additional</span>
+                                            <strong>Php {{ (pricePaxAdMulti || 0) | number:2 }}</strong>
+                                            <small>per pax</small>
+                                        </div>
+                                        <div class="booking-rate-strip__item">
+                                            <span>Kid additional</span>
+                                            <strong>Php {{ (pricePaxKdMulti || 0) | number:2 }}</strong>
+                                            <small>per pax</small>
+                                        </div>
+                                        <div class="booking-rate-strip__item">
+                                            <span>Custom charges total</span>
+                                            <strong>Php {{ getBookingAdditionalsTotal() | number:2 }}</strong>
+                                            <small>live total</small>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <div class="col-span-3 flex flex-col md:col-span-3">
-                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                                Booking Note
-                            </label>
-                            <textarea class="w-full h-auto max-h-40 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
-                                      name="bookingNote"
-                                      placeholder="Add Note Here..."
-                                      ng-model="bookingNote">
+                                <div class="booking-form-field booking-form-field--full">
+                                    <div class="booking-additionals-header">
+                                        <div class="booking-additionals-header__copy">
+                                            <label class="font-label text-sm font-bold text-gray-600 sm:text-base">
+                                                Additional Charges
+                                            </label>
+                                            <p class="booking-inline-note">
+                                                Add custom fees outside the package and per-pax pricing.
+                                            </p>
+                                        </div>
+                                        <button type="button"
+                                                class="booking-icon-button"
+                                                ng-click="addBookingAdditional()"
+                                                aria-label="Add additional charge"
+                                                title="Add additional charge">
+                                            <span class="material-symbols-outlined">add</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="space-y-3" ng-if="bookingAdditionals.length">
+                                        <div class="booking-additional-form-row" ng-repeat="item in bookingAdditionals track by $index">
+                                            <div class="booking-additional-form-row__field">
+                                                <label class="booking-additional-form-row__label" ng-if="$first">Description</label>
+                                                <input type="text"
+                                                       class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                       placeholder="Description"
+                                                       ng-model="item.description">
+                                            </div>
+
+                                            <div class="booking-additional-form-row__field">
+                                                <label class="booking-additional-form-row__label" ng-if="$first">Amount</label>
+                                                <input type="text"
+                                                       class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                       placeholder="Amount"
+                                                       ng-model="item.amount"
+                                                       ng-change="computeFinalPrice()"
+                                                       oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1')">
+                                            </div>
+
+                                            <div class="booking-additional-form-row__action">
+                                                <button type="button"
+                                                        class="booking-icon-button booking-icon-button--danger"
+                                                        ng-click="removeBookingAdditional($index)"
+                                                        aria-label="Remove additional charge"
+                                                        title="Remove additional charge">
+                                                    <span class="material-symbols-outlined">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-additionals-empty" ng-if="!bookingAdditionals.length">
+                                        No custom charges added yet.
+                                    </div>
+                                </div>
+
+                                <div class="booking-form-field booking-form-field--full">
+                                    <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                        Booking Note
+                                    </label>
+                                    <p class="booking-inline-note booking-note-section__hint">
+                                        Use this for context, instructions, or reminders that should stay with the booking.
+                                    </p>
+                                    <textarea class="w-full h-auto max-h-40 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                              name="bookingNote"
+                                              placeholder="Add Note Here..."
+                                              ng-model="bookingNote">
                         </textarea>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="w-full px-12 py-8" ng-if="isEditMode">

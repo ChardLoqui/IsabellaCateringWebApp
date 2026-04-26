@@ -86,7 +86,7 @@
                     $scope.redirectToCustomerViewPage();
                 else
                     $scope.redirectToBookingCalendarPage();
-    th        }
+            }
         });
     }
     //======================================================== LOGIN START =======================================================
@@ -449,7 +449,7 @@
                 $scope.sessionInfo.name = returnedData.data.userName;
                 $scope.sessionInfo.permission = returnedData.data.permID;
 
-                const roles = { "1": "Admin", "2": "Staff", "3": "User" };
+                const roles = { "1": "Admin", "2": "Staff", "3": "Customer" };
                 $scope.sessionInfo.role = roles[returnedData.data.permID] || "";
 
                 console.log("Logged in as User ID:", $scope.currentUserID);
@@ -592,7 +592,7 @@
         var query = normalizeSearchValue($scope.searchState.account);
 
         $scope.filteredAccountsData = $scope.usersData.filter(function (user) {
-            var role = user.permissionID == 1 ? 'admin' : user.permissionID == 2 ? 'staff' : 'user';
+            var role = user.permissionID == 1 ? 'admin' : user.permissionID == 2 ? 'staff' : 'customer';
             var status = user.isActive == 1 || user.isActive === true ? 'active' : 'inactive';
 
             return matchesSearchValues(query, [
@@ -1176,6 +1176,7 @@
                             paxCount: res.data.paxCount,
                             addAdult: res.data.addAdult,
                             addKid: res.data.addKid,
+                            bookingNote: res.data.bookingNote,
                             requestCancel: res.data.requestCancel,
                             bookingCancelled: res.data.bookingCancelled,
                             cancelNote: res.data.cancelNote,
@@ -1198,6 +1199,7 @@
                 if (!detailsRes || !detailsRes.data || !detailsRes.data.success) {
                     $scope.client = null;
                     $scope.package = null;
+                    $scope.bookingAdditionalsView = [];
                     return;
                 }
 
@@ -1301,6 +1303,13 @@
                 var packageInfo = detailsRes.data.packages || {};
                 var initial = detailsRes.data.payment || {};
 
+                $scope.paymentTransactions = detailsRes.data.paymentTransactions || [];
+
+                $scope.paymentTransactions.forEach(function (transaction) {
+                    if (transaction.dueDate) 
+                        transaction.dueDate = convertDate(transaction.dueDate);
+                });
+
                 $scope.packageView = {
                     mainCourse: detailsRes.data.preMainCourse.mainCourseTypDesc,
                     sides: $scope.sidesType,
@@ -1348,13 +1357,31 @@
                 });
                 $scope.packageTypeInfo = detailsRes.data.packageType.packageTypDesc
 
-                const formattedPrice = new Intl.NumberFormat('en-US', {
+                const formattedInitialPrice = new Intl.NumberFormat('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                 }).format(initial.amountDue);
 
+                const formattedBalancePrice = new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                }).format(initial.remainingBalance);
+
+                $scope.bookingAdditionalsView = (detailsRes.data.bookingAdditionals || []).filter(function (item) {
+                    return item && item.description && item.description.trim() && (Number(item.amount) || 0) > 0;
+                }).map(function (item) {
+                    return {
+                        description: item.description,
+                        amount: new Intl.NumberFormat('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                        }).format(Number(item.amount) || 0)
+                    };
+                });
+
                 $scope.payment = {
-                    paymentInitial: formattedPrice
+                    paymentInitial: formattedInitialPrice,
+                    paymentBalance: formattedBalancePrice
                 };
 
                 $scope.client = {
@@ -1376,6 +1403,7 @@
                 $scope.order = null;
                 $scope.client = null;
                 $scope.package = null;
+                $scope.bookingAdditionalsView = [];
             }).finally(function () {
                 $scope.orderLoading = false;
             });
@@ -1506,6 +1534,9 @@
 
     $scope.printBookingPDF = function () {
         var year = new Date().getFullYear(); 
+        var bookingAdditionalsLines = ($scope.bookingAdditionalsView || []).map(function (item) {
+            return `   ${item.description}: PHP ${item.amount}\n`;
+        });
         
 
         var dd = {
@@ -1602,6 +1633,14 @@
                     style: 'small',
                     margin: [0, 5, 0, 10]
                 },
+
+                bookingAdditionalsLines.length
+                    ? {
+                        text: [{ text: 'Additional Charges:\n', bold: true }].concat(bookingAdditionalsLines),
+                        style: 'details',
+                        margin: [0, 0, 0, 10]
+                    }
+                    : { text: '' },
 
                 // --- TOTAL ---
                 {
@@ -1727,6 +1766,7 @@
 
     let currentDate = new Date();
     let selectedDate = null;
+    let hasResolvedInitialCalendarSelection = false;
     let activeCalendarRequestId = 0;
     let activeCalendarSearchRequestId = 0;
     let highlightedBookingId = null;
@@ -1891,6 +1931,31 @@
 
         currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
         return true;
+    }
+
+    function resolveInitialCalendarSelection() {
+        if (hasResolvedInitialCalendarSelection) {
+            return;
+        }
+
+        hasResolvedInitialCalendarSelection = true;
+
+        if (selectedDate || pendingCalendarSelection || calendarSearchPreviewOrigin || livePreviewDateKey || livePreviewBookingId) {
+            return;
+        }
+
+        const today = getCalendarToday();
+        if (currentDate.getFullYear() !== today.getFullYear() || currentDate.getMonth() !== today.getMonth()) {
+            return;
+        }
+
+        const todayDateKey = getCalendarDateKey(today);
+        if (!todayDateKey || isPastCalendarDate(todayDateKey)) {
+            return;
+        }
+
+        selectedDate = todayDateKey;
+        highlightedBookingId = null;
     }
 
     function formatCalendarSearchResultLabel(result) {
@@ -2176,6 +2241,7 @@
         const month = currentDate.getMonth();
         const requestId = ++activeCalendarRequestId;
         $scope.calendarLoading = true;
+        resolveInitialCalendarSelection();
 
         currentMonthElement.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -2487,17 +2553,19 @@
                 g.totalPaid += amount
             }
             //g.totalDue += p.amountDue != null ? Number(p.amountDue) : 0;
-            //g.totalPaid += p.amount != null ? Number(p.amount) : 0;
+            
             if (g.totalRemBalance == 0) {
                 g.overallStatus = 'Fully Paid'
             } else if (g.totalDue == g.totalRemBalance) {
                 g.overallStatus = 'Unpaid'
+                g.hasUnpaid = true
             } else if(g.totalRemBalance < 0){
                 g.overallStatus = 'With Excess'
             }else{
                 g.overallStatus = 'Partially Paid'
+                g.hasUnpaid = true
             }
-            
+            g.totalPaid = g.totalDue - g.totalRemBalance;
             if (p.dateUpdated && (!g.dateUpdated || new Date(p.dateUpdated) > new Date(g.dateUpdated))) {
                 g.dateUpdated = p.dateUpdated;
             }
@@ -3262,6 +3330,7 @@
 
     //payment reminder in PAYMENTS table
     $scope.sendPaymentReminder = function (group) {
+        $scope.paymentLoading = true;
         if (!group) {
             console.warn("sendPaymentReminder called with no group data.");
             return;
@@ -3279,8 +3348,8 @@
                 }
 
                 var email = res.data.email;
-                var firstName = res.data.firstName;
-                var lastName = res.data.lastName;
+                var fullName = res.data.firstName + " " + res.data.lastName;
+                var eventName = res.data.eventName;
 
                 var pendingPayments = group.payments.filter(function (p) {
                     return p.paymentStatus !== 'Paid';
@@ -3300,139 +3369,129 @@
                         + ' | Due: ' + date;
                 }).join('\n');
 
-                var types = pendingPayments.map(function (p) { return p.paymentType; }).join(', ');
-                var subject = encodeURIComponent('Payment Reminder — ' + types + ' | Booking #' + group.bookingID);
-                var body = encodeURIComponent(
-                    'Dear ' + firstName + ' ' + lastName + ',\n\n' +
-                    'We are Isabella Catering and Events. We hope this message finds you well.\n\n' +
-                    'This is a friendly reminder regarding your outstanding payment(s) for Booking #' + group.bookingID + ':\n\n' +
-                    paymentLines + '\n\n' +
-                    'Please settle your balance on or before the due date to avoid any inconvenience.\n\n' +
-                    '── Payment Options ──\n' +
-                    'GCash: 0912345678 (Isabella Catering and Events)\n\n' +
-                    'If you have already made a payment, please disregard this notice.\n\n' +
-                    'For inquiries, please contact us directly.\n\n' +
-                    'Warm regards,\n' +
-                    'Isabella Catering and Events Team'
-                );
+                IsabellaCateringWebAppService.sendReminderService(email, paymentLines, fullName, eventName, "reminder")
+                    .then(function (res) {
 
-                var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
-                    + '&to=' + encodeURIComponent(email)
-                    + '&su=' + subject
-                    + '&body=' + body;
+                        if (res.data.success === true) {
+                            Swal.fire({
+                                title: 'Process Complete',
+                                text: 'Reminder for Booking ' + eventName + ' has been processed.',
+                                icon: 'success',
+                                confirmButtonColor: '#ec4899'
+                            }).then(function () {
 
-                window.open(gmailUrl, '_blank');
+                                var sentAt = new Date().toISOString();
+                                var noteText = 'Payment reminder sent via Gmail | Booking #' + group.bookingID +
+                                    ' (' + pendingPayments.length + ' payments)';
 
-                var hasReturned = false;
-                window.onfocus = function () {
-                    if (!hasReturned) {
-                        hasReturned = true;
+                                pendingPayments.forEach(function (p) {
+                                    IsabellaCateringWebAppService.logPaymentReminder({
+                                        paymentID: p.paymentID,
+                                        sentBy: $scope.currentUserID,
+                                        sentAt: sentAt,
+                                        note: noteText,
+                                        dateCreated: sentAt,
+                                        dateUpdated: sentAt
+                                    }).catch(function () {
+                                        console.warn('Could not log reminder for paymentID ' + p.paymentID);
+                                    });
+                                });
+                                Swal.fire({
+                                    title: 'Action Logged',
+                                    text: 'The reminder attempt for Booking ' + eventName + ' has been recorded.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#ec4899'
+                                });
+                                $scope.paymentLoading = false;
+                            });
 
-                        Swal.fire({
-                            title: 'Action Logged',
-                            text: 'The reminder attempt for Booking #' + group.bookingID + ' has been recorded.',
-                            icon: 'success',
-                            confirmButtonColor: '#ec4899'
-                        });
-
-                        window.onfocus = null;
-                    }
-                };
-
-                var sentAt = new Date().toISOString();
-                var noteText = 'Payment reminder sent via Gmail | Booking #' + group.bookingID +
-                    ' (' + pendingPayments.length + ' payments)';
-
-                pendingPayments.forEach(function (p) {
-                    IsabellaCateringWebAppService.logPaymentReminder({
-                        paymentID: p.paymentID,
-                        sentBy: $scope.currentUserID,
-                        sentAt: sentAt,
-                        note: noteText,
-                        dateCreated: sentAt,
-                        dateUpdated: sentAt
-                    }).catch(function () {
-                        console.warn('Could not log reminder for paymentID ' + p.paymentID);
+                        } else {
+                            Swal.fire({
+                                title: 'Process Incomplete',
+                                text: 'Reminder for Booking ' + eventName + ' has not been processed.',
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                            $scope.paymentLoading = false;
+                        }
                     });
-                });
-            })
-            .catch(function (error) {
-                Swal.fire({ title: 'Server Error', text: 'Check console for details.', icon: 'error' });
             });
     };
 
     //payment reminder in DUE payments table
     $scope.sendDuePaymentReminder = function (payment) {
-        $http.get('/Main/GetClientEmailByBooking?bookingID=' + payment.bookingID)
-            .then(function (response) {
-                if (!response.data.success) {
+        $scope.paymentLoading = true;
+        IsabellaCateringWebAppService.getClientEmailByBooking(payment.bookingID)
+            .then(function (res) {
+                if (!res.data.success) {
                     Swal.fire({
                         title: 'Error', text: 'Client email not found.', icon: 'error',
                         confirmButtonColor: "#EC4899"
                     });
+                    $scope.paymentLoading = false;
                     return;
                 }
 
-                var email = response.data.email;
-                var name = response.data.firstName + ' ' + response.data.lastName;
-                var balance = Math.max(0,
-                    Number(payment.amountDue) - Number(payment.amount)
-                ).toLocaleString('en-PH', { minimumFractionDigits: 2 });
-
-                var subject = encodeURIComponent('Payment Reminder - Booking #' + payment.bookingID);
-                var body = encodeURIComponent(
-                    'Dear ' + name + ',\n\n' +
-                    'This is a friendly reminder regarding your upcoming payment:\n\n' +
-                    '  Type    : ' + payment.paymentType + '\n' +
+                var email = res.data.email;
+                var fullName = res.data.firstName + " " + res.data.lastName;
+                var eventName = res.data.eventName;
+                var paymentLines = '  Type    : ' + payment.paymentType + '\n' +
                     '  Due Date: ' + payment.dueDate + '\n' +
-                    '  Balance : ₱' + balance + '\n\n' +
-                    'Please settle your balance at your earliest convenience.\n\n' +
-                    '── Payment Options ──\n' +
-                    'GCash: 0912345678 (Isabella Catering and Events)\n\n' +
-                    'If you have already made a payment, please disregard this notice.\n\n' +
-                    'For inquiries, please contact us directly.\n\n' +
-                    'Warm regards,\n' +
-                    'Isabella Catering and Events'
-                );
+                    '  Balance : ₱' + payment.remainingBalance ;
 
-                window.open(
-                    'https://mail.google.com/mail/?view=cm&fs=1' +
-                    '&to=' + encodeURIComponent(email) +
-                    '&su=' + subject +
-                    '&body=' + body,
-                    '_blank'
-                );
+                IsabellaCateringWebAppService.sendReminderService(email, paymentLines, fullName, eventName, "reminder_due")
+                    .then(function (res) {
 
-                var returnedToTab = false;
-                window.onfocus = function () {
-                    if (!returnedToTab) {
-                        returnedToTab = true;
+                        if (res.data.success === true) {
+                            Swal.fire({
+                                title: 'Process Complete',
+                                text: 'Reminder for Booking ' + eventName + ' has been processed.',
+                                icon: 'success',
+                                confirmButtonColor: '#ec4899'
+                            }).then(function () {
+                                var sentAt = new Date().toISOString();
+                                var noteText = 'Payment reminder sent via Gmail | Booking #' + payment.bookingID;
 
-                        Swal.fire({
-                            title: 'Process Complete',
-                            text: 'Reminder for Booking #' + payment.bookingID + ' processed.',
-                            icon: 'success',
-                            confirmButtonColor: '#ec4899'
-                        });
-
-                        window.onfocus = null;
-                    }
-                };
-
-                var sentAt = new Date().toISOString();
-                var noteText = 'Due payment reminder sent via Gmail — '
-                    + payment.paymentType + ' | Booking #' + payment.bookingID;
-
-                IsabellaCateringWebAppService.logPaymentReminder({
-                    paymentID: payment.paymentID,
-                    sentBy: $scope.currentUserID,
-                    sentAt: sentAt,
-                    note: noteText,
-                    dateCreated: sentAt,
-                    dateUpdated: sentAt
-                }).catch(function () {
-                    console.warn('Could not log reminder for paymentID ' + payment.paymentID);
-                });
+                                IsabellaCateringWebAppService.logPaymentReminder({
+                                    paymentID: payment.paymentID,
+                                    sentBy: $scope.currentUserID,
+                                    sentAt: sentAt,
+                                    note: noteText,
+                                    dateCreated: sentAt,
+                                    dateUpdated: sentAt
+                                }).then(function (res) {
+                                    if (res.data.success == true) {
+                                        Swal.fire({
+                                            title: 'Action Logged',
+                                            text: 'The reminder attempt for Booking ' + eventName + ' has been recorded.',
+                                            icon: 'success',
+                                            confirmButtonColor: '#ec4899'
+                                        });
+                                        $scope.paymentLoading = false;
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Failed to Log Action',
+                                            text: 'The reminder attempt for Booking ' + eventName + ' has not been recorded.',
+                                            icon: 'error',
+                                            confirmButtonColor: '#ec4899'
+                                        });
+                                        $scope.paymentLoading = false;
+                                    }
+                                }).catch(function () {
+                                    console.warn('Could not log reminder for paymentID ' + payment.paymentID);
+                                    $scope.paymentLoading = false;
+                                });
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Process Incomplete',
+                                text: 'Reminder for Booking ' + eventName + ' has not been processed.',
+                                icon: 'error',
+                                confirmButtonColor: '#ec4899'
+                            });
+                            $scope.paymentLoading = false;
+                        }
+                    });
             });
     };
 
@@ -4030,6 +4089,44 @@
         });
     }
 
+    function parseCurrencyValue(value) {
+        var normalized = (value || '0').toString().replace(/[^0-9.]/g, '');
+        return parseFloat(normalized) || 0;
+    }
+
+    function formatBookingCurrency(value) {
+        var amount = Number(value) || 0;
+        return `Php ${amount.toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        })}`;
+    }
+
+    $scope.bookingAdditionals = [];
+
+    $scope.addBookingAdditional = function () {
+        $scope.bookingAdditionals.push({
+            bookingAdditionalID: 0,
+            description: '',
+            amount: null
+        });
+    };
+
+    $scope.removeBookingAdditional = function (index) {
+        if (index < 0 || index >= ($scope.bookingAdditionals || []).length) {
+            return;
+        }
+
+        $scope.bookingAdditionals.splice(index, 1);
+        $scope.computeFinalPrice();
+    };
+
+    $scope.getBookingAdditionalsTotal = function () {
+        return ($scope.bookingAdditionals || []).reduce(function (total, item) {
+            return total + parseCurrencyValue(item && item.amount);
+        }, 0);
+    };
+
     function applyEditBookingData(bookingData, detailsData) {
         var client = detailsData.clients || {};
         var packageInfo = detailsData.packages || {};
@@ -4076,6 +4173,13 @@
         $scope.eventPrepVenue = bookingData.prepVenue || '';
         $scope.eventVenue = bookingData.venue || '';
         $scope.bookingNote = bookingData.bookingNote || '';
+        $scope.bookingAdditionals = (detailsData.bookingAdditionals || []).map(function (item) {
+            return {
+                bookingAdditionalID: item.bookingAdditionalID || 0,
+                description: item.description || '',
+                amount: item.amount
+            };
+        });
 
         var bookingDate = parseDotNetDate(bookingData.bookingDate);
         if (bookingDate) {
@@ -4156,6 +4260,7 @@
             $scope.addAdult = bookingData.addAdult ? bookingData.addAdult.toString() : '';
             $scope.addKid = bookingData.addKid ? bookingData.addKid.toString() : '';
             $scope.computeFinalPrice();
+            disableBookingInput();
         });
     }
 
@@ -4203,7 +4308,7 @@
     }
 
     function buildBookingSubmission() {
-        var cleanAmount = ($scope.bookingFinalPrice || '0').toString().replace(/[^0-9]/g, '');
+        var cleanAmount = parseCurrencyValue($scope.bookingFinalPrice);
 
         return {
             clientInfo: {
@@ -4238,8 +4343,17 @@
                 addKid: parseInt($scope.addKid, 10) || 0
             },
             paymentInfo: {
-                amountDue: parseFloat(cleanAmount) || 0
+                amountDue: cleanAmount
             },
+            bookingAdditionals: ($scope.bookingAdditionals || []).filter(function (item) {
+                return item && item.description && item.description.trim() && parseCurrencyValue(item.amount) > 0;
+            }).map(function (item) {
+                return {
+                    bookingAdditionalID: item.bookingAdditionalID || 0,
+                    description: item.description.trim(),
+                    amount: parseCurrencyValue(item.amount)
+                };
+            }),
             packages: {
                 packageTypID: $scope.packageTypeID || 0,
                 pricePaxID: $scope.priceTypeID || 0,
@@ -4383,7 +4497,7 @@
             if (result.isConfirmed) {
                 IsabellaCateringWebAppService.checkCalendarAvailabilityService($scope.dateOfEvent).then(function (response) {
                     if (response.data.success) {
-                        IsabellaCateringWebAppService.insertPackageService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
+                        IsabellaCateringWebAppService.insertPackageService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.bookingAdditionals, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
                             if (returnedData.data.success) {
                                 Swal.fire({
                                     title: 'Success!',
@@ -4446,7 +4560,7 @@
                 return;
             }
 
-            IsabellaCateringWebAppService.updateBookingService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
+            IsabellaCateringWebAppService.updateBookingService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.bookingAdditionals, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
                 if (returnedData.data.success) {
                     Swal.fire({
                         title: 'Updated!',
@@ -4529,16 +4643,14 @@
         });
     };
     function disableBookingInput() {
-        if ($scope.packageTypeID < 3 || $scope.packageTypeID > 4) 
-            $scope.addKdInput = true;
-        else
-            $scope.addKdInput = false;
+        var pkg = ($scope.packageType || "").toLowerCase();
+        var evt = ($scope.eventType || "").toLowerCase();
 
-        if ($scope.packageTypeID < 5 || $scope.packageTypeID > 7) 
-            $scope.addDebutInput = true;
-        else
-            $scope.addDebutInput = false;
-        
+        var isKiddie = pkg.indexOf("kid") !== -1 || evt.indexOf("kid") !== -1;
+        var isDebut = pkg.indexOf("debut") !== -1 || evt.indexOf("debut") !== -1;
+
+        $scope.addKdInput = !isKiddie;
+        $scope.addDebutInput = !isDebut;
     }
 
     $scope.changeSummaryDateOutput = function () {
@@ -4665,7 +4777,7 @@
     $scope.selectPricePaxType = function (id, type, price) {
         $scope.priceType = type;
         $scope.priceTypeID = id;
-        $scope.bookingBasePrice = `Php ${price}`;
+        $scope.bookingBasePrice = formatBookingCurrency(price);
         $scope.activeDropdown = null;
 
         if ($scope.markBookingFieldTouched) {
@@ -4689,6 +4801,7 @@
         $scope.eventType = type;
         $scope.eventTypeID = id;
         $scope.activeDropdown = null;
+        disableBookingInput();
     };
 
     $scope.getEventDisplayText = function () {
@@ -5328,9 +5441,10 @@
     $scope.computeFinalPrice = function () {
         var adultTotal = ($scope.addAdult || 0) * ($scope.pricePaxAdMulti || 0);
         var kidTotal = ($scope.addKid || 0) * ($scope.pricePaxKdMulti || 0);
-        var basePrice = ($scope.bookingBasePrice || "0").toString().replace(/[^0-9]/g, '');
-        var total = adultTotal + kidTotal + parseInt(basePrice);
-        $scope.bookingFinalPrice = `Php ${total.toLocaleString()}`;
+        var additionalsTotal = $scope.getBookingAdditionalsTotal();
+        var basePrice = parseCurrencyValue($scope.bookingBasePrice);
+        var total = adultTotal + kidTotal + additionalsTotal + basePrice;
+        $scope.bookingFinalPrice = formatBookingCurrency(total);
     };
     
 
