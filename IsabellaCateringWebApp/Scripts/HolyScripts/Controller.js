@@ -4150,7 +4150,8 @@
             paxCount: bookingData.paxCount,
             addAdult: bookingData.addAdult,
             addKid: bookingData.addKid,
-            bookingNote: bookingData.bookingNote
+            bookingNote: bookingData.bookingNote,
+            customerNote: bookingData.customerNote
         };
 
         $scope.eventName = client.eventName || '';

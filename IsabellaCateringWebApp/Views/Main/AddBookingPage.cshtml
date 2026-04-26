@@ -1259,6 +1259,19 @@
                                               ng-model="bookingNote">
                         </textarea>
                                 </div>
+
+                                <div class="booking-form-field booking-form-field--full"
+                                     ng-if="isEditMode && order.customerNote">
+                                    <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                        Customer Note
+                                    </label>
+                                    <p class="booking-inline-note booking-note-section__hint">
+                                        Customer-submitted note shown for reference only.
+                                    </p>
+                                    <div class="min-h-[96px] whitespace-pre-wrap rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 sm:text-base">
+                                        {{ order.customerNote }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
