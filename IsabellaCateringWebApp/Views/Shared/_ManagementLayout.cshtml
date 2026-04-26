@@ -170,6 +170,15 @@
 
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
+                   @(currentAction == "CancelTab" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                           href="@Url.Action("CancelTab", "Main")">
+                            <span class="material-symbols-outlined nav-icon min-w-[24px]">cancel</span>
+                            <span class="nav-text">Cancellations</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="group flex items-center px-6 py-3 transition-all duration-200
                    @(currentAction == "LogsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                            href="@Url.Action("LogsPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">article</span>

@@ -259,6 +259,11 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+
+        public ActionResult CancelTab()
+        {
+            return View();
+        }
         public JsonResult Logs(string level, string processService, string processDesc)
         {
             try
@@ -2417,6 +2422,44 @@ namespace IsabellaCateringWebApp.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
+            }
+        }
+
+        public JsonResult GetCancellations()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var cancellations = (from booking in db.bookings_tbl
+                                         join client in db.clients_tbl on booking.clientID equals client.clientID
+                                         where booking.requestCancel == 1 || booking.bookingCancelled == 1
+                                         select new
+                                         {
+                                             bookingID = booking.bookingID,
+                                             bookingDate = booking.bookingDate,
+                                             venue = booking.venue,
+                                             eventName = client.eventName,
+                                             clientName = client.cFName + " " + client.cLName,
+                                             requestCancel = booking.requestCancel,
+                                             bookingCancelled = booking.bookingCancelled,
+                                             customerNote = booking.customerNote,
+                                             cancelNote = booking.cancelNote,
+                                             acceptedCancelNote = booking.acceptedCancelNote,
+                                             dateCancelled = booking.dateCancelled,
+                                             dateDeletion = booking.dateDeletion
+                                         }).ToList();
+
+                    return Json(new { success = true, data = cancellations }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Management:",
+                "Attempted to get cancellations. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 

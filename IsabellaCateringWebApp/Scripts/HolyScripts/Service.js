@@ -189,6 +189,10 @@
         });
     }
 
+    this.getCancellationsService = function () {
+        return $http.get("/Main/GetCancellations");
+    }
+
 
     //========================================================CREATE BOOKING END=======================================================
 
