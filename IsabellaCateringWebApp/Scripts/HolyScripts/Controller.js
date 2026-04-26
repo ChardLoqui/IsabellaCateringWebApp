@@ -16,7 +16,7 @@
         window.location.href = `/Main/AddBookingPage?mode=edit&id=${id}`;
     };
     $scope.redirectToBookingCalendarPage = function () {
-        window.location.href = "/Main/BookingCalendarPage";
+        window.location.href = "/Main/BookingCalendarTabPage";
     }
     $scope.redirectToLoginPage = function () {
         window.location.href = "/Main/LoginPage";
@@ -25,10 +25,10 @@
         window.location.href = "/Main/ForgetPassPage";
     }
     $scope.redirectToCustomerViewPage = function () {
-        window.location.href = "/Main/CustomerViewPage";
+        window.location.href = "/Main/CustomerViewTabPage";
     }
     $scope.redirectToAdminViewPage = function () {
-        window.location.href = "/Main/AdminViewPage";
+        window.location.href = "/Main/AdminViewTabPage";
     }
 
     const currentPath = (window.location.pathname || '').toLowerCase();
@@ -5560,7 +5560,16 @@
             if (res.data.success) {
                 var cancellations = res.data.data || [];
                 $scope.cancellationRequests = cancellations.filter(c => c.requestCancel === 1 && c.bookingCancelled === 0);
+                $scope.cancellationRequests.forEach(function (request) {
+                    if (request.bookingDate)
+                        request.bookingDate = convertDate(request.bookingDate);
+                });
+
                 $scope.approvedCancellations = cancellations.filter(c => c.bookingCancelled === 1);
+                $scope.approvedCancellations.forEach(function (approved) {
+                    if (approved.bookingDate)
+                        approved.bookingDate = convertDate(approved.bookingDate);
+                });
                 $scope.cancellationsLoadedOnce = true;
             } else {
                 Swal.fire({

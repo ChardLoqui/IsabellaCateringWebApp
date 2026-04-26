@@ -40,55 +40,47 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
-
-
         public ActionResult LoginPage()
         {
             return View();
         }
-        public ActionResult AccountsPage()
+        public ActionResult AccountsTabPage()
         {
             return View();
         }
-        public ActionResult LogsPage()
+        public ActionResult LogsTabPage()
         {
             return View();
         }
-
         public ActionResult ChangePassPage()
         {
             return View();
         }
-
         public ActionResult ForgetPassPage()
         {
             return View();
         }
-
-        public ActionResult CustomerViewPage()
+        public ActionResult CustomerViewTabPage()
         {
             return View();
         }
-
         public ActionResult AddBookingPage()
         {
             return View();
         }
-        public ActionResult BookingCalendarPage()
+        public ActionResult BookingCalendarTabPage()
         {
             return View();
         }
-
-        public ActionResult PaymentReminderPage()
+        public ActionResult PaymentReminderTabPage()
         {
             return View();
         }
-        public ActionResult AdminViewPage()
+        public ActionResult AdminViewTabPage()
         {
             return View();
         }
-
-        public ActionResult CancelTab()
+        public ActionResult CancelRequestTabPage()
         {
             return View();
         }
@@ -2682,7 +2674,7 @@ Isabella Catering and Events
         }
 
         [HttpPost]
-        public JsonResult RequestCancellation(int bookingID, string customerNote)
+        public JsonResult RequestCancellation(int bookingID, string cancelNote)
         {
             try
             {
@@ -2695,14 +2687,14 @@ Isabella Catering and Events
                     }
 
                     booking.requestCancel = 1;
-                    booking.customerNote = customerNote;
+                    booking.cancelNote = cancelNote;
                     booking.dateCancelled = DateTime.Now;
 
                     var newTask = new tblTasksModel()
                     {
                         bookingID = bookingID,
                         task = "Cancellation Request",
-                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
+                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {cancelNote}",
                         dueDate = DateTime.Now.AddDays(1),
                         status = "Pending",
                         dateCreated = DateTime.Now,

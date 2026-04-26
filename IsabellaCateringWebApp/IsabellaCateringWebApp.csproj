@@ -1117,20 +1117,20 @@
     <Content Include="Views\Main\HomePage.cshtml" />
     <Content Include="Scripts\version.json" />
     <Content Include="Views\Main\LoginPage.cshtml" />
-    <Content Include="Views\Main\AccountsPage.cshtml" />
-    <Content Include="Views\Main\LogsPage.cshtml" />
+    <Content Include="Views\Main\AccountsTabPage.cshtml" />
+    <Content Include="Views\Main\LogsTabPage.cshtml" />
     <Content Include="Views\Main\ChangePassPage.cshtml" />
     <Content Include="Views\Main\ForgetPassPage.cshtml" />
     <Content Include="Views\Shared\_LogInLayout.cshtml" />
     <Content Include="Views\Main\AddBookingPage.cshtml" />
-    <Content Include="Views\Main\CustomerViewPage.cshtml" />
-    <Content Include="Views\Main\BookingCalendarPage.cshtml" />
-    <Content Include="Views\Main\PaymentReminderPage.cshtml" />
+    <Content Include="Views\Main\CustomerViewTabPage.cshtml" />
+    <Content Include="Views\Main\BookingCalendarTabPage.cshtml" />
+    <Content Include="Views\Main\PaymentReminderTabPage.cshtml" />
     <Content Include="Views\Shared\NavbarLayout.cshtml" />
     <Content Include="Views\Shared\_ManagementLayout.cshtml" />
-    <Content Include="Views\Main\AdminViewPage.cshtml" />
+    <Content Include="Views\Main\AdminViewTabPage.cshtml" />
     <Content Include="Views\Main\LandingPage.cshtml" />
-    <Content Include="Views\Main\CancelTab.cshtml" />
+    <Content Include="Views\Main\CancelRequestTabPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
