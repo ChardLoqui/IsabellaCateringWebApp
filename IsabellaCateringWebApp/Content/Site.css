@@ -2019,6 +2019,61 @@ textarea {
     user-select: none;
 }
 
+.cancellation-stat-loader-label {
+    width: 9rem;
+    height: 0.875rem;
+}
+
+.cancellation-stat-loader-value {
+    width: 4rem;
+    height: 2.25rem;
+    border-radius: 0.875rem;
+}
+
+.cancellation-stat-loader-meta {
+    width: 5.75rem;
+    height: 1rem;
+}
+
+.cancellation-table-loader-cell {
+    height: 0.875rem;
+    border-radius: 9999px;
+}
+
+.cancellation-table-loader-cell-id {
+    width: 4.25rem;
+}
+
+.cancellation-table-loader-cell-name {
+    width: 8.5rem;
+}
+
+.cancellation-table-loader-cell-client {
+    width: 7rem;
+}
+
+.cancellation-table-loader-cell-date {
+    width: 6.25rem;
+}
+
+.cancellation-table-loader-cell-note {
+    width: min(100%, 13rem);
+}
+
+.cancellation-table-loader-cell-note-wide {
+    width: min(100%, 11rem);
+}
+
+.cancellation-table-loader-cell-action {
+    width: 4.75rem;
+    height: 2rem;
+    border-radius: 0.625rem;
+}
+
+.cancellation-table-loader-cell-link {
+    width: 5.5rem;
+}
+
 @media (min-width: 640px) {
     .management-section-actions {
         flex-direction: row;

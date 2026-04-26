@@ -5552,13 +5552,16 @@
     $scope.cancellationRequests = [];
     $scope.approvedCancellations = [];
     $scope.cancellationsLoading = false;
+    $scope.cancellationsLoadedOnce = false;
 
     $scope.getCancellations = function () {
         $scope.cancellationsLoading = true;
         IsabellaCateringWebAppService.getCancellationsService().then(function (res) {
             if (res.data.success) {
-                $scope.cancellationRequests = res.data.data.filter(c => c.requestCancel === 1 && c.bookingCancelled === 0);
-                $scope.approvedCancellations = res.data.data.filter(c => c.bookingCancelled === 1);
+                var cancellations = res.data.data || [];
+                $scope.cancellationRequests = cancellations.filter(c => c.requestCancel === 1 && c.bookingCancelled === 0);
+                $scope.approvedCancellations = cancellations.filter(c => c.bookingCancelled === 1);
+                $scope.cancellationsLoadedOnce = true;
             } else {
                 Swal.fire({
                     title: 'Error',
