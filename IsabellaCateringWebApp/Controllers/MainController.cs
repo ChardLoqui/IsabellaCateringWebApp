@@ -2165,16 +2165,21 @@ Isabella Catering and Events
             {
                 return;
             }
+            var initialPayment = db.payments_tbl
+                                .Where(x => x.bookingID == bookingID &&
+                                x.transactionNum == 0)
+                                .FirstOrDefault();
 
-            var existingPayment = db.payments_tbl.Where(p => p.bookingID == bookingID).OrderBy(p => p.paymentType == "-" || p.paymentType == null || p.paymentType == "" ? 0 : 1).ThenBy(p => p.paymentID).FirstOrDefault();
-            if (existingPayment == null)
+            if (initialPayment == null)
             {
                 return;
             }
 
-            existingPayment.amountDue = paymentInfo.amountDue;
-            existingPayment.dueDate = bookingDate;
-            existingPayment.dateUpdated = DateTime.Now;
+            initialPayment.amountDue = paymentInfo.amountDue;
+            initialPayment.remainingBalance = initialPayment.amountDue;
+            initialPayment.dueDate = bookingDate;
+            initialPayment.dateUpdated = DateTime.Now;
+            recomputePayment(bookingID, "Booking Updated");
         }
 
         private void SaveBookingAdditionals(IsabellaCateringContext db, int bookingID, List<tblBookingAdditionalsModel> bookingAdditionals)
