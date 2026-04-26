@@ -719,6 +719,7 @@ namespace IsabellaCateringWebApp.Controllers
             using (var db = new IsabellaCateringContext())
             {
                 var data = (from log in db.activitylogs_tbl
+                            where log.isArchived == 0
                             select new
                             {
                                 logID = log.logID + ": " + log.userID + " [" + log.permission + "]",
@@ -727,6 +728,52 @@ namespace IsabellaCateringWebApp.Controllers
                                 userName = log.userEmail,
                             }).ToList();
                 return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public ActionResult ExportAndArchiveLogs()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var logsToArchive = db.activitylogs_tbl.Where(x => x.isArchived == 0).ToList();
+
+                    if (logsToArchive.Count == 0)
+                    {
+                        return Content("No logs to archive.");
+                    }
+
+                    var csv = new StringBuilder();
+                    csv.AppendLine("LogID,UserID,Permission,UserEmail,Level,Service,Description,TraceID,DateCreated");
+
+                    foreach (var log in logsToArchive)
+                    {
+                        csv.AppendLine($"{log.logID},{log.userID},\"{log.permission}\",\"{log.userEmail}\",\"{log.level}\",\"{log.processService}\",\"{log.processDesc?.Replace("\"", "\"\"")}\",\"{log.traceID}\",\"{log.dateCreated:yyyy-MM-dd HH:mm:ss}\"");
+                    }
+
+                    var now = DateTime.UtcNow;
+                    var deletionDate = now.AddMonths(2);
+
+                    foreach (var log in logsToArchive)
+                    {
+                        log.isArchived = 1;
+                        log.dateExport = now;
+                        log.dateDeletion = deletionDate;
+                    }
+
+                    var expiredLogs = db.activitylogs_tbl.Where(x => x.isArchived == 1 && x.dateDeletion <= now).ToList();
+                    db.activitylogs_tbl.RemoveRange(expiredLogs);
+
+                    db.SaveChanges();
+
+                    byte[] buffer = Encoding.UTF8.GetBytes(csv.ToString());
+                    return File(buffer, "text/csv", $"AuditLogs_{now:yyyyMMdd_HHmmss}.csv");
+                }
+            }
+            catch (Exception ex)
+            {
+                return Content("Error during archive process: " + ex.Message);
             }
         }
         //===================================================================Logs End==================================================================

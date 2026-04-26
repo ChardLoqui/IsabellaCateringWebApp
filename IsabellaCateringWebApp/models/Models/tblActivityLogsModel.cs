@@ -16,5 +16,8 @@ namespace IsabellaCateringWebApp.Models.Models
         public string processDesc { get; set; }
         public string traceID { get; set; }
         public DateTime dateCreated { get; set; }
+        public int isArchived { get; set; }
+        public DateTime? dateExport { get; set; }
+        public DateTime? dateDeletion { get; set; }
     }
 }
