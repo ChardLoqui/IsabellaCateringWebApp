@@ -1820,7 +1820,7 @@ Isabella Catering and Events
                                     {
                                         var bookingAdditionals = db.bookingadditionals_tbl.Where(x => x.bookingID == bookingID).OrderBy(x => x.bookingAdditionalID).ToList();
                                         var bookingPayment = db.payments_tbl.Where(e => e.bookingID == bookingID && e.paymentType == "Initial").FirstOrDefault();
-                                        var transactions = db.payments_tbl.Where(e => e.bookingID == bookingID).OrderByDescending(x => x.transactionNum).ToList();
+                                        var transactions = db.payments_tbl.Where(e => e.bookingID == bookingID).OrderBy(x => x.transactionNum).ToList();
                                         if (bookingPayment != null)
                                         {
                                             return Json(new
@@ -1830,6 +1830,7 @@ Isabella Catering and Events
                                                 events = bookingEvent,
                                                 packageType = packageType,
                                                 payment = bookingPayment,
+                                                paymentTransactions = transactions,
 
                                                 preMainCourse = preMainCourse,
 

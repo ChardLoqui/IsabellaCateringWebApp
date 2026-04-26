@@ -1303,6 +1303,13 @@
                 var packageInfo = detailsRes.data.packages || {};
                 var initial = detailsRes.data.payment || {};
 
+                $scope.paymentTransactions = detailsRes.data.paymentTransactions || [];
+
+                $scope.paymentTransactions.forEach(function (transaction) {
+                    if (transaction.dueDate) 
+                        transaction.dueDate = convertDate(transaction.dueDate);
+                });
+
                 $scope.packageView = {
                     mainCourse: detailsRes.data.preMainCourse.mainCourseTypDesc,
                     sides: $scope.sidesType,
@@ -1350,10 +1357,15 @@
                 });
                 $scope.packageTypeInfo = detailsRes.data.packageType.packageTypDesc
 
-                const formattedPrice = new Intl.NumberFormat('en-US', {
+                const formattedInitialPrice = new Intl.NumberFormat('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                 }).format(initial.amountDue);
+
+                const formattedBalancePrice = new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                }).format(initial.remainingBalance);
 
                 $scope.bookingAdditionalsView = (detailsRes.data.bookingAdditionals || []).filter(function (item) {
                     return item && item.description && item.description.trim() && (Number(item.amount) || 0) > 0;
@@ -1368,7 +1380,8 @@
                 });
 
                 $scope.payment = {
-                    paymentInitial: formattedPrice
+                    paymentInitial: formattedInitialPrice,
+                    paymentBalance: formattedBalancePrice
                 };
 
                 $scope.client = {
