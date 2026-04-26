@@ -1818,6 +1818,7 @@ Isabella Catering and Events
 
                                     if (bookingEvent != null)
                                     {
+                                        var bookingAdditionals = db.bookingadditionals_tbl.Where(x => x.bookingID == bookingID).OrderBy(x => x.bookingAdditionalID).ToList();
                                         var bookingPayment = db.payments_tbl.Where(e => e.bookingID == bookingID && e.paymentType == "Initial").FirstOrDefault();
                                         var transactions = db.payments_tbl.Where(e => e.bookingID == bookingID).OrderByDescending(x => x.transactionNum).ToList();
                                         if (bookingPayment != null)
@@ -1894,6 +1895,7 @@ Isabella Catering and Events
                                                 preDebut1 = preDebut1,
                                                 preDebut2 = preDebut2,
                                                 preDebut3 = preDebut3,
+                                                bookingAdditionals = bookingAdditionals,
 
                                                 success = true,
                                                 message = "Package Fetched Successfully!"
@@ -2175,8 +2177,41 @@ Isabella Catering and Events
             existingPayment.dateUpdated = DateTime.Now;
         }
 
+        private void SaveBookingAdditionals(IsabellaCateringContext db, int bookingID, List<tblBookingAdditionalsModel> bookingAdditionals)
+        {
+            var existingAdditionals = db.bookingadditionals_tbl.Where(x => x.bookingID == bookingID).ToList();
+            if (existingAdditionals.Count > 0)
+            {
+                db.bookingadditionals_tbl.RemoveRange(existingAdditionals);
+            }
+
+            if (bookingAdditionals == null)
+            {
+                return;
+            }
+
+            var now = DateTime.Now;
+            foreach (var item in bookingAdditionals.Where(x => x != null))
+            {
+                var description = item.description?.Trim();
+                if (string.IsNullOrWhiteSpace(description) || item.amount <= 0)
+                {
+                    continue;
+                }
+
+                db.bookingadditionals_tbl.Add(new tblBookingAdditionalsModel()
+                {
+                    bookingID = bookingID,
+                    description = description,
+                    amount = item.amount,
+                    dateCreated = now,
+                    dateUpdated = now
+                });
+            }
+        }
+
         [HttpPost]
-        public JsonResult insertPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        public JsonResult insertPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, List<tblBookingAdditionalsModel> bookingAdditionals, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
         {
             try
             {
@@ -2302,6 +2337,8 @@ Isabella Catering and Events
                        "INFO",
                        "Booking Management:",
                        $"New Booking Data has been created. bookingID: {newBooking.bookingID}");
+
+                    SaveBookingAdditionals(db, newBooking.bookingID, bookingAdditionals);
 
                     var newReceipt = new tblBookingReceiptsModel()
                     {
@@ -2452,7 +2489,7 @@ Isabella Catering and Events
         }
 
         [HttpPost]
-        public JsonResult UpdateBooking(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        public JsonResult UpdateBooking(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, List<tblBookingAdditionalsModel> bookingAdditionals, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
         {
             try
             {
@@ -2504,6 +2541,7 @@ Isabella Catering and Events
                     existingBooking.addKid = bookingInfo.addKid;
                     existingBooking.dateUpdated = DateTime.Now;
 
+                    SaveBookingAdditionals(db, existingBooking.bookingID, bookingAdditionals);
                     UpdatePrimaryBookingPayment(db, existingBooking.bookingID, paymentInfo, bookingInfo.bookingDate);
                     db.SaveChanges();
 

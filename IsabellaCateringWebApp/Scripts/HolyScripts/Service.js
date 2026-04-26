@@ -122,11 +122,12 @@
         });
     }
 
-    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, bookingAdditionals, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
         return $http.post("/Main/insertPackage", {
             clientInfo: clientInfo,
             bookingInfo: bookingInfo,
             paymentInfo: paymentInfo,
+            bookingAdditionals: bookingAdditionals,
             packages: packages,
             sidesGrpTypes: sidesGrpTypes,
             specialsGrpTypes: specialsGrpTypes,
@@ -139,11 +140,12 @@
         });
     }
 
-    this.updateBookingService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+    this.updateBookingService = function (clientInfo, bookingInfo, paymentInfo, bookingAdditionals, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
         return $http.post("/Main/UpdateBooking", {
             clientInfo: clientInfo,
             bookingInfo: bookingInfo,
             paymentInfo: paymentInfo,
+            bookingAdditionals: bookingAdditionals,
             packages: packages,
             sidesGrpTypes: sidesGrpTypes,
             specialsGrpTypes: specialsGrpTypes,

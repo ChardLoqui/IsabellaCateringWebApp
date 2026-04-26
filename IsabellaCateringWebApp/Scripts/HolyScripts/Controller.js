@@ -1176,6 +1176,7 @@
                             paxCount: res.data.paxCount,
                             addAdult: res.data.addAdult,
                             addKid: res.data.addKid,
+                            bookingNote: res.data.bookingNote,
                             requestCancel: res.data.requestCancel,
                             bookingCancelled: res.data.bookingCancelled,
                             cancelNote: res.data.cancelNote,
@@ -1198,6 +1199,7 @@
                 if (!detailsRes || !detailsRes.data || !detailsRes.data.success) {
                     $scope.client = null;
                     $scope.package = null;
+                    $scope.bookingAdditionalsView = [];
                     return;
                 }
 
@@ -1353,6 +1355,18 @@
                     maximumFractionDigits: 2,
                 }).format(initial.amountDue);
 
+                $scope.bookingAdditionalsView = (detailsRes.data.bookingAdditionals || []).filter(function (item) {
+                    return item && item.description && item.description.trim() && (Number(item.amount) || 0) > 0;
+                }).map(function (item) {
+                    return {
+                        description: item.description,
+                        amount: new Intl.NumberFormat('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                        }).format(Number(item.amount) || 0)
+                    };
+                });
+
                 $scope.payment = {
                     paymentInitial: formattedPrice
                 };
@@ -1376,6 +1390,7 @@
                 $scope.order = null;
                 $scope.client = null;
                 $scope.package = null;
+                $scope.bookingAdditionalsView = [];
             }).finally(function () {
                 $scope.orderLoading = false;
             });
@@ -1506,6 +1521,9 @@
 
     $scope.printBookingPDF = function () {
         var year = new Date().getFullYear(); 
+        var bookingAdditionalsLines = ($scope.bookingAdditionalsView || []).map(function (item) {
+            return `   ${item.description}: PHP ${item.amount}\n`;
+        });
         
 
         var dd = {
@@ -1602,6 +1620,14 @@
                     style: 'small',
                     margin: [0, 5, 0, 10]
                 },
+
+                bookingAdditionalsLines.length
+                    ? {
+                        text: [{ text: 'Additional Charges:\n', bold: true }].concat(bookingAdditionalsLines),
+                        style: 'details',
+                        margin: [0, 0, 0, 10]
+                    }
+                    : { text: '' },
 
                 // --- TOTAL ---
                 {
@@ -4050,6 +4076,44 @@
         });
     }
 
+    function parseCurrencyValue(value) {
+        var normalized = (value || '0').toString().replace(/[^0-9.]/g, '');
+        return parseFloat(normalized) || 0;
+    }
+
+    function formatBookingCurrency(value) {
+        var amount = Number(value) || 0;
+        return `Php ${amount.toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        })}`;
+    }
+
+    $scope.bookingAdditionals = [];
+
+    $scope.addBookingAdditional = function () {
+        $scope.bookingAdditionals.push({
+            bookingAdditionalID: 0,
+            description: '',
+            amount: null
+        });
+    };
+
+    $scope.removeBookingAdditional = function (index) {
+        if (index < 0 || index >= ($scope.bookingAdditionals || []).length) {
+            return;
+        }
+
+        $scope.bookingAdditionals.splice(index, 1);
+        $scope.computeFinalPrice();
+    };
+
+    $scope.getBookingAdditionalsTotal = function () {
+        return ($scope.bookingAdditionals || []).reduce(function (total, item) {
+            return total + parseCurrencyValue(item && item.amount);
+        }, 0);
+    };
+
     function applyEditBookingData(bookingData, detailsData) {
         var client = detailsData.clients || {};
         var packageInfo = detailsData.packages || {};
@@ -4096,6 +4160,13 @@
         $scope.eventPrepVenue = bookingData.prepVenue || '';
         $scope.eventVenue = bookingData.venue || '';
         $scope.bookingNote = bookingData.bookingNote || '';
+        $scope.bookingAdditionals = (detailsData.bookingAdditionals || []).map(function (item) {
+            return {
+                bookingAdditionalID: item.bookingAdditionalID || 0,
+                description: item.description || '',
+                amount: item.amount
+            };
+        });
 
         var bookingDate = parseDotNetDate(bookingData.bookingDate);
         if (bookingDate) {
@@ -4224,7 +4295,7 @@
     }
 
     function buildBookingSubmission() {
-        var cleanAmount = ($scope.bookingFinalPrice || '0').toString().replace(/[^0-9]/g, '');
+        var cleanAmount = parseCurrencyValue($scope.bookingFinalPrice);
 
         return {
             clientInfo: {
@@ -4259,8 +4330,17 @@
                 addKid: parseInt($scope.addKid, 10) || 0
             },
             paymentInfo: {
-                amountDue: parseFloat(cleanAmount) || 0
+                amountDue: cleanAmount
             },
+            bookingAdditionals: ($scope.bookingAdditionals || []).filter(function (item) {
+                return item && item.description && item.description.trim() && parseCurrencyValue(item.amount) > 0;
+            }).map(function (item) {
+                return {
+                    bookingAdditionalID: item.bookingAdditionalID || 0,
+                    description: item.description.trim(),
+                    amount: parseCurrencyValue(item.amount)
+                };
+            }),
             packages: {
                 packageTypID: $scope.packageTypeID || 0,
                 pricePaxID: $scope.priceTypeID || 0,
@@ -4404,7 +4484,7 @@
             if (result.isConfirmed) {
                 IsabellaCateringWebAppService.checkCalendarAvailabilityService($scope.dateOfEvent).then(function (response) {
                     if (response.data.success) {
-                        IsabellaCateringWebAppService.insertPackageService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
+                        IsabellaCateringWebAppService.insertPackageService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.bookingAdditionals, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
                             if (returnedData.data.success) {
                                 Swal.fire({
                                     title: 'Success!',
@@ -4467,7 +4547,7 @@
                 return;
             }
 
-            IsabellaCateringWebAppService.updateBookingService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
+            IsabellaCateringWebAppService.updateBookingService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.bookingAdditionals, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
                 if (returnedData.data.success) {
                     Swal.fire({
                         title: 'Updated!',
@@ -4684,7 +4764,7 @@
     $scope.selectPricePaxType = function (id, type, price) {
         $scope.priceType = type;
         $scope.priceTypeID = id;
-        $scope.bookingBasePrice = `Php ${price}`;
+        $scope.bookingBasePrice = formatBookingCurrency(price);
         $scope.activeDropdown = null;
 
         if ($scope.markBookingFieldTouched) {
@@ -5348,9 +5428,10 @@
     $scope.computeFinalPrice = function () {
         var adultTotal = ($scope.addAdult || 0) * ($scope.pricePaxAdMulti || 0);
         var kidTotal = ($scope.addKid || 0) * ($scope.pricePaxKdMulti || 0);
-        var basePrice = ($scope.bookingBasePrice || "0").toString().replace(/[^0-9]/g, '');
-        var total = adultTotal + kidTotal + parseInt(basePrice);
-        $scope.bookingFinalPrice = `Php ${total.toLocaleString()}`;
+        var additionalsTotal = $scope.getBookingAdditionalsTotal();
+        var basePrice = parseCurrencyValue($scope.bookingBasePrice);
+        var total = adultTotal + kidTotal + additionalsTotal + basePrice;
+        $scope.bookingFinalPrice = formatBookingCurrency(total);
     };
     
 
