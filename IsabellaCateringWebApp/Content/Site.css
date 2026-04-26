@@ -355,6 +355,20 @@ textarea {
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
+.login-field[type="password"]::-ms-reveal,
+.login-field[type="password"]::-ms-clear {
+    display: none;
+}
+
+.login-field[type="password"]::-webkit-credentials-auto-fill-button,
+.login-field[type="password"]::-webkit-contacts-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}
+
 .login-field:hover {
     border-color: #eca1c2;
 }
@@ -1235,6 +1249,157 @@ textarea {
     color: #18181b;
 }
 
+.booking-form-shell {
+    margin-top: 0.25rem;
+}
+
+.booking-form-two-column {
+    display: grid;
+    gap: 1rem 1.1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.booking-form-field {
+    min-width: 0;
+}
+
+.booking-form-field--wide {
+    grid-column: span 1;
+}
+
+.booking-form-field--full {
+    grid-column: 1 / -1;
+}
+
+.booking-final-total-input {
+    font-size: 1.1rem !important;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    background: #ffffff !important;
+}
+
+.booking-inline-note {
+    margin: 0;
+    color: #71717a;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.booking-icon-button {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #f0d3e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #d6418b;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.booking-icon-button:hover {
+    border-color: #e5bdd1;
+    background: #fff7fb;
+    color: #bf2f78;
+}
+
+.booking-icon-button .material-symbols-outlined {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.booking-icon-button--danger {
+    color: #b91c1c;
+}
+
+.booking-icon-button--danger:hover {
+    border-color: #fecaca;
+    background: #fff5f5;
+    color: #991b1b;
+}
+
+.booking-additionals-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.95rem;
+}
+
+.booking-additionals-header__copy {
+    min-width: 0;
+}
+
+.booking-rate-strip {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid #f0d3e1;
+    border-radius: 10px;
+    background: #fffdfd;
+    padding: 0.95rem 1rem;
+}
+
+.booking-rate-strip__item {
+    display: grid;
+    gap: 0.12rem;
+}
+
+.booking-rate-strip__item span,
+.booking-additional-form-row__label {
+    color: #71717a;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.booking-rate-strip__item strong {
+    color: #18181b;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.booking-rate-strip__item small {
+    color: #a1a1aa;
+    font-size: 0.74rem;
+    line-height: 1.35;
+}
+
+.booking-additional-form-row {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem) auto;
+    align-items: end;
+}
+
+.booking-additional-form-row__field {
+    min-width: 0;
+}
+
+.booking-additional-form-row__action {
+    display: flex;
+    align-items: end;
+}
+
+.booking-additionals-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 76px;
+    border: 1px dashed #e6c7d7;
+    border-radius: 10px;
+    color: #71717a;
+    font-size: 0.84rem;
+    background: #fffdfd;
+    text-align: center;
+    padding: 1rem;
+}
+
+.booking-note-section__hint {
+    margin-bottom: 0.55rem;
+}
+
 .payment-summary-card {
     color: inherit;
 }
@@ -1318,6 +1483,23 @@ textarea {
         font-size: 0.8rem;
     }
 
+    .booking-form-two-column {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-additionals-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .booking-additional-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-additional-form-row__action {
+        justify-content: flex-start;
+    }
+
     .booking-calendar-page #days-container {
         grid-auto-rows: minmax(6rem, auto);
     }
@@ -1335,6 +1517,12 @@ textarea {
 
     .booking-calendar-page #days-container .current {
         min-height: 3.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .booking-form-field--wide {
+        grid-column: span 1;
     }
 }
 

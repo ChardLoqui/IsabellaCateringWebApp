@@ -193,6 +193,7 @@
     <Compile Include="Models\Context\IsabellaCateringContext.cs" />
     <Compile Include="Models\Maps\tblActivityLogsMap.cs" />
     <Compile Include="Models\Maps\tblBackdropTypesMap.cs" />
+    <Compile Include="Models\Maps\tblBookingAdditionalsMap.cs" />
     <Compile Include="Models\Maps\tblBookingReceiptsMap.cs" />
     <Compile Include="Models\Maps\tblBookingsMap.cs" />
     <Compile Include="Models\Maps\tblCenterPieceTypesMap.cs" />
@@ -232,6 +233,7 @@
     <Compile Include="Models\Models\tblEventsModel.cs" />
     <Compile Include="Models\Models\tblActivityLogsModel.cs" />
     <Compile Include="Models\Models\tblBackdropTypesModel.cs" />
+    <Compile Include="Models\Models\tblBookingAdditionalsModel.cs" />
     <Compile Include="Models\Models\tblBookingsModel.cs" />
     <Compile Include="Models\Models\tblBookingReceiptsModel.cs" />
     <Compile Include="Models\Models\tblCenterPieceTypesModel.cs" />
