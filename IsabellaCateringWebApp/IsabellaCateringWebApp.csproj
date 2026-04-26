@@ -1130,6 +1130,7 @@
     <Content Include="Views\Shared\_ManagementLayout.cshtml" />
     <Content Include="Views\Main\AdminViewPage.cshtml" />
     <Content Include="Views\Main\LandingPage.cshtml" />
+    <Content Include="Views\Main\CancelTab.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

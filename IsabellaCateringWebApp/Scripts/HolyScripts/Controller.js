@@ -5547,5 +5547,110 @@
 
     //======================================================== LANDING PAGE END ========================================================
 
+    //======================================================== CANCELLATION TAB START ========================================================
+
+    $scope.cancellationRequests = [];
+    $scope.approvedCancellations = [];
+    $scope.cancellationsLoading = false;
+
+    $scope.getCancellations = function () {
+        $scope.cancellationsLoading = true;
+        IsabellaCateringWebAppService.getCancellationsService().then(function (res) {
+            if (res.data.success) {
+                $scope.cancellationRequests = res.data.data.filter(c => c.requestCancel === 1 && c.bookingCancelled === 0);
+                $scope.approvedCancellations = res.data.data.filter(c => c.bookingCancelled === 1);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: res.data.message,
+                    icon: 'error',
+                    confirmButtonColor: '#EC4899'
+                });
+            }
+            $scope.cancellationsLoading = false;
+        }).catch(function (err) {
+            console.error(err);
+            $scope.cancellationsLoading = false;
+        });
+    };
+
+    $scope.approveCancellation = function (bookingID) {
+        Swal.fire({
+            title: 'Approve Cancellation?',
+            text: "Enter a note for the customer (optional):",
+            input: 'text',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EC4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, approve it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.approveCancellationService(bookingID, result.value).then(function (res) {
+                    if (res.data.success) {
+                        Swal.fire({
+                            title: 'Approved!',
+                            text: 'The booking has been cancelled.',
+                            icon: 'success',
+                            confirmButtonColor: '#EC4899'
+                        });
+                        $scope.getCancellations();
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: res.data.message,
+                            icon: 'error',
+                            confirmButtonColor: '#EC4899'
+                        });
+                    }
+                });
+            }
+        });
+    };
+
+    $scope.rejectCancellation = function (bookingID) {
+        Swal.fire({
+            title: 'Reject Cancellation?',
+            text: "Enter a reason for rejection (optional):",
+            input: 'text',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EC4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, reject it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.rejectCancellationService(bookingID, result.value).then(function (res) {
+                    if (res.data.success) {
+                        Swal.fire({
+                            title: 'Rejected!',
+                            text: 'The cancellation request has been rejected.',
+                            icon: 'success',
+                            confirmButtonColor: '#EC4899'
+                        });
+                        $scope.getCancellations();
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: res.data.message,
+                            icon: 'error',
+                            confirmButtonColor: '#EC4899'
+                        });
+                    }
+                });
+            }
+        });
+    };
+
+    $scope.viewBookingDetails = function (bookingID) {
+        IsabellaCateringWebAppService.setBookingViewService(bookingID).then(function (res) {
+            if (res.data.success) {
+                $scope.redirectToAdminViewPage();
+            }
+        });
+    };
+
+    //======================================================== CANCELLATION TAB END ========================================================
+
 
 });

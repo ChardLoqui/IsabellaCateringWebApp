@@ -608,6 +608,10 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        public ActionResult CancelTab()
+        {
+            return View();
+        }
         //===================================================================Landing Page End==================================================================
 
         //===================================================================Logs Start==================================================================
@@ -2673,6 +2677,155 @@ Isabella Catering and Events
                 "Bookings Management:",
                 "Attempted to delete bookings. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RequestCancellation(int bookingID, string customerNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 1;
+                    booking.customerNote = customerNote;
+                    booking.dateCancelled = DateTime.Now;
+
+                    var newTask = new tblTasksModel()
+                    {
+                        bookingID = bookingID,
+                        task = "Cancellation Request",
+                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
+                        dueDate = DateTime.Now.AddDays(1),
+                        status = "Pending",
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.tasks_tbl.Add(newTask);
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation requested for bookingID: {bookingID}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request sent successfully. Our team will contact you soon." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to request cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ApproveCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.bookingCancelled = 1;
+                    booking.requestCancel = 0;
+                    booking.acceptedCancelNote = adminNote;
+                    booking.dateDeletion = DateTime.Now;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation APPROVED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation approved successfully." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to approve cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RejectCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 0;
+                    booking.cancelNote = adminNote;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation REJECTED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request rejected." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
+            }
+        }
+
+        public JsonResult GetCancellations()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var cancellations = (from booking in db.bookings_tbl
+                                         join client in db.clients_tbl on booking.clientID equals client.clientID
+                                         where booking.requestCancel == 1 || booking.bookingCancelled == 1
+                                         select new
+                                         {
+                                             bookingID = booking.bookingID,
+                                             bookingDate = booking.bookingDate,
+                                             venue = booking.venue,
+                                             eventName = client.eventName,
+                                             clientName = client.cFName + " " + client.cLName,
+                                             requestCancel = booking.requestCancel,
+                                             bookingCancelled = booking.bookingCancelled,
+                                             customerNote = booking.customerNote,
+                                             cancelNote = booking.cancelNote,
+                                             acceptedCancelNote = booking.acceptedCancelNote,
+                                             dateCancelled = booking.dateCancelled,
+                                             dateDeletion = booking.dateDeletion
+                                         }).ToList();
+
+                    return Json(new { success = true, data = cancellations }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Management:",
+                "Attempted to get cancellations. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
