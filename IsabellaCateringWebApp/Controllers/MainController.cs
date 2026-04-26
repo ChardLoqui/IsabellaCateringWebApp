@@ -599,6 +599,11 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
+        public ActionResult CancelTab()
+        {
+            return View();
+        }
+        //===================================================================Landing Page End==================================================================
 
         public JsonResult Logs(string level, string processService, string processDesc)
         {
