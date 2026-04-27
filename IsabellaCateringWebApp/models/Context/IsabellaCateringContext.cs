@@ -19,7 +19,7 @@ namespace IsabellaCateringWebApp.Models.Context
         public IsabellaCateringContext() : base("Name=isabellacms_db") { }
         public virtual DbSet<tblActivityLogsModel> activitylogs_tbl { get; set; }
         public virtual DbSet<tblBackdropTypesModel> backdroptypes_tbl { get; set; }
-        public virtual DbSet<tblBookingAdditionalsModel> bookingadditionals_tbl { get; set; }
+        //public virtual DbSet<tblBookingAdditionalsModel> bookingadditionals_tbl { get; set; }
         public virtual DbSet<tblBookingReceiptsModel> bookingreceipts_tbl { get; set; }
         public virtual DbSet<tblBookingsModel> bookings_tbl { get; set; }
         public virtual DbSet<tblCenterPieceTypesModel> centerpiecetypes_tbl { get; set; }
@@ -62,7 +62,7 @@ namespace IsabellaCateringWebApp.Models.Context
             base.OnModelCreating(modelBuilder);
             modelBuilder.Configurations.Add(new tblActivityLogsMap());
             modelBuilder.Configurations.Add(new tblBackdropTypesMap());
-            modelBuilder.Configurations.Add(new tblBookingAdditionalsMap());
+            //modelBuilder.Configurations.Add(new tblBookingAdditionalsMap());
             modelBuilder.Configurations.Add(new tblBookingReceiptsMap());
             modelBuilder.Configurations.Add(new tblBookingsMap());
             modelBuilder.Configurations.Add(new tblCenterPieceTypesMap());
