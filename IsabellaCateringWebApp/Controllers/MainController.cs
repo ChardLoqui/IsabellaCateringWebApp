@@ -40,55 +40,51 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
-
-
         public ActionResult LoginPage()
         {
             return View();
         }
-        public ActionResult AccountsPage()
+        public ActionResult AccountsTabPage()
         {
             return View();
         }
-        public ActionResult LogsPage()
+        public ActionResult LogsTabPage()
         {
             return View();
         }
-
         public ActionResult ChangePassPage()
         {
             return View();
         }
-
         public ActionResult ForgetPassPage()
         {
             return View();
         }
-
-        public ActionResult CustomerViewPage()
+        public ActionResult CustomerViewTabPage()
         {
             return View();
         }
-
         public ActionResult AddBookingPage()
         {
             return View();
         }
-        public ActionResult BookingCalendarPage()
+        public ActionResult BookingCalendarTabPage()
         {
             return View();
         }
-
-        public ActionResult PaymentReminderPage()
+        public ActionResult RequestCalendarPage()
         {
             return View();
         }
-        public ActionResult AdminViewPage()
+        public ActionResult PaymentReminderTabPage()
         {
             return View();
         }
-
-        public ActionResult CancelTab()
+        public ActionResult AdminViewTabPage()
+        {
+            return View();
+        }
+        public ActionResult CancelRequestTabPage()
         {
             return View();
         }
@@ -509,6 +505,105 @@ namespace IsabellaCateringWebApp.Controllers
 
         //===================================================================Booking Calendar End==================================================================
 
+        //===================================================================Request Booking Calendar Start==================================================================
+
+        public JsonResult getRequestCalendarMonth(int year, int month)
+        {
+            try
+            {
+                if (month < 1 || month > 12)
+                {
+                    return Json(new { success = false, message = "Invalid month." }, JsonRequestBehavior.AllowGet);
+                }
+
+                var today = DateTime.Today;
+                var minimumDate = today.AddDays(4);
+                var maximumDate = today.AddYears(3);
+
+                var monthStart = new DateTime(year, month, 1);
+                var monthEnd = monthStart.AddMonths(1);
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingCounts = db.bookings_tbl
+                        .Where(b => b.bookingDate >= monthStart && b.bookingDate < monthEnd)
+                        .GroupBy(b => b.bookingDate)
+                        .Select(g => new
+                        {
+                            bookingDate = g.Key,
+                            count = g.Count()
+                        })
+                        .ToList()
+                        .ToDictionary(
+                            x => x.bookingDate.Year + "-" + x.bookingDate.Month + "-" + x.bookingDate.Day,
+                            x => x.count
+                        );
+
+                    return Json(new { bookingCounts = bookingCounts, success = true }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Request Calendar:",
+                    "Attempted to get request calendar month. " + ex.Message + " " + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult validateRequestDate(string formattedDate)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(formattedDate))
+                {
+                    return Json(new { success = false, message = "Please select a date first!" }, JsonRequestBehavior.AllowGet);
+                }
+
+                DateTime selectedDate = DateTime.Parse(formattedDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+                DateTime today = DateTime.Today;
+                DateTime minimumDate = today.AddDays(4);
+                DateTime maximumDate = today.AddYears(3);
+
+                // Check if date is within allowed range
+                if (selectedDate < minimumDate)
+                {
+                    return Json(new { success = false, message = "Bookings must be requested at least 4 days in advance." }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (selectedDate > maximumDate)
+                {
+                    return Json(new { success = false, message = "Bookings can only be requested up to 3 years in advance." }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingCount = db.bookings_tbl
+                        .Where(b => b.bookingDate == selectedDate)
+                        .Count();
+
+                    if (bookingCount >= 3)
+                    {
+                        return Json(new { success = false, message = "This date already has 3 bookings and is no longer available." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    Session["requestSelectedDate"] = formattedDate;
+                    return Json(new { success = true, selectedDate = formattedDate, message = "Date confirmed!" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Request Calendar:",
+                    "Attempted to validate request date. " + ex.Message + " " + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //===================================================================Request Booking Calendar End==================================================================
+
         //===================================================================Landing Page Start==================================================================
         public class EventPackage
         {
@@ -589,21 +684,32 @@ namespace IsabellaCateringWebApp.Controllers
                         if (ent != null) inclusions.Add("Entrance: " + ent.entranceTypDesc);
                     }
 
+                    // Standard string-based inclusions from packages_tbl
+                    if (!string.IsNullOrEmpty(packageDetails.incStaples)) inclusions.Add(packageDetails.incStaples);
+                    if (!string.IsNullOrEmpty(packageDetails.incStyling)) inclusions.Add(packageDetails.incStyling);
+                    if (!string.IsNullOrEmpty(packageDetails.incTableSet)) inclusions.Add(packageDetails.incTableSet);
+                    if (!string.IsNullOrEmpty(packageDetails.incDnrWare)) inclusions.Add(packageDetails.incDnrWare);
+                    if (!string.IsNullOrEmpty(packageDetails.incBftSet)) inclusions.Add(packageDetails.incBftSet);
 
+                    return Json(new
+                    {
+                        success = true,
+                        packageName = packageType.packageTypDesc,
+                        description = packageType.packageSet ?? "Exquisite catering for your special event.",
+                        inclusions = inclusions,
+                        message = "Package details retrieved successfully from database!"
+                    }, JsonRequestBehavior.AllowGet);
                 }
             }
             catch (Exception ex)
             {
-
-                return Json(new { succes = false, message = "Logs failed!" + ex.Message }, JsonRequestBehavior.AllowGet);
+                Logs("ERROR", "Package Card:", "Error fetching package details: " + ex.Message);
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
-        public ActionResult CancelTab()
-        {
-            return View();
-        }
         //===================================================================Landing Page End==================================================================
+
+        //===================================================================Logs Start==================================================================
 
         public JsonResult Logs(string level, string processService, string processDesc)
         {
@@ -2671,7 +2777,7 @@ Isabella Catering and Events
         }
 
         [HttpPost]
-        public JsonResult RequestCancellation(int bookingID, string customerNote)
+        public JsonResult RequestCancellation(int bookingID, string cancelNote)
         {
             try
             {
@@ -2684,14 +2790,14 @@ Isabella Catering and Events
                     }
 
                     booking.requestCancel = 1;
-                    booking.customerNote = customerNote;
+                    booking.cancelNote = cancelNote;
                     booking.dateCancelled = DateTime.Now;
 
                     var newTask = new tblTasksModel()
                     {
                         bookingID = bookingID,
                         task = "Cancellation Request",
-                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
+                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {cancelNote}",
                         dueDate = DateTime.Now.AddDays(1),
                         status = "Pending",
                         dateCreated = DateTime.Now,
@@ -3020,119 +3126,6 @@ Isabella Catering and Events
 
         //===================================================================Create/Edit/Delete Booking End==================================================================
 
-        //===================================================================Request Booking Cancellation Start==================================================================
-        [HttpPost]
-        public JsonResult RequestCancellation(int bookingID, string customerNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.requestCancel = 1;
-                    booking.customerNote = customerNote;
-                    booking.dateCancelled = DateTime.Now;
-
-                    var newTask = new tblTasksModel()
-                    {
-                        bookingID = bookingID,
-                        task = "Cancellation Request",
-                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
-                        dueDate = DateTime.Now.AddDays(1),
-                        status = "Pending",
-                        dateCreated = DateTime.Now,
-                        dateUpdated = DateTime.Now
-                    };
-                    db.tasks_tbl.Add(newTask);
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation requested for bookingID: {bookingID}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation request sent successfully. Our team will contact you soon." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to request cancellation: " + ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public JsonResult ApproveCancellation(int bookingID, string adminNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.bookingCancelled = 1;
-                    booking.requestCancel = 0;
-                    booking.acceptedCancelNote = adminNote;
-                    booking.dateDeletion = DateTime.Now;
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation APPROVED for bookingID: {bookingID}. Note: {adminNote}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation approved successfully." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to approve cancellation: " + ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public JsonResult RejectCancellation(int bookingID, string adminNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.requestCancel = 0;
-                    booking.cancelNote = adminNote;
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation REJECTED for bookingID: {bookingID}. Note: {adminNote}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation request rejected." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
-            }
-        }
-
-        //===================================================================Request Booking Cancellation End==================================================================
         
         //===================================================================Payment Management Start==================================================================
         
@@ -3719,7 +3712,7 @@ Isabella Catering and Events
             }
         }
 
-        //===================================================================Payment Management Start==================================================================
+        //===================================================================Payment Management End==================================================================
 
     }
 }
