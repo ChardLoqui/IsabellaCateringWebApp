@@ -102,6 +102,32 @@
         });
         return response;
     };
+    this.getRequestBooking = function (booking) {
+        var response = $http({
+            method: "post",
+            url: "/Main/getRequestBooking",
+            data: booking
+        });
+        return response;
+    };
+
+    this.getBookingRequestsForAcceptanceService = function () {
+        return $http.get("/Main/GetBookingRequestsForAcceptance");
+    };
+    this.rejectFullyBookedDatesService = function () {
+        return $http.get("/Main/rejectFullyBookedDates");
+    };
+
+    this.acceptRequestSetDateService = function (requestID) {
+        return $http.get("/Main/setAcceptRequestSetDate", {
+            params: { requestID: requestID }
+        });
+    }
+    this.rejectRequestService = function (requestID) {
+        return $http.get("/Main/rejectRequest", {
+            params: { requestID: requestID }
+        });
+    }
 
     //========================================================CREATE BOOKING START=======================================================
     this.bookEvent = function (eventData) {
@@ -122,11 +148,31 @@
         });
     }
 
-    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, bookingAdditionals, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes, toDeleteRequestID) {
         return $http.post("/Main/insertPackage", {
             clientInfo: clientInfo,
             bookingInfo: bookingInfo,
             paymentInfo: paymentInfo,
+            bookingAdditionals: bookingAdditionals,
+            packages: packages,
+            sidesGrpTypes: sidesGrpTypes,
+            specialsGrpTypes: specialsGrpTypes,
+            staffGrpTypes: staffGrpTypes,
+            equipGrpTypes: equipGrpTypes,
+            entertainmentGrpTypes: entertainmentGrpTypes,
+            photoGrpTypes: photoGrpTypes,
+            keepsakesGrpTypes: keepsakesGrpTypes,
+            debutGrpTypes: debutGrpTypes,
+            toDeleteRequestID: toDeleteRequestID
+        });
+    }
+
+    this.insertRequestPackageService = function (clientInfo, bookingInfo, paymentInfo, bookingAdditionals, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+        return $http.post("/Main/insertRequestPackage", {
+            clientInfo: clientInfo,
+            bookingInfo: bookingInfo,
+            paymentInfo: paymentInfo,
+            bookingAdditionals: bookingAdditionals,
             packages: packages,
             sidesGrpTypes: sidesGrpTypes,
             specialsGrpTypes: specialsGrpTypes,
@@ -139,11 +185,12 @@
         });
     }
 
-    this.updateBookingService = function (clientInfo, bookingInfo, paymentInfo, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+    this.updateBookingService = function (clientInfo, bookingInfo, paymentInfo, bookingAdditionals, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
         return $http.post("/Main/UpdateBooking", {
             clientInfo: clientInfo,
             bookingInfo: bookingInfo,
             paymentInfo: paymentInfo,
+            bookingAdditionals: bookingAdditionals,
             packages: packages,
             sidesGrpTypes: sidesGrpTypes,
             specialsGrpTypes: specialsGrpTypes,
@@ -189,6 +236,10 @@
         });
     }
 
+    this.getCancellationsService = function () {
+        return $http.get("/Main/GetCancellations");
+    }
+
 
     //========================================================CREATE BOOKING END=======================================================
 
@@ -218,6 +269,12 @@
         });
     }
 
+    this.getBookingRequestDetailsService = function (bookingID) {
+        return $http.get("/Main/getBookingRequestDetails", {
+            params: { bookingID: bookingID }
+        });
+    }
+
     this.checkCalendarAvailabilityService = function (formattedDate) {
         return $http.get("/Main/checkCalendarAvailability", {
             params: { formattedDate: formattedDate }
@@ -231,6 +288,22 @@
     }
 
     //========================================================BOOKING CALENDAR END=======================================================
+
+    //========================================================REQUEST BOOKING CALENDAR START=======================================================
+
+    this.getRequestCalendarMonthService = function (year, month) {
+        return $http.get("/Main/getRequestCalendarMonth", {
+            params: { year: year, month: month }
+        });
+    };
+
+    this.validateRequestDateService = function (formattedDate) {
+        return $http.get("/Main/validateRequestDate", {
+            params: { formattedDate: formattedDate }
+        });
+    };
+
+    //========================================================REQUEST BOOKING CALENDAR END=======================================================
 
     //========================================================PAYMENT REMINDER START=======================================================
 
@@ -274,6 +347,12 @@
     this.loadBookingPaymentBalanceService = function (bookingID) {
         return $http.get('/Main/loadBookingPaymentBalance', {
             params: { bookingID: bookingID }
+        });
+    }
+
+    this.sendReminderService = function (toEmail, paymentLines, fullName, eventName, purpose) {
+        return $http.get('/Main/SendReminder', {
+            params: { toEmail: toEmail, paymentLines: paymentLines, fullName: fullName, eventName: eventName, purpose: purpose }
         });
     }
 

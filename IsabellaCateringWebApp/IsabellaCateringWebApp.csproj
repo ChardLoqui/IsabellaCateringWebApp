@@ -193,9 +193,12 @@
     <Compile Include="Models\Context\IsabellaCateringContext.cs" />
     <Compile Include="Models\Maps\tblActivityLogsMap.cs" />
     <Compile Include="Models\Maps\tblBackdropTypesMap.cs" />
+    <Compile Include="Models\Maps\tblBookingAdditionalsMap.cs" />
     <Compile Include="Models\Maps\tblBookingReceiptsMap.cs" />
+    <Compile Include="Models\Maps\tblBookingRequestsMap.cs" />
     <Compile Include="Models\Maps\tblBookingsMap.cs" />
     <Compile Include="Models\Maps\tblCenterPieceTypesMap.cs" />
+    <Compile Include="Models\Maps\tblClientRequestsMap.cs" />
     <Compile Include="Models\Maps\tblClientsMap.cs" />
     <Compile Include="Models\Maps\tblCouchTypesMap.cs" />
     <Compile Include="Models\Maps\tblDebutGrpTypesMap.cs" />
@@ -229,9 +232,12 @@
     <Compile Include="Models\Maps\tblTaskHistoryMap.cs" />
     <Compile Include="Models\Maps\tblTasksMap.cs" />
     <Compile Include="Models\Maps\tblUsersMap.cs" />
+    <Compile Include="Models\Models\tblBookingRequestsModel.cs" />
+    <Compile Include="Models\Models\tblClientRequestsModel.cs" />
     <Compile Include="Models\Models\tblEventsModel.cs" />
     <Compile Include="Models\Models\tblActivityLogsModel.cs" />
     <Compile Include="Models\Models\tblBackdropTypesModel.cs" />
+    <Compile Include="Models\Models\tblBookingAdditionalsModel.cs" />
     <Compile Include="Models\Models\tblBookingsModel.cs" />
     <Compile Include="Models\Models\tblBookingReceiptsModel.cs" />
     <Compile Include="Models\Models\tblCenterPieceTypesModel.cs" />
@@ -1115,19 +1121,23 @@
     <Content Include="Views\Main\HomePage.cshtml" />
     <Content Include="Scripts\version.json" />
     <Content Include="Views\Main\LoginPage.cshtml" />
-    <Content Include="Views\Main\AccountsPage.cshtml" />
-    <Content Include="Views\Main\LogsPage.cshtml" />
+    <Content Include="Views\Main\AccountsTabPage.cshtml" />
+    <Content Include="Views\Main\LogsTabPage.cshtml" />
     <Content Include="Views\Main\ChangePassPage.cshtml" />
     <Content Include="Views\Main\ForgetPassPage.cshtml" />
     <Content Include="Views\Shared\_LogInLayout.cshtml" />
     <Content Include="Views\Main\AddBookingPage.cshtml" />
-    <Content Include="Views\Main\CustomerViewPage.cshtml" />
-    <Content Include="Views\Main\BookingCalendarPage.cshtml" />
-    <Content Include="Views\Main\PaymentReminderPage.cshtml" />
+    <Content Include="Views\Main\CustomerViewTabPage.cshtml" />
+    <Content Include="Views\Main\BookingCalendarTabPage.cshtml" />
+    <Content Include="Views\Main\PaymentReminderTabPage.cshtml" />
     <Content Include="Views\Shared\NavbarLayout.cshtml" />
     <Content Include="Views\Shared\_ManagementLayout.cshtml" />
-    <Content Include="Views\Main\AdminViewPage.cshtml" />
+    <Content Include="Views\Main\AdminViewTabPage.cshtml" />
     <Content Include="Views\Main\LandingPage.cshtml" />
+    <Content Include="Views\Main\CancelRequestTabPage.cshtml" />
+    <Content Include="Views\Main\RequestCalendarPage.cshtml" />
+    <Content Include="Views\Main\RequestAddBookingPage.cshtml" />
+    <Content Include="Views\Main\BookingRequestTabPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

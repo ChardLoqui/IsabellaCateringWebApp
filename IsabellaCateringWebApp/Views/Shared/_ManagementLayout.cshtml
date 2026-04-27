@@ -144,7 +144,7 @@
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
                    @(currentAction == "BookingCalendarPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                           href="@Url.Action("BookingCalendarPage", "Main")">
+                           href="@Url.Action("BookingCalendarTabPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">calendar_month</span>
                             <span class="nav-text">Booking Calendar</span>
                         </a>
@@ -152,8 +152,17 @@
 
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
+                   @(currentAction == "RequestTab" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                           href="@Url.Action("BookingRequestTabPage", "Main")">
+                            <span class="material-symbols-outlined nav-icon min-w-[24px]">forward_to_inbox</span>
+                            <span class="nav-text">Booking Requests</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="group flex items-center px-6 py-3 transition-all duration-200
                    @(currentAction == "PaymentReminderPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                           href="@Url.Action("PaymentReminderPage", "Main")">
+                           href="@Url.Action("PaymentReminderTabPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">account_balance_wallet</span>
                             <span class="nav-text">Manage Payment</span>
                         </a>
@@ -162,7 +171,7 @@
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
                    @(currentAction == "AccountsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                           href="@Url.Action("AccountsPage", "Main")">
+                           href="@Url.Action("AccountsTabPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">groups</span>
                             <span class="nav-text">Accounts</span>
                         </a>
@@ -170,8 +179,17 @@
 
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
+                   @(currentAction == "CancelTab" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                           href="@Url.Action("CancelRequestTabPage", "Main")">
+                            <span class="material-symbols-outlined nav-icon min-w-[24px]">cancel</span>
+                            <span class="nav-text">Cancellations</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="group flex items-center px-6 py-3 transition-all duration-200
                    @(currentAction == "LogsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                           href="@Url.Action("LogsPage", "Main")">
+                           href="@Url.Action("LogsTabPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">article</span>
                             <span class="nav-text">Logs</span>
                         </a>
@@ -182,7 +200,7 @@
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
                     @(currentAction == "CustomerViewPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                           href="@Url.Action("CustomerViewPage", "Main")">
+                           href="@Url.Action("CustomerViewTabPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">timeline</span>
                             <span class="nav-text">Event Progress</span>
                         </a>

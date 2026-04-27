@@ -7,7 +7,7 @@
       ng-init="getOrderInfo();">
 
     <div class="relative z-10 h-full overflow-y-auto">
-    <div class="p-8 mb-5">
+    <div class="mb-5 p-8">
         <h1 class="mb-6 text-2xl font-semibold text-black">Event Progress</h1>
 
         <div ng-if="orderLoading" class="management-surface management-loader-shell mt-4">
@@ -18,54 +18,6 @@
         </div>
 
         <div ng-if="!orderLoading && order" class="management-content-fade">
-            <!-- Cancellation Request Alert -->
-            <section ng-if="order.requestCancel == 1 && order.bookingCancelled == 0" class="mb-4 rounded-lg border-2 border-red-200 bg-red-50 p-5 shadow-sm">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex items-start gap-4">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
-                            <span class="material-symbols-outlined text-2xl">event_busy</span>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-bold text-red-900">Cancellation Requested</h2>
-                            <p class="text-sm text-red-700">
-                                The customer has requested to cancel this booking.
-                            </p>
-                            <p ng-if="order.customerNote" class="mt-2 rounded bg-white p-2 text-sm italic text-gray-700 border border-red-100">
-                                " {{ order.customerNote }} "
-                            </p>
-                            <p class="mt-1 text-xs text-red-500">
-                                Requested on: {{ order.dateCancelled }}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button"
-                                ng-click="approveCancellation()"
-                                class="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-red-700 active:scale-95">
-                            <span class="material-symbols-outlined text-base">check_circle</span>
-                            Approve
-                        </button>
-                        <button type="button"
-                                ng-click="rejectCancellation()"
-                                class="flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-gray-700 border border-gray-200 transition-all hover:bg-gray-50 active:scale-95">
-                            <span class="material-symbols-outlined text-base">cancel</span>
-                            Reject
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Cancellation Confirmed Status -->
-            <section ng-if="order.bookingCancelled == 1" class="mb-4 rounded-lg border border-gray-300 bg-gray-100 p-5 opacity-75">
-                <div class="flex items-center gap-4 text-gray-600">
-                    <span class="material-symbols-outlined text-3xl">block</span>
-                    <div>
-                        <h2 class="text-lg font-bold">Booking Cancelled</h2>
-                        <p class="text-sm">This booking was cancelled on {{ order.dateDeletion }}.</p>
-                    </div>
-                </div>
-            </section>
-
         <section class="management-surface mt-4 rounded-lg p-5">
             <div class="flex flex-col gap-2 border-b border-gray-100 pb-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
@@ -109,7 +61,7 @@
             </div>
         </section>
 
-        <section class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,2fr)_320px]">
+        <section class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,2fr)_570px]">
             <div class="space-y-4">
                 <section class="management-surface rounded-lg p-5">
                     <div class="flex flex-col gap-3 border-b border-gray-100 pb-3 lg:flex-row lg:items-start lg:justify-between">
@@ -121,13 +73,10 @@
                                 Package reference and style details for this booking.
                             </p>
                         </div>
-                        
+
                         <div class="rounded-md bg-pink-50 px-3 py-2 text-sm font-medium text-pink-600">
                             Design and inclusion overview
                         </div>
-                        <button type="button" ng-click="redirectToAddBookingPageEditMode(editBookingID)" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
-                            Edit Event <i class="ml-2 material-icons">edit</i>
-                        </button>
                     </div>
 
                     <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
@@ -137,7 +86,7 @@
                             <ul ng-if="package && package.items && package.items.length"
                                 class="mt-3 space-y-2 text-sm text-gray-600">
                                 <li ng-repeat="item in package.items" class="flex items-start gap-3">
-                                    <span class="text-pink-500 text-lg">o</span>
+                                    <span class="text-lg text-pink-500">o</span>
                                     <span>{{ item }}</span>
                                 </li>
                             </ul>
@@ -148,7 +97,7 @@
                             </p>
                         </div>
 
-                        <div class="grid gap-2 content-start">
+                        <div class="grid content-start gap-2">
                             <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
                                 <p class="text-sm font-medium text-gray-500">Theme</p>
                                 <p class="mt-1 text-base font-semibold text-gray-900">
@@ -175,7 +124,7 @@
                     </div>
 
                     <dl class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:col-span-2 xl:col-span-1">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <dt class="text-sm font-medium text-gray-500">Date</dt>
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.bookingDate || 'Not set' }}</dd>
                         </div>
@@ -205,7 +154,7 @@
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.eventTime || 'Not set' }}</dd>
                         </div>
 
-                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:col-span-2 xl:col-span-1">
                             <dt class="text-sm font-medium text-gray-500">Meal Time</dt>
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.eventMealTime || 'Not set' }}</dd>
                         </div>
@@ -279,6 +228,13 @@
                             <dd class="text-right text-sm font-semibold text-gray-900">{{ order.addKid || 'Not set' }}</dd>
                         </div>
 
+                        <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3" ng-if="bookingAdditionalsView && bookingAdditionalsView.length">
+                            <dt class="text-sm font-medium text-gray-500">Additional Charges</dt>
+                            <dd class="text-right text-sm font-semibold text-gray-900">
+                                <div ng-repeat="item in bookingAdditionalsView track by $index">{{ item.description }} - ₱ {{ item.amount }}</div>
+                            </dd>
+                        </div>
+
                         <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3">
                             <dt class="text-sm font-medium text-gray-500">Final Price</dt>
                             <dd class="text-right text-sm font-semibold text-gray-900">₱ {{ payment.paymentInitial || 'Not set' }}</dd>
@@ -287,9 +243,64 @@
                     </dl>
                 </section>
 
-                <button type="button" ng-click="printBookingPDF()" class="create-booking-submit inline-flex w-full cursor-pointer items-center justify-center px-5 py-3 text-sm font-semibold sm:w-auto sm:min-w-[220px]">
-                    Download PDF
-                </button>
+                <section class="management-surface rounded-lg p-5">
+                    <h2 class="text-xl font-semibold text-gray-900">Transaction Details</h2>
+
+                    <div class="mt-4 overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-100 text-gray-500">
+                                    <th scope="col" class="pb-3 font-medium">Payment Type</th>
+                                    <th scope="col" class="pb-3 font-medium">Amount Due</th>
+                                    <th scope="col" class="pb-3 font-medium">Amount</th>
+                                    <th scope="col" class="pb-3 text-right font-medium">Status</th>
+                                    <th scope="col" class="pb-3 text-right font-medium">Due Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr ng-repeat="transaction in paymentTransactions">
+                                    <td class="py-3 font-semibold text-gray-900">
+                                        {{ transaction.paymentType || 'Not set' }}
+                                    </td>
+                                    <td class="py-3 font-semibold text-gray-900">
+                                        ₱ {{ transaction.amountDue || '0.00' }}
+                                    </td>
+                                    <td class="py-3 font-semibold text-gray-900">
+                                        ₱ {{ transaction.amount || '0.00' }}
+                                    </td>
+                                    <td class="py-3 text-right font-semibold text-gray-900">
+                                        {{ transaction.paymentStatus || 'Not set' }}
+                                    </td>
+                                    <td class="py-3 text-right font-semibold text-gray-900">
+                                        {{ transaction.dueDate || 'Not set' }}
+                                    </td>
+                                </tr>
+                                <tr ng-if="paymentTransactions || paymentTransactions.length">
+                                    <td colspan="5" class="py-4 text-center text-gray-500 font-medium">
+                                        <div class="flex items-start justify-between gap-4">
+                                            <dt class="text-sm font-medium text-gray-500">Remaining Balance</dt>
+                                            <dd class="text-right text-sm font-semibold text-gray-900">₱ {{ payment.paymentBalance || '0.00' }}</dd>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr ng-if="!paymentTransactions || !paymentTransactions.length">
+                                    <td colspan="5" class="py-4 text-center text-gray-500 font-medium">
+                                        No transactions recorded yet.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div class="mt-4 space-y-3">
+                    <button type="button"
+                            ng-click="requestCancellation()"
+                            class="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-red-600 border border-red-200 shadow-sm transition-all hover:bg-red-50 active:scale-[0.98]">
+                        <span class="material-symbols-outlined text-[20px]">event_busy</span>
+                        Request Cancellation
+                    </button>
+                </div>
             </aside>
         </section>
         </div>

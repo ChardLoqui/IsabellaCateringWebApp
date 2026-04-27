@@ -40,50 +40,59 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
-
-
         public ActionResult LoginPage()
         {
             return View();
         }
-        public ActionResult AccountsPage()
+        public ActionResult AccountsTabPage()
         {
             return View();
         }
-        public ActionResult LogsPage()
+        public ActionResult LogsTabPage()
         {
             return View();
         }
-
         public ActionResult ChangePassPage()
         {
             return View();
         }
-
         public ActionResult ForgetPassPage()
         {
             return View();
         }
-
-        public ActionResult CustomerViewPage()
+        public ActionResult CustomerViewTabPage()
         {
             return View();
         }
-
         public ActionResult AddBookingPage()
         {
             return View();
         }
-        public ActionResult BookingCalendarPage()
+        public ActionResult BookingCalendarTabPage()
         {
             return View();
         }
-
-        public ActionResult PaymentReminderPage()
+        public ActionResult RequestCalendarPage()
         {
             return View();
         }
-        public ActionResult AdminViewPage()
+        public ActionResult BookingRequestTabPage()
+        {
+            return View();
+        }
+        public ActionResult PaymentReminderTabPage()
+        {
+            return View();
+        }
+        public ActionResult AdminViewTabPage()
+        {
+            return View();
+        }
+        public ActionResult CancelRequestTabPage()
+        {
+            return View();
+        }
+        public ActionResult RequestAddBookingPage()
         {
             return View();
         }
@@ -269,6 +278,140 @@ namespace IsabellaCateringWebApp.Controllers
             }
 
         }
+        public JsonResult setAcceptRequestSetDate(int requestID)
+        {
+            try
+            {
+                Session["currentBooking"] = requestID.ToString();
+                Logs(
+                    "INFO",
+                    "Booking Request:",
+                    "Request set booking view.");
+                return Json(new { success = true, message = "Session Set!" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Request:",
+                "Attempted to set request view. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Attempted to set request view. "+ ex.Message }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+
+        }
+
+        public JsonResult rejectRequest(int requestID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingRequest = db.bookingrequests_tbl
+                                    .Where(b => b.bookingRequestID == requestID)
+                                    .FirstOrDefault();
+
+                    if (bookingRequest != null)
+                    {
+                        var clientRequest = db.clientrequests_tbl
+                                    .Where(b => b.clientRequestID == bookingRequest.clientRequestID)
+                                    .FirstOrDefault();
+
+                        if(clientRequest != null)
+                        {
+                            db.clientrequests_tbl.Remove(clientRequest);
+                            sendRequestRejection(clientRequest.cEmail, bookingRequest.bookingRequestID);
+                        }
+                        db.bookingrequests_tbl.Remove(bookingRequest);
+                        db.SaveChanges();
+
+                        Logs(
+                        "INFO",
+                        "Booking Request:",
+                        "Request Rejected. rejection email sent to "+clientRequest.cEmail);
+                        return Json(new { success = true, message = "Request Rejected! Email was sent to the requestor!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        Logs(
+                        "WARN",
+                        "Booking Request:",
+                        "Request not found!");
+                        return Json(new { success = false, message = "Request not found!" }, JsonRequestBehavior.AllowGet);
+                    }
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Request:",
+                "Attempted to remove request. bookingRequestID= "+ requestID +"." + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Attempted to remove request. bookingRequestID= " + requestID + "." + ex.Message }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+        public JsonResult rejectFullyBookedDates()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var deletedCount = 0;
+                    var bookingRequests = db.bookingrequests_tbl.ToList();
+                    
+                    foreach (var booking in bookingRequests)
+                    {
+                        string formattedDate = booking.bookingDate.ToString("yyyy-MM-dd");
+
+                        JsonResult result = checkCalendarAvailability(formattedDate);
+
+                        if (!(bool)((dynamic)result.Data).success)
+                        {
+                            var relatedClientRequest = db.clientrequests_tbl.Where(x => x.clientRequestID == booking.clientRequestID).FirstOrDefault();
+                            if (relatedClientRequest != null)
+                            {
+                                sendRequestRejection(relatedClientRequest.cEmail, booking.bookingRequestID);
+                                db.clientrequests_tbl.Remove(relatedClientRequest);
+
+                            }
+                            db.bookingrequests_tbl.Remove(booking);
+                            db.SaveChanges();
+                            deletedCount += 1;
+                        }
+                    }
+
+                    if(deletedCount == 0)
+                    {
+                        Logs(
+                            "WARN",
+                            "Booking Request:",
+                            "Request not found!");
+                        return Json(new { success = false, message = "No request was rejected!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        Logs(
+                            "INFO",
+                            "Booking Request:",
+                            "Multiple request rejected! requests rejected = "+deletedCount);
+                        return Json(new { success = true, message = deletedCount+" request was rejected! Rejection message was sent to all requestors!" }, JsonRequestBehavior.AllowGet);
+                    }
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Request:",
+                "Attempted to reject multiple request. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Attempted to reject multiple request. " + ex.Message }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
 
         public JsonResult getBooking(tblBookingsModel booking)
         {
@@ -278,6 +421,35 @@ namespace IsabellaCateringWebApp.Controllers
                 {
                     var bookingUpdate = db.bookings_tbl
                                     .Where(b => b.bookingID == booking.bookingID)
+                                    .FirstOrDefault();
+
+                    if (bookingUpdate == null)
+                    {
+                        return Json(new { message = "Booking not found", bookingID = booking.bookingID }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        return Json(bookingUpdate, JsonRequestBehavior.AllowGet);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking View:",
+                "Attempted to get booking details. " + ex.Message + "" + ex.InnerException);
+                return Json(new { message = "Error connecting to DB: " + ex.Message, bookingID = booking.bookingID }, JsonRequestBehavior.AllowGet);
+            }
+        }
+        public JsonResult getRequestBooking(tblBookingsModel booking)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingUpdate = db.bookingrequests_tbl
+                                    .Where(b => b.bookingRequestID == booking.bookingID)
                                     .FirstOrDefault();
 
                     if (bookingUpdate == null)
@@ -317,7 +489,7 @@ namespace IsabellaCateringWebApp.Controllers
                     var bookings = db.bookings_tbl
                                         .Where(b => b.bookingDate == csharpDate)
                                         .ToList();
-                    if (bookings.Count < 5)
+                    if (bookings.Count < 3)
                     {
                         Session["bookingSelectedDate"] = formattedDate;
                         return Json(new { success = true, selectedDate = Session["bookingSelectedDate"], message = "Create Request Granted!" }, JsonRequestBehavior.AllowGet);
@@ -504,6 +676,127 @@ namespace IsabellaCateringWebApp.Controllers
 
         //===================================================================Booking Calendar End==================================================================
 
+        //===================================================================Request Booking Calendar Start==================================================================
+
+        public JsonResult getRequestCalendarMonth(int year, int month)
+        {
+            try
+            {
+                if (month < 1 || month > 12)
+                {
+                    return Json(new { success = false, message = "Invalid month." }, JsonRequestBehavior.AllowGet);
+                }
+
+                var today = DateTime.Today;
+                var minimumDate = today.AddDays(4);
+                var maximumDate = today.AddYears(3);
+
+                var monthStart = new DateTime(year, month, 1);
+                var monthEnd = monthStart.AddMonths(1);
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingCounts = db.bookings_tbl
+                        .Where(b => b.bookingDate >= monthStart && b.bookingDate < monthEnd)
+                        .GroupBy(b => b.bookingDate)
+                        .Select(g => new
+                        {
+                            bookingDate = g.Key,
+                            count = g.Count()
+                        })
+                        .ToList()
+                        .ToDictionary(
+                            x => x.bookingDate.Year + "-" + x.bookingDate.Month + "-" + x.bookingDate.Day,
+                            x => x.count
+                        );
+
+                    var requestCounts = db.bookingrequests_tbl
+                        .Where(b => b.bookingDate >= monthStart && b.bookingDate < monthEnd)
+                        .GroupBy(b => b.bookingDate)
+                        .Select(g => new
+                        {
+                            bookingDate = g.Key,
+                            count = g.Count()
+                        })
+                        .ToList()
+                        .ToDictionary(
+                            x => x.bookingDate.Year + "-" + x.bookingDate.Month + "-" + x.bookingDate.Day,
+                            x => x.count
+                        );
+
+                    return Json(new { bookingCounts = bookingCounts, requestCounts = requestCounts, success = true }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Request Calendar:",
+                    "Attempted to get request calendar month. " + ex.Message + " " + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public JsonResult validateRequestDate(string formattedDate)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(formattedDate))
+                {
+                    return Json(new { success = false, message = "Please select a date first!" }, JsonRequestBehavior.AllowGet);
+                }
+
+                DateTime selectedDate = DateTime.Parse(formattedDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+                DateTime today = DateTime.Today;
+                DateTime minimumDate = today.AddDays(4);
+                DateTime maximumDate = today.AddYears(3);
+
+                // Check if date is within allowed range
+                if (selectedDate < minimumDate)
+                {
+                    return Json(new { success = false, message = "Bookings must be requested at least 4 days in advance." }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (selectedDate > maximumDate)
+                {
+                    return Json(new { success = false, message = "Bookings can only be requested up to 3 years in advance." }, JsonRequestBehavior.AllowGet);
+                }
+
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookingCount = db.bookings_tbl
+                        .Where(b => b.bookingDate == selectedDate)
+                        .Count();
+
+                    var requestCount = db.bookingrequests_tbl
+                        .Where(b => b.bookingDate == selectedDate)
+                        .Count();
+                    
+                    if (requestCount >= 3)
+                    {
+                        return Json(new { success = false, message = "This date already has 3 requests and is no longer available." }, JsonRequestBehavior.AllowGet);
+                    }
+                    if (bookingCount >= 3)
+                    {
+                        return Json(new { success = false, message = "This date already has 3 bookings and is no longer available." }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    Session["requestSelectedDate"] = formattedDate;
+                    return Json(new { success = true, selectedDate = formattedDate, message = "Date confirmed!" }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Request Calendar:",
+                    "Attempted to validate request date. " + ex.Message + " " + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //===================================================================Request Booking Calendar End==================================================================
+
         //===================================================================Landing Page Start==================================================================
         public class EventPackage
         {
@@ -607,10 +900,10 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
         //===================================================================Landing Page End==================================================================
 
         //===================================================================Logs Start==================================================================
+
         public JsonResult Logs(string level, string processService, string processDesc)
         {
             try
@@ -778,6 +1071,465 @@ namespace IsabellaCateringWebApp.Controllers
         }
         //===================================================================Logs End==================================================================
 
+        //===================================================================Request Booking Management Start==================================================================
+        public JsonResult GetBookingRequestsForAcceptance()
+        {
+            using (var db = new IsabellaCateringContext())
+            {
+                var data = (from br in db.bookingrequests_tbl
+                            join cr in db.clientrequests_tbl on br.clientRequestID equals cr.clientRequestID
+                            join ev in db.events_tbl on br.eventID equals ev.eventID into evJoin
+                            from ev in evJoin.DefaultIfEmpty()
+                            select new
+                            {
+                                bookingRequestID = br.bookingRequestID,
+                                eventName = cr.eventName,
+                                eventID = br.eventID,
+                                eventDesc = ev != null ? ev.eventDesc : "",
+                                clientEmail = cr.cEmail,
+                                venue = br.venue,
+                                bookingDate = br.bookingDate,
+                                paxCount = br.paxCount,
+                                addAdult = br.addAdult,
+                                addKid = br.addKid,
+                                customerNote = br.customerNote
+                            }).ToList();
+
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //===================================================================Request Booking Management End==================================================================
+
+        //===================================================================Email Start===============================================================
+
+        private string BuildPasswordResetLink(string token)
+        {
+            if (Request != null && Request.Url != null)
+            {
+                return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
+            }
+
+            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
+        }
+
+        public JsonResult SendEmail(string toEmail, string token, string purpose)
+        {
+            try
+            {
+                // SMTP Configuration 
+                string smtpHost = "smtp.gmail.com";
+                int smtpPort = 587;
+                string smtpUser = System.Configuration.ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = System.Configuration.ConfigurationManager.AppSettings["SmtpPass"];
+
+                string resetLink = BuildPasswordResetLink(token);
+
+                using (var client = new SmtpClient(smtpHost, smtpPort))
+                {
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+
+                    var mailMessage = new MailMessage();
+                    mailMessage.From = new MailAddress(smtpUser, "Isabell Catering and Events Service");
+                    mailMessage.To.Add(toEmail);
+
+                    
+                    switch (purpose.ToLower())
+                    {
+                        case "registration":
+                            mailMessage.Subject = "Verify Your Registration - Isabella Catering Services";
+                            mailMessage.Body = $@"Welcome to Isabella Catering and Events.
+
+To complete your registration and secure your account, we require a mandatory password reset. Please use the secure link below to establish your new credentials:
+
+Reset Link: {resetLink}
+
+Please be advised that for security purposes, this link will expire in 10 minutes.
+
+If you did not initiate this request, no further action is required and you may safely ignore this email.
+
+Sincerely,
+
+Isabella Catering and Events";
+                            break;
+
+                        case "forgot_password":
+                            mailMessage.Subject = "Password Reset Link - Isabella Catering Services";
+                            mailMessage.Body = $@"Welcome to Isabella Catering and Events.
+
+To complete your log in and secure your account, we require a mandatory password reset. Please use the secure link below to establish your new credentials:
+
+Reset Link: {resetLink}
+
+Please be advised that for security purposes, this link will expire in 10 minutes.
+
+If you did not initiate this request, no further action is required and you may safely ignore this email.
+
+Sincerely,
+
+Isabella Catering and Events";
+                            break;
+
+                        default:
+                            mailMessage.Subject = "Password Reset Link - Isabella Catering Services";
+                            mailMessage.Body = $@"Welcome to Isabella Catering and Events.
+
+To complete your log in and secure your account, we require a mandatory password reset. Please use the secure link below to establish your new credentials:
+
+Reset Link: {resetLink}
+
+Please be advised that for security purposes, this link will expire in 10 minutes.
+
+If you did not initiate this request, no further action is required and you may safely ignore this email.
+
+Sincerely,
+
+Isabella Catering and Events";
+                            break;
+                    }
+
+                    mailMessage.IsBodyHtml = false;
+
+                    client.Send(mailMessage);
+
+                    Logs(
+                        "INFO",
+                        "Password Reset:",
+                        "Request password token created.");
+                    Logs(
+                        "INFO",
+                        "Password Reset:",
+                        $"Request password link created and sent to email. Email Address: {toEmail}");
+                    return Json(new { success = true, message = $"Succesfully sent Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS Email:",
+                    $"Attempted to send Email to {toEmail}.");
+                return Json(new { success = false, message = $"Failed to send Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult SendReminder(string toEmail, string paymentLines, string fullName, string eventName, string purpose)
+        {
+            try
+            {
+                // SMTP Configuration 
+                string smtpHost = "smtp.gmail.com";
+                int smtpPort = 587;
+                string smtpUser = System.Configuration.ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = System.Configuration.ConfigurationManager.AppSettings["SmtpPass"];
+
+                using (var client = new SmtpClient(smtpHost, smtpPort))
+                {
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+
+                    var mailMessage = new MailMessage();
+                    mailMessage.From = new MailAddress(smtpUser, "Isabell Catering Service");
+                    mailMessage.To.Add(toEmail);
+
+
+                    switch (purpose.ToLower())
+                    {
+                        case "reminder":
+                            mailMessage.Subject = "Payment Reminder - Isabella Catering Services";
+                            mailMessage.Body = $@"
+Dear {fullName},
+
+We hope this message finds you well.
+
+This is a courteous reminder regarding your upcoming payment for your booking, {eventName}:
+
+{paymentLines}
+
+Please ensure that your balance is settled on or before the due date to avoid any inconvenience.
+
+Payment Options:
+GCash: 0912345678 (Isabella Catering and Events)
+
+Once the transaction is complete, please provide a copy of your proof of payment for our records. If you have already fulfilled this payment, please disregard this notice.
+
+Should you have any questions or require assistance, please contact us directly.
+
+Sincerely,
+
+Isabella Catering and Events
+";
+                            break;
+
+                        case "reminder_due":
+                            mailMessage.Subject = "Due Payment Reminder - Isabella Catering Services";
+                            mailMessage.Body = $@"Dear {fullName},
+
+We hope this message finds you well.
+
+This is a formal reminder regarding the outstanding balance for your booking: {eventName}. According to our records, the following payment(s) remain unsettled:
+
+{paymentLines}
+
+We kindly request that you settle these balances at your earliest convenience to ensure there are no interruptions to your scheduled services.
+
+── Payment Options ──
+GCash: 0912345678 (Isabella Catering and Events)
+
+Once the transaction is complete, please provide a copy of your proof of payment for our records. If you have already fulfilled this payment, please disregard this notice.
+
+Should you have any questions regarding your statement or if you require further assistance, please contact us directly.
+
+Sincerely,
+
+Isabella Catering and Events";
+                            break;
+
+                        default:
+                            mailMessage.Subject = "Payment Reminder - Isabella Catering Services";
+                            mailMessage.Body = $@"
+Dear {fullName},
+
+We hope this message finds you well.
+
+This is a courteous reminder regarding your upcoming payment for your booking, {eventName}:
+
+{paymentLines}
+
+Please ensure that your balance is settled on or before the due date to avoid any inconvenience.
+
+Payment Options:
+GCash: 0912345678 (Isabella Catering and Events)
+
+Once the transaction is complete, please provide a copy of your proof of payment for our records. If you have already fulfilled this payment, please disregard this notice.
+
+Should you have any questions or require assistance, please contact us directly.
+
+Sincerely,
+
+Isabella Catering and Events
+";
+                            break;
+                    }
+
+                    mailMessage.IsBodyHtml = false;
+
+                    client.Send(mailMessage);
+
+                    Logs(
+                        "INFO",
+                        "Payment Reminder:",
+                        $"Payment reminder created and sent to email. Email Address: {toEmail}");
+                    return Json(new { success = true, message = $"Succesfully sent Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS Email:",
+                    $"Attempted to send Email to {toEmail}.");
+                return Json(new { success = false, message = $"Failed to send Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult SendRequestApproval(string toEmail, string fullName, string eventName, string eventDate)
+        {
+            try
+            {
+                // SMTP Configuration 
+                string smtpHost = "smtp.gmail.com";
+                int smtpPort = 587;
+                string smtpUser = System.Configuration.ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = System.Configuration.ConfigurationManager.AppSettings["SmtpPass"];
+
+                using (var client = new SmtpClient(smtpHost, smtpPort))
+                {
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+
+                    var mailMessage = new MailMessage();
+                    mailMessage.From = new MailAddress(smtpUser, "Isabell Catering Service");
+                    mailMessage.To.Add(toEmail);
+
+
+                        mailMessage.Subject = "Request Confirmation - Isabella Catering Services";
+                    mailMessage.Body = $@"Dear {fullName},
+
+Thank you for considering Isabella Catering and Events. We have successfully received your booking request for {eventName} scheduled on {eventDate}, and it is currently undergoing our standard review process.
+
+Next Steps:
+• Review Period: All submissions undergo a comprehensive review, which typically requires between one business day and one week.
+• Validation: Upon initial review, a representative will contact you via email or telephone to formally validate your booking details.
+  NOTE: Please be advised that a non-refundable reservation fee of ₱5,000.00 will be required upon the official approval of your booking.
+• Availability: In the event that your requested date is no longer available, our team will promptly reach out to discuss alternative scheduling options.
+
+We kindly remind you to thoroughly review the Terms and Conditions associated with your request. 
+
+Should you have any immediate inquiries or require further assistance prior to our follow-up, please do not hesitate to contact us directly.
+
+Sincerely,
+
+Isabella Catering and Events";
+                    mailMessage.IsBodyHtml = false;
+
+                    client.Send(mailMessage);
+
+                    Logs(
+                        "INFO",
+                        "Request Confirmation:",
+                        $"Request confirmation created and sent to email. Email Address: {toEmail}");
+                    return Json(new { success = true, message = $"Succesfully sent Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS Email:",
+                    $"Attempted to send Email to {toEmail}.");
+                return Json(new { success = false, message = $"Failed to send Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+        public JsonResult SendBookingApproval(string toEmail, string fullName, string eventName, DateTime eventDate, string bookingReceipt)
+        {
+            try
+            {
+                // SMTP Configuration 
+                string formattedDate = eventDate.ToString("MMMM d, yyyy");
+                string smtpHost = "smtp.gmail.com";
+                int smtpPort = 587;
+                string smtpUser = System.Configuration.ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = System.Configuration.ConfigurationManager.AppSettings["SmtpPass"];
+
+                using (var client = new SmtpClient(smtpHost, smtpPort))
+                {
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+
+                    var mailMessage = new MailMessage();
+                    mailMessage.From = new MailAddress(smtpUser, "Isabell Catering Service");
+                    mailMessage.To.Add(toEmail);
+
+
+                        mailMessage.Subject = "Booking Confirmation - Isabella Catering Services";
+                    mailMessage.Body = $@"Dear {fullName},
+
+Thank you for selecting Isabella Catering and Events. We are pleased to inform you that your booking request for {eventName} scheduled on {formattedDate} has been officially approved.
+
+Next Steps:
+• You may now review the details of your booking through our website utilizing your unique entry code: {bookingReceipt}.
+  NOTE: During your initial login, you may enter any temporary password. The system will subsequently prompt you to establish a secure, permanent password.
+• Once your account setup is complete, you may utilize our portal to monitor your booking for any updates or modifications.
+• All financial transactions, along with their respective due dates and current statuses, are accessible for your review. You may also request official receipts through this system.
+• We kindly ask that you carefully review your booking details to ensure all information is accurate and free of discrepancies.
+
+Please ensure you have thoroughly reviewed our Terms and Conditions. 
+
+Should you have any immediate inquiries or require further assistance, please do not hesitate to contact us directly.
+
+Sincerely,
+
+Isabella Catering and Events";
+                    mailMessage.IsBodyHtml = false;
+
+                    client.Send(mailMessage);
+
+                    Logs(
+                        "INFO",
+                        "Request Confirmation:",
+                        $"Request confirmation created and sent to email. Email Address: {toEmail}");
+                    return Json(new { success = true, message = $"Succesfully sent Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS Email:",
+                    $"Attempted to send Email to {toEmail}.");
+                return Json(new { success = false, message = $"Failed to send Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
+        public JsonResult sendRequestRejection(string toEmail, int bookingRequestID)
+        {
+            try
+            {
+                string fullName = "";
+                string eventName = "";
+                string eventDate = "";
+                using (var db = new IsabellaCateringContext())
+                {
+                    var currentBookingRequest = db.bookingrequests_tbl.Where(x => x.bookingRequestID == bookingRequestID).FirstOrDefault();
+                    var currentClientRequest = db.clientrequests_tbl.Where(x => x.clientRequestID == currentBookingRequest.clientRequestID).FirstOrDefault();
+
+                    fullName = currentClientRequest.cFName + " " + currentClientRequest.cLName;
+                    eventName = currentClientRequest.eventName;
+                    eventDate = currentBookingRequest.bookingDate.ToString("MMMM d, yyyy");
+                }
+
+
+                string smtpHost = "smtp.gmail.com";
+                int smtpPort = 587;
+                string smtpUser = System.Configuration.ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = System.Configuration.ConfigurationManager.AppSettings["SmtpPass"];
+                using (var client = new SmtpClient(smtpHost, smtpPort))
+                {
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+
+                    var mailMessage = new MailMessage();
+                    mailMessage.From = new MailAddress(smtpUser, "Isabell Catering Service");
+                    mailMessage.To.Add(toEmail);
+
+
+                    mailMessage.Subject = "Request Rejection - Isabella Catering Services";
+                    mailMessage.Body = $@"
+Dear " + fullName +
+$@"
+
+Thank you for visiting Isabella Catering and Events. We have received your booking request for " + eventName + $@" on " + eventDate + $@".
+
+Unfortunately, the date you requested is unavailable, alternatively you can request for another available date.
+
+For any immediate inquiries, please contact us directly.
+
+Warm regards,
+
+Isabella Catering and Events";
+                    mailMessage.IsBodyHtml = false;
+
+                    client.Send(mailMessage);
+
+                    Logs(
+                        "INFO",
+                        "Request Rejection:",
+                        $"Request rejection created and sent to email. Email Address: {toEmail}");
+                    return Json(new { success = true, message = $"Succesfully sent Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "ICMS Email:",
+                    $"Attempted to send Email to {toEmail}.");
+                return Json(new { success = false, message = $"Failed to send Email to {toEmail}." }, JsonRequestBehavior.AllowGet);
+                throw new ArgumentException($"There is an ERROR while accessing database {ex.Message}:{ex.InnerException}");
+            }
+        }
+
+
+
+
+        //===================================================================Email End=================================================================
+
         //===================================================================Login/Register/Reset/Logout Start==================================================================
 
         // get creds for login
@@ -799,7 +1551,7 @@ namespace IsabellaCateringWebApp.Controllers
 
                         if (verify.password == "0")
                         {
-                            var resetResult = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                            var resetResult = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail, "registration");
                             var detailMessage = resetResult.Success
                                 ? "Check your email for a password reset link!"
                                 : resetResult.HasActiveToken
@@ -1033,50 +1785,7 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        private string BuildPasswordResetLink(string token)
-        {
-            if (Request != null && Request.Url != null)
-            {
-                return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
-            }
-
-            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
-        }
-
-        private void SendPasswordResetEmail(string recipientEmail, string token)
-        {
-            if (string.IsNullOrWhiteSpace(recipientEmail))
-            {
-                throw new InvalidOperationException("No email address is available for password reset.");
-            }
-
-            var pickupDirectory = @"C:\Emails";
-            Directory.CreateDirectory(pickupDirectory);
-
-            using (var smtp = new SmtpClient())
-            using (var mail = new MailMessage())
-            {
-                smtp.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-                smtp.PickupDirectoryLocation = pickupDirectory;
-
-                mail.From = new MailAddress("no-reply@localhost");
-                mail.To.Add(recipientEmail);
-                mail.Subject = "Reset Password";
-                mail.Body = "Your Password Reset Link " + BuildPasswordResetLink(token);
-
-                smtp.Send(mail);
-            }
-            Logs(
-                "INFO",
-                "Password Reset:",
-                "Request password token created.");
-            Logs(
-                "INFO",
-                "Password Reset:",
-                $"Request password link created and sent to email. Email Address: {recipientEmail}");
-        }
-
-        private PasswordResetRequestResult CreatePasswordResetRequest(IsabellaCateringContext db, int userId, int clientId, string recipientEmail)
+        private PasswordResetRequestResult CreatePasswordResetRequest(IsabellaCateringContext db, int userId, int clientId, string recipientEmail, string purpose)
         {
             if (userId <= 0 && clientId <= 0)
             {
@@ -1138,7 +1847,7 @@ namespace IsabellaCateringWebApp.Controllers
 
             try
             {
-                SendPasswordResetEmail(recipientEmail, token);
+                SendEmail(recipientEmail, token, purpose);
             }
             catch
             {
@@ -1188,7 +1897,7 @@ namespace IsabellaCateringWebApp.Controllers
                         }, JsonRequestBehavior.AllowGet);
                     }
 
-                    var result = CreatePasswordResetRequest(db, verify.userID, 0, verify.email);
+                    var result = CreatePasswordResetRequest(db, verify.userID, 0, verify.email, "forgot_password");
                     return Json(new
                     {
                         success = result.Success,
@@ -1228,7 +1937,7 @@ namespace IsabellaCateringWebApp.Controllers
                         }, JsonRequestBehavior.AllowGet);
                     }
 
-                    var result = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail);
+                    var result = CreatePasswordResetRequest(db, 0, verify.clientID, verify.cEmail, "forgot_password");
                     return Json(new
                     {
                         success = result.Success,
@@ -1359,6 +2068,7 @@ namespace IsabellaCateringWebApp.Controllers
                     userID = Session["currentLog"]?.ToString() ?? string.Empty,
                     permID = Session["currentPerm"]?.ToString() ?? string.Empty,
                     selectedDate = Session["bookingSelectedDate"]?.ToString() ?? string.Empty,
+                    requestedDate = Session["requestSelectedDate"]?.ToString() ?? string.Empty,
                     isGuest = Session["isGuest"]?.ToString() ?? string.Empty,
                     bookingID = Session["currentBooking"]?.ToString() ?? string.Empty
                 };
@@ -1676,8 +2386,9 @@ namespace IsabellaCateringWebApp.Controllers
 
                                     if (bookingEvent != null)
                                     {
+                                        var bookingAdditionals = db.bookingadditionals_tbl.Where(x => x.bookingID == bookingID).OrderBy(x => x.bookingAdditionalID).ToList();
                                         var bookingPayment = db.payments_tbl.Where(e => e.bookingID == bookingID && e.paymentType == "Initial").FirstOrDefault();
-                                        var transactions = db.payments_tbl.Where(e => e.bookingID == bookingID).OrderByDescending(x => x.transactionNum).ToList();
+                                        var transactions = db.payments_tbl.Where(e => e.bookingID == bookingID).OrderBy(x => x.transactionNum).ToList();
                                         if (bookingPayment != null)
                                         {
                                             return Json(new
@@ -1687,6 +2398,259 @@ namespace IsabellaCateringWebApp.Controllers
                                                 events = bookingEvent,
                                                 packageType = packageType,
                                                 payment = bookingPayment,
+                                                paymentTransactions = transactions,
+
+                                                preMainCourse = preMainCourse,
+
+                                                preSides1 = preSides1,
+                                                preSides2 = preSides2,
+                                                preSides3 = preSides3,
+                                                preSides4 = preSides4,
+
+                                                preCenterPiece = preCenterPiece,
+
+                                                preSeating = preSeating,
+
+                                                preSpecials1 = preSpecials1,
+                                                preSpecials2 = preSpecials2,
+                                                preSpecials3 = preSpecials3,
+                                                preSpecials4 = preSpecials4,
+                                                preSpecials5 = preSpecials5,
+                                                preSpecials6 = preSpecials6,
+                                                preSpecials7 = preSpecials7,
+                                                preSpecials8 = preSpecials8,
+                                                preSpecials9 = preSpecials9,
+
+                                                preStaff1 = preStaff1,
+                                                preStaff2 = preStaff2,
+                                                preStaff3 = preStaff3,
+
+                                                preBackdrop = preBackdrop,
+
+                                                preEntrance = preEntrance,
+
+                                                preCouch = preCouch,
+
+                                                preEquip1 = preEquip1,
+                                                preEquip2 = preEquip2,
+                                                preEquip3 = preEquip3,
+                                                preEquip4 = preEquip4,
+                                                preEquip5 = preEquip5,
+                                                preEquip6 = preEquip6,
+                                                preEquip7 = preEquip7,
+
+                                                preEntertainment1 = preEntertainment1,
+                                                preEntertainment2 = preEntertainment2,
+                                                preEntertainment3 = preEntertainment3,
+                                                preEntertainment4 = preEntertainment4,
+                                                preEntertainment5 = preEntertainment5,
+                                                preEntertainment6 = preEntertainment6,
+                                                preEntertainment7 = preEntertainment7,
+
+                                                prePhoto1 = prePhoto1,
+                                                prePhoto2 = prePhoto2,
+                                                prePhoto3 = prePhoto3,
+                                                prePhoto4 = prePhoto4,
+                                                prePhoto5 = prePhoto5,
+                                                prePhoto6 = prePhoto6,
+                                                prePhoto7 = prePhoto7,
+
+                                                preKeepsakes1 = preKeepsakes1,
+                                                preKeepsakes2 = preKeepsakes2,
+                                                preKeepsakes3 = preKeepsakes3,
+                                                preKeepsakes4 = preKeepsakes4,
+                                                preKeepsakes5 = preKeepsakes5,
+
+                                                preDebut1 = preDebut1,
+                                                preDebut2 = preDebut2,
+                                                preDebut3 = preDebut3,
+                                                bookingAdditionals = bookingAdditionals,
+
+                                                success = true,
+                                                message = "Package Fetched Successfully!"
+                                            }, JsonRequestBehavior.AllowGet);
+                                        }
+                                        else
+                                        {
+                                            Logs(
+                                                "WARN",
+                                                "Booking Management:",
+                                                "Attempted to get booking details. Message : \"No Event Payment!\"");
+                                            return Json(new { success = false, message = "No Event Payment!" }, JsonRequestBehavior.AllowGet);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Logs(
+                                        "WARN",
+                                        "Booking Management:",
+                                        "Attempted to get booking details. Message : \"No Event Found!\"");
+                                        return Json(new { success = false, message = "No Event Found!" }, JsonRequestBehavior.AllowGet);
+                                    }
+                                }
+                                else
+                                {
+                                    Logs(
+                                        "WARN",
+                                        "Booking Management:",
+                                        "Attempted to get booking details. Message : \"No Package Found!\"");
+                                    return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
+                                }
+                            }
+                            else
+                            {
+                                Logs(
+                                    "WARN",
+                                    "Booking Management:",
+                                    "Attempted to get booking details. Message : \"No Client Found!\"");
+                                return Json(new { success = false, message = "No Client Found!" }, JsonRequestBehavior.AllowGet);
+                            }
+                        }
+                        else
+                        {
+                            Logs(
+                                "WARN",
+                                "Booking Management:",
+                                "Attempted to get booking details. Message : \"No Package Found!\"");
+                            return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "LETHAL",
+                    "Booking View:",
+                    "Attempted to get booking details. " + ex.Message + "" + ex.InnerException);
+                return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+        public JsonResult getBookingRequestDetails(int bookingID)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var bookings = db.bookingrequests_tbl
+                                    .Where(b => b.bookingRequestID == bookingID)
+                                    .FirstOrDefault();
+
+                    if (bookings == null)
+                    {
+                        return Json(new { success = false, message = "No Bookings Found!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        Session["bookingSelectedDate"] = bookings.bookingDate.ToString("yyyy-M-d");
+                        var bookingPackage = db.packages_tbl
+                                    .Where(p => p.packageID == bookings.packageID)
+                                    .FirstOrDefault();
+
+                        if (bookingPackage != null)
+                        {
+                            var preMainCourse = db.maincoursetypes_tbl.Where(p => p.mainCourseTypID == bookingPackage.mainCourseTypID).FirstOrDefault();
+                            var preSides = db.sidesgrptypes_tbl.Where(p => p.sidesGrpTypID == bookingPackage.sidesGrpTypID).FirstOrDefault();
+                            var preCenterPiece = db.centerpiecetypes_tbl.Where(p => p.centerPieceTypID == bookingPackage.centerPieceTypID).FirstOrDefault();
+                            var preSeating = db.seatingtypes_tbl.Where(p => p.seatingTypID == bookingPackage.seatingTypID).FirstOrDefault();
+                            var preSpecials = db.specialsgrptypes_tbl.Where(p => p.specialsGrpTypID == bookingPackage.specialsGrpTypID).FirstOrDefault();
+                            var preStaff = db.staffgrptypes_tbl.Where(p => p.staffGrpTypID == bookingPackage.staffGrpTypID).FirstOrDefault();
+                            var preBackdrop = db.backdroptypes_tbl.Where(p => p.backdropTypID == bookingPackage.backdropTypID).FirstOrDefault();
+                            var preEntrance = db.entrancetypes_tbl.Where(p => p.entranceTypID == bookingPackage.entranceTypID).FirstOrDefault();
+                            var preCouch = db.couchtypes_tbl.Where(p => p.couchTypID == bookingPackage.couchTypID).FirstOrDefault();
+                            var preEquip = db.equipgrptypes_tbl.Where(p => p.equipGrpTypID == bookingPackage.equipGrpTypID).FirstOrDefault();
+                            var preEntertainment = db.entertainmentgrptypes_tbl.Where(p => p.entertainmentGrpTypID == bookingPackage.entertainmentGrpTypID).FirstOrDefault();
+                            var prePhoto = db.photogrptypes_tbl.Where(p => p.photoGrpTypID == bookingPackage.photoGrpTypID).FirstOrDefault();
+                            var preKeepsakes = db.keepsakesgrptypes_tbl.Where(p => p.keepsakesGrpTypID == bookingPackage.keepsakesGrptypID).FirstOrDefault();
+                            var preDebut = db.debutgrptypes_tbl.Where(p => p.debutGrpTypID == bookingPackage.debutGrpTypID).FirstOrDefault();
+                            var packageType = db.packagetypes_tbl.Where(p => p.packageTypID == bookingPackage.packageTypID).FirstOrDefault();
+
+                            if (preMainCourse != null &&
+                                preSides != null &&
+                                preCenterPiece != null &&
+                                preSeating != null &&
+                                preSpecials != null &&
+                                preStaff != null &&
+                                preBackdrop != null &&
+                                preEntrance != null &&
+                                preCouch != null &&
+                                preEquip != null &&
+                                preEntertainment != null &&
+                                prePhoto != null &&
+                                preKeepsakes != null &&
+                                preDebut != null)
+                            {
+                                var preSides1 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp1).FirstOrDefault();
+                                var preSides2 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp2).FirstOrDefault();
+                                var preSides3 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp3).FirstOrDefault();
+                                var preSides4 = db.sidestypes_tbl.Where(p => p.sidesTypID == preSides.sidesGrpTyp4).FirstOrDefault();
+
+                                var preSpecials1 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp1).FirstOrDefault();
+                                var preSpecials2 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp2).FirstOrDefault();
+                                var preSpecials3 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp3).FirstOrDefault();
+                                var preSpecials4 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp4).FirstOrDefault();
+                                var preSpecials5 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp5).FirstOrDefault();
+                                var preSpecials6 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp6).FirstOrDefault();
+                                var preSpecials7 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp7).FirstOrDefault();
+                                var preSpecials8 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp8).FirstOrDefault();
+                                var preSpecials9 = db.specialstypes_tbl.Where(p => p.specialsTypID == preSpecials.specialsGrpTyp9).FirstOrDefault();
+
+                                var preStaff1 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp1).FirstOrDefault();
+                                var preStaff2 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp2).FirstOrDefault();
+                                var preStaff3 = db.stafftypes_tbl.Where(p => p.staffTypID == preStaff.staffGrpTyp3).FirstOrDefault();
+
+                                var preEquip1 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp1).FirstOrDefault();
+                                var preEquip2 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp2).FirstOrDefault();
+                                var preEquip3 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp3).FirstOrDefault();
+                                var preEquip4 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp4).FirstOrDefault();
+                                var preEquip5 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp5).FirstOrDefault();
+                                var preEquip6 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp6).FirstOrDefault();
+                                var preEquip7 = db.equiptypes_tbl.Where(p => p.equipTypID == preEquip.equipGrpTyp7).FirstOrDefault();
+
+                                var preEntertainment1 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp1).FirstOrDefault();
+                                var preEntertainment2 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp2).FirstOrDefault();
+                                var preEntertainment3 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp3).FirstOrDefault();
+                                var preEntertainment4 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp4).FirstOrDefault();
+                                var preEntertainment5 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp5).FirstOrDefault();
+                                var preEntertainment6 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp6).FirstOrDefault();
+                                var preEntertainment7 = db.entertainmenttypes_tbl.Where(p => p.entertainmentTypID == preEntertainment.entertainmentGrpTyp7).FirstOrDefault();
+
+                                var prePhoto1 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp1).FirstOrDefault();
+                                var prePhoto2 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp2).FirstOrDefault();
+                                var prePhoto3 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp3).FirstOrDefault();
+                                var prePhoto4 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp4).FirstOrDefault();
+                                var prePhoto5 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp5).FirstOrDefault();
+                                var prePhoto6 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp6).FirstOrDefault();
+                                var prePhoto7 = db.phototypes_tbl.Where(p => p.photoTypID == prePhoto.photoGrpTyp7).FirstOrDefault();
+
+                                var preKeepsakes1 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp1).FirstOrDefault();
+                                var preKeepsakes2 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp2).FirstOrDefault();
+                                var preKeepsakes3 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp3).FirstOrDefault();
+                                var preKeepsakes4 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp4).FirstOrDefault();
+                                var preKeepsakes5 = db.keepsakestypes_tbl.Where(p => p.keepsakesTypID == preKeepsakes.keepsakesGrpTyp5).FirstOrDefault();
+
+                                var preDebut1 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp1).FirstOrDefault();
+                                var preDebut2 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp2).FirstOrDefault();
+                                var preDebut3 = db.debuttypes_tbl.Where(p => p.debutTypID == preDebut.debutGrpTyp3).FirstOrDefault();
+
+                                var bookingClient = db.clientrequests_tbl
+                                    .Where(c => c.clientRequestID == bookings.clientRequestID)
+                                    .FirstOrDefault();
+
+                                if (bookingClient != null)
+                                {
+                                    var bookingEvent = db.events_tbl
+                                            .Where(e => e.eventID == bookings.eventID)
+                                            .FirstOrDefault();
+
+                                    if (bookingEvent != null)
+                                    {
+                                        return Json(new
+                                            {
+                                                packages = bookingPackage,
+                                                clients = bookingClient,
+                                                events = bookingEvent,
+                                                packageType = packageType,
 
                                                 preMainCourse = preMainCourse,
 
@@ -1756,21 +2720,12 @@ namespace IsabellaCateringWebApp.Controllers
                                                 success = true,
                                                 message = "Package Fetched Successfully!"
                                             }, JsonRequestBehavior.AllowGet);
-                                        }
-                                        else
-                                        {
-                                            Logs(
-                                                "WARN",
-                                                "Booking Management:",
-                                                "Attempted to get booking details. Message : \"No Event Payment!\"");
-                                            return Json(new { success = false, message = "No Event Payment!" }, JsonRequestBehavior.AllowGet);
-                                        }
                                     }
                                     else
                                     {
                                         Logs(
                                         "WARN",
-                                        "Booking Management:",
+                                        "Booking Request:",
                                         "Attempted to get booking details. Message : \"No Event Found!\"");
                                         return Json(new { success = false, message = "No Event Found!" }, JsonRequestBehavior.AllowGet);
                                     }
@@ -1779,7 +2734,7 @@ namespace IsabellaCateringWebApp.Controllers
                                 {
                                     Logs(
                                         "WARN",
-                                        "Booking Management:",
+                                        "Booking Request:",
                                         "Attempted to get booking details. Message : \"No Package Found!\"");
                                     return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
                                 }
@@ -1788,7 +2743,7 @@ namespace IsabellaCateringWebApp.Controllers
                             {
                                 Logs(
                                     "WARN",
-                                    "Booking Management:",
+                                    "Booking Request:",
                                     "Attempted to get booking details. Message : \"No Client Found!\"");
                                 return Json(new { success = false, message = "No Client Found!" }, JsonRequestBehavior.AllowGet);
                             }
@@ -1797,7 +2752,7 @@ namespace IsabellaCateringWebApp.Controllers
                         {
                             Logs(
                                 "WARN",
-                                "Booking Management:",
+                                "Booking Request:",
                                 "Attempted to get booking details. Message : \"No Package Found!\"");
                             return Json(new { success = false, message = "No Package Found!" }, JsonRequestBehavior.AllowGet);
                         }
@@ -1808,7 +2763,7 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 Logs(
                     "LETHAL",
-                    "Booking View:",
+                    "Booking Request:",
                     "Attempted to get booking details. " + ex.Message + "" + ex.InnerException);
                 return Json(new { message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
@@ -2021,20 +2976,58 @@ namespace IsabellaCateringWebApp.Controllers
             {
                 return;
             }
+            var initialPayment = db.payments_tbl
+                                .Where(x => x.bookingID == bookingID &&
+                                x.transactionNum == 0)
+                                .FirstOrDefault();
 
-            var existingPayment = db.payments_tbl.Where(p => p.bookingID == bookingID).OrderBy(p => p.paymentType == "-" || p.paymentType == null || p.paymentType == "" ? 0 : 1).ThenBy(p => p.paymentID).FirstOrDefault();
-            if (existingPayment == null)
+            if (initialPayment == null)
             {
                 return;
             }
 
-            existingPayment.amountDue = paymentInfo.amountDue;
-            existingPayment.dueDate = bookingDate;
-            existingPayment.dateUpdated = DateTime.Now;
+            initialPayment.amountDue = paymentInfo.amountDue;
+            initialPayment.remainingBalance = initialPayment.amountDue;
+            initialPayment.dueDate = bookingDate;
+            initialPayment.dateUpdated = DateTime.Now;
+            recomputePayment(bookingID, "Booking Updated");
+        }
+
+        private void SaveBookingAdditionals(IsabellaCateringContext db, int bookingID, List<tblBookingAdditionalsModel> bookingAdditionals)
+        {
+            var existingAdditionals = db.bookingadditionals_tbl.Where(x => x.bookingID == bookingID).ToList();
+            if (existingAdditionals.Count > 0)
+            {
+                db.bookingadditionals_tbl.RemoveRange(existingAdditionals);
+            }
+
+            if (bookingAdditionals == null)
+            {
+                return;
+            }
+
+            var now = DateTime.Now;
+            foreach (var item in bookingAdditionals.Where(x => x != null))
+            {
+                var description = item.description?.Trim();
+                if (string.IsNullOrWhiteSpace(description) || item.amount <= 0)
+                {
+                    continue;
+                }
+
+                db.bookingadditionals_tbl.Add(new tblBookingAdditionalsModel()
+                {
+                    bookingID = bookingID,
+                    description = description,
+                    amount = item.amount,
+                    dateCreated = now,
+                    dateUpdated = now
+                });
+            }
         }
 
         [HttpPost]
-        public JsonResult insertPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        public JsonResult insertPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, List<tblBookingAdditionalsModel> bookingAdditionals, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes, int toDeleteRequestID)
         {
             try
             {
@@ -2161,6 +3154,8 @@ namespace IsabellaCateringWebApp.Controllers
                        "Booking Management:",
                        $"New Booking Data has been created. bookingID: {newBooking.bookingID}");
 
+                    SaveBookingAdditionals(db, newBooking.bookingID, bookingAdditionals);
+
                     var newReceipt = new tblBookingReceiptsModel()
                     {
                         bookingID = newBooking.bookingID,
@@ -2283,14 +3278,53 @@ namespace IsabellaCateringWebApp.Controllers
                     };
 
                     db.payments_tbl.Add(newPayment);
-
-
                     db.SaveChanges();
 
                     Logs(
                        "INFO",
                        "Booking Management:",
                        $"New Payment Data has been created. paymentID: {newPayment.paymentID}");
+
+                    SendBookingApproval(newClient.cEmail, (newClient.cFName + " " + newClient.cLName), newClient.eventName, newBooking.bookingDate, newClient.entryCode);
+                    if (toDeleteRequestID != 0)
+                    {
+                        var bookingRequest = db.bookingrequests_tbl.Where(x => x.bookingRequestID == toDeleteRequestID).FirstOrDefault();
+
+                        if (bookingRequest != null)
+                        {
+                            string formattedDate = bookingRequest.bookingDate.ToString("yyyy-MM-dd");
+
+                            JsonResult result = checkCalendarAvailability(formattedDate);
+
+                            if (!(bool)((dynamic)result.Data).success)
+                            {
+                                var bookingRequests = db.bookingrequests_tbl.Where(x => x.bookingDate == bookingRequest.bookingDate).ToList();
+
+                                foreach (var booking in bookingRequests)
+                                {
+                                    var relatedClientRequest = db.clientrequests_tbl.Where(x => x.clientRequestID == booking.clientRequestID).FirstOrDefault();
+                                    if (relatedClientRequest != null)
+                                    {
+                                        sendRequestRejection(relatedClientRequest.cEmail, booking.bookingRequestID);
+                                        db.clientrequests_tbl.Remove(relatedClientRequest);
+                                        
+                                    }
+                                    db.bookingrequests_tbl.Remove(booking);
+                                }
+                                db.SaveChanges();
+                            }
+                            else
+                            {
+                                var relatedClientRequest = db.clientrequests_tbl.Where(x => x.clientRequestID == bookingRequest.clientRequestID).FirstOrDefault();
+                                sendRequestRejection(relatedClientRequest.cEmail, bookingRequest.bookingRequestID);
+                                db.clientrequests_tbl.Remove(relatedClientRequest);
+                                db.bookingrequests_tbl.Remove(bookingRequest);
+                                db.SaveChanges();
+                            }
+
+                            return Json(new { success = true, message = "Booking Completed Successfully! Email Sent to All Rejected Requests!" }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
                 }
 
                 Logs(
@@ -2308,9 +3342,285 @@ namespace IsabellaCateringWebApp.Controllers
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+        [HttpPost]
+        public JsonResult insertRequestPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, List<tblBookingAdditionalsModel> bookingAdditionals, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    if(bookingInfo.paxCount == 0)
+                    {
+                        return Json(new { success = false, message = "Please choose Guest Count!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    
+                    var existingRequestClient = db.clientrequests_tbl
+                        .Where(x => x.cEmail == clientInfo.cEmail
+                        ).FirstOrDefault();
+
+                    if (existingRequestClient != null)
+                    {
+                        var existingRequestBooking = db.bookingrequests_tbl
+                            .Where(x =>
+                            x.eventID == bookingInfo.eventID &&
+                            x.dsgnTheme == bookingInfo.dsgnTheme &&
+                            x.dsgnMotif == bookingInfo.dsgnMotif &&
+                            x.prepVenue == bookingInfo.prepVenue &&
+                            x.ceremTime == bookingInfo.ceremTime &&
+                            x.eventTime == bookingInfo.eventTime &&
+                            x.venue == bookingInfo.venue &&
+                            x.eventSetTime == bookingInfo.eventSetTime &&
+                            x.eventMealTime == bookingInfo.eventMealTime &&
+                            x.paxCount == bookingInfo.paxCount &&
+                            x.addAdult == bookingInfo.addAdult &&
+                            x.addKid == bookingInfo.addKid
+                            ).FirstOrDefault();
+
+                        if (existingRequestBooking != null)
+                        {
+                            Logs(
+                                "WARN",
+                                "Booking Request:",
+                                $"Attempted to create multiple duplicate booking request data. clientRequestID: {existingRequestClient.clientRequestID}");
+                            return Json(new { success = false, message = "A request using this email was already registered" }, JsonRequestBehavior.AllowGet);
+                        }
+                        Logs(
+                                "WARN",
+                                "Booking Request:",
+                                $"Attempted to create multiple booking request data. clientRequestID: {existingRequestClient.clientRequestID}");
+                        return Json(new { success = false, message = "A request using this email was already registered" }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    var emailVerification = SendRequestApproval(clientInfo.cEmail, (clientInfo.cFName + " " + clientInfo.cLName), clientInfo.eventName, bookingInfo.bookingDate.ToString("MMMM dd, yyyy"));
+
+                    if (((dynamic)emailVerification.Data).success == false)
+                    {
+                        Logs(
+                        "WARN",
+                        "Booking Request:",
+                        $"Invalid Email. email: {clientInfo.cEmail}");
+                        return Json(new { success = false, message = "Confirmation email not sent. Invalid Email" }, JsonRequestBehavior.AllowGet);
+                    }
+
+
+                    var currPackageID = ResolvePackageId(db, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes);
+
+                    //string datePart = DateTime.Now.ToString("yyMMdd");
+                    //string randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                    //string receiptCode = $"BK-{datePart}-{randomPart}";
+
+                    //var existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
+                    //while (existingReceipt != null)
+                    //{
+                    //    randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                    //    receiptCode = $"BK-{datePart}-{randomPart}";
+                    //    existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
+                    //}
+
+                    var newRequestClient = new tblClientRequestsModel()
+                    {
+                        eventName = clientInfo.eventName,
+                        cFName = clientInfo.cFName,
+                        cLName = clientInfo.cLName,
+                        cEmail = clientInfo.cEmail,
+                        cContact = clientInfo.cContact,
+                        cCeleb1FName = clientInfo.cCeleb1FName,
+                        cCeleb1LName = clientInfo.cCeleb1LName,
+                        cCeleb2FName = clientInfo.cCeleb2FName,
+                        cCeleb2LName = clientInfo.cCeleb2LName,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.clientrequests_tbl.Add(newRequestClient);
+                    db.SaveChanges();
+
+                    Logs(
+                       "INFO",
+                       "Booking Request:",
+                       $"New Request Client Data has been created. clientID: {newRequestClient.clientRequestID}");
+
+                    var newRequestBooking = new tblBookingRequestsModel()
+                    {
+                        clientRequestID = newRequestClient.clientRequestID,
+                        packageID = currPackageID,
+                        eventID = bookingInfo.eventID,
+                        dsgnTheme = bookingInfo.dsgnTheme,
+                        dsgnMotif = bookingInfo.dsgnMotif,
+                        prepVenue = bookingInfo.prepVenue,
+                        bookingDate = bookingInfo.bookingDate,
+                        ceremTime = bookingInfo.ceremTime,
+                        eventTime = bookingInfo.eventTime,
+                        venue = bookingInfo.venue,
+                        eventSetTime = bookingInfo.eventSetTime,
+                        eventMealTime = bookingInfo.eventMealTime,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now,
+                        customerNote = bookingInfo.customerNote,
+                        paxCount = bookingInfo.paxCount,
+                        addAdult = bookingInfo.addAdult,
+                        addKid = bookingInfo.addKid,
+                    };
+                    db.bookingrequests_tbl.Add(newRequestBooking);
+                    db.SaveChanges();
+
+                    Logs(
+                       "INFO",
+                       "Booking Request:",
+                       $"New Booking Request Data has been created. bookingRequestID: {newRequestBooking.bookingRequestID}");
+
+                    
+                    //SaveBookingAdditionals(db, newBooking.bookingID, bookingAdditionals);
+
+                    //var newReceipt = new tblBookingReceiptsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    receiptNum = receiptCode,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+                    //db.bookingreceipts_tbl.Add(newReceipt);
+                    //db.SaveChanges();
+
+                    //newClient.receiptID = newReceipt.receiptID;
+                    //newClient.entryCode = receiptCode;
+                    //db.SaveChanges();
+
+                    //Logs(
+                    //   "INFO",
+                    //   "Booking Management:",
+                    //   $"New Receipt Data has been created. receiptID: {newReceipt.receiptID}");
+
+                    //float downPayment = 5000;
+                    //float subtractedDownPayment = paymentInfo.amountDue - downPayment;
+                    //float halfPayment = subtractedDownPayment / 2;
+                    //float quarterPayment = subtractedDownPayment / 4;
+
+                    //DateTime today = DateTime.Today;
+                    //DateTime bookingDate = bookingInfo.bookingDate.Date;
+
+                    //DateTime firstHalfDate;
+                    //DateTime lastQuarterDate;
+
+                    //int totalDays = (int)(bookingDate - today).TotalDays;
+
+                    //if (totalDays < 120)
+                    //{
+                    //    firstHalfDate = today.AddDays(totalDays / 2);
+                    //    lastQuarterDate = bookingDate.AddDays(-(totalDays / 4));
+                    //}
+                    //else
+                    //{
+                    //    firstHalfDate = bookingDate.AddDays(-120);
+                    //    lastQuarterDate = bookingDate.AddDays(-14);
+                    //}
+
+                    //var newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = paymentInfo.amountDue,
+                    //    amount = 0,
+                    //    paymentType = "Initial",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 0,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = bookingInfo.bookingDate.AddDays(10),
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = paymentInfo.amountDue,
+                    //    amount = 5000,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 1,
+                    //    paymentStatus = "Complete",
+                    //    dueDate = DateTime.Now,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = subtractedDownPayment,
+                    //    amount = halfPayment,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 2,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = firstHalfDate,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = subtractedDownPayment,
+                    //    amount = quarterPayment,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 3,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = lastQuarterDate,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = subtractedDownPayment,
+                    //    amount = quarterPayment,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 4,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = bookingInfo.bookingDate.Date,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+
+                    //db.SaveChanges();
+
+                    //Logs(
+                    //   "INFO",
+                    //   "Booking Management:",
+                    //   $"New Payment Data has been created. paymentID: {newPayment.paymentID}");
+                }
+
+                Logs(
+                    "INFO",
+                    "Booking Request:",
+                    $"New Booking Request Set Data has been created.");
+                return Json(new { success = true, message = "Booking Request Completed Successfully!" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Request:",
+                "Attempted to request bookings. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
 
         [HttpPost]
-        public JsonResult UpdateBooking(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        public JsonResult UpdateBooking(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, List<tblBookingAdditionalsModel> bookingAdditionals, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
         {
             try
             {
@@ -2362,6 +3672,7 @@ namespace IsabellaCateringWebApp.Controllers
                     existingBooking.addKid = bookingInfo.addKid;
                     existingBooking.dateUpdated = DateTime.Now;
 
+                    SaveBookingAdditionals(db, existingBooking.bookingID, bookingAdditionals);
                     UpdatePrimaryBookingPayment(db, existingBooking.bookingID, paymentInfo, bookingInfo.bookingDate);
                     db.SaveChanges();
 
@@ -2487,6 +3798,155 @@ namespace IsabellaCateringWebApp.Controllers
                 "Bookings Management:",
                 "Attempted to delete bookings. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RequestCancellation(int bookingID, string cancelNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 1;
+                    booking.cancelNote = cancelNote;
+                    booking.dateCancelled = DateTime.Now;
+
+                    var newTask = new tblTasksModel()
+                    {
+                        bookingID = bookingID,
+                        task = "Cancellation Request",
+                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {cancelNote}",
+                        dueDate = DateTime.Now.AddDays(1),
+                        status = "Pending",
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.tasks_tbl.Add(newTask);
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation requested for bookingID: {bookingID}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request sent successfully. Our team will contact you soon." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to request cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ApproveCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.bookingCancelled = 1;
+                    booking.requestCancel = 0;
+                    booking.acceptedCancelNote = adminNote;
+                    booking.dateDeletion = DateTime.Now;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation APPROVED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation approved successfully." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to approve cancellation: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RejectCancellation(int bookingID, string adminNote)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
+                    if (booking == null)
+                    {
+                        return Json(new { success = false, message = "Booking not found." });
+                    }
+
+                    booking.requestCancel = 0;
+                    booking.cancelNote = adminNote;
+
+                    Logs(
+                        "WARN",
+                        "Booking Management:",
+                        $"Cancellation REJECTED for bookingID: {bookingID}. Note: {adminNote}");
+
+                    db.SaveChanges();
+
+                    return Json(new { success = true, message = "Cancellation request rejected." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
+            }
+        }
+
+        public JsonResult GetCancellations()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var cancellations = (from booking in db.bookings_tbl
+                                         join client in db.clients_tbl on booking.clientID equals client.clientID
+                                         where booking.requestCancel == 1 || booking.bookingCancelled == 1
+                                         select new
+                                         {
+                                             bookingID = booking.bookingID,
+                                             bookingDate = booking.bookingDate,
+                                             venue = booking.venue,
+                                             eventName = client.eventName,
+                                             clientName = client.cFName + " " + client.cLName,
+                                             requestCancel = booking.requestCancel,
+                                             bookingCancelled = booking.bookingCancelled,
+                                             customerNote = booking.customerNote,
+                                             cancelNote = booking.cancelNote,
+                                             acceptedCancelNote = booking.acceptedCancelNote,
+                                             dateCancelled = booking.dateCancelled,
+                                             dateDeletion = booking.dateDeletion
+                                         }).ToList();
+
+                    return Json(new { success = true, data = cancellations }, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Management:",
+                "Attempted to get cancellations. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -2691,119 +4151,6 @@ namespace IsabellaCateringWebApp.Controllers
 
         //===================================================================Create/Edit/Delete Booking End==================================================================
 
-        //===================================================================Request Booking Cancellation Start==================================================================
-        [HttpPost]
-        public JsonResult RequestCancellation(int bookingID, string customerNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.requestCancel = 1;
-                    booking.customerNote = customerNote;
-                    booking.dateCancelled = DateTime.Now;
-
-                    var newTask = new tblTasksModel()
-                    {
-                        bookingID = bookingID,
-                        task = "Cancellation Request",
-                        taskDesc = $"Customer requested cancellation for booking ID: {bookingID}. Note: {customerNote}",
-                        dueDate = DateTime.Now.AddDays(1),
-                        status = "Pending",
-                        dateCreated = DateTime.Now,
-                        dateUpdated = DateTime.Now
-                    };
-                    db.tasks_tbl.Add(newTask);
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation requested for bookingID: {bookingID}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation request sent successfully. Our team will contact you soon." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to request cancellation: " + ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public JsonResult ApproveCancellation(int bookingID, string adminNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.bookingCancelled = 1;
-                    booking.requestCancel = 0;
-                    booking.acceptedCancelNote = adminNote;
-                    booking.dateDeletion = DateTime.Now;
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation APPROVED for bookingID: {bookingID}. Note: {adminNote}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation approved successfully." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to approve cancellation: " + ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public JsonResult RejectCancellation(int bookingID, string adminNote)
-        {
-            try
-            {
-                using (var db = new IsabellaCateringContext())
-                {
-                    var booking = db.bookings_tbl.FirstOrDefault(b => b.bookingID == bookingID);
-                    if (booking == null)
-                    {
-                        return Json(new { success = false, message = "Booking not found." });
-                    }
-
-                    booking.requestCancel = 0;
-                    booking.cancelNote = adminNote;
-
-                    Logs(
-                        "WARN",
-                        "Booking Management:",
-                        $"Cancellation REJECTED for bookingID: {bookingID}. Note: {adminNote}");
-
-                    db.SaveChanges();
-
-                    return Json(new { success = true, message = "Cancellation request rejected." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Failed to reject cancellation: " + ex.Message });
-            }
-        }
-
-        //===================================================================Request Booking Cancellation End==================================================================
         
         //===================================================================Payment Management Start==================================================================
         
@@ -3239,13 +4586,32 @@ namespace IsabellaCateringWebApp.Controllers
                         initialPayment.paymentStatus = "Complete";
                         initialPayment.remainingBalance = latestPayment.remainingBalance;
                     }
+                    else if (latestPayment.remainingBalance > 0)
+                    {
+                        initialPayment.paymentStatus = "Incomplete";
+                        initialPayment.remainingBalance = latestPayment.remainingBalance;
+
+                        var excessPayments = db.payments_tbl
+                                .Where(x => x.bookingID == bookingID &&
+                                x.paymentType == "Excess")
+                                .FirstOrDefault();
+
+                        if (excessPayments != null)
+                        {
+                            db.payments_tbl.Remove(excessPayments);
+                            db.SaveChanges();
+                            recomputePayment(bookingID, message);
+                        }                        
+                    }
                     else
                     {
                         initialPayment.paymentStatus = "Incomplete";
                         initialPayment.remainingBalance = latestPayment.remainingBalance;
                     }
 
-                    db.SaveChanges();
+                        db.SaveChanges();
+
+
                     return Json(new { success = true, message = "Payment Group recomputed Successfully" }, JsonRequestBehavior.AllowGet);
                 }
             }
@@ -3318,6 +4684,7 @@ namespace IsabellaCateringWebApp.Controllers
                         email = client.cEmail,
                         firstName = client.cFName,
                         lastName = client.cLName,
+                        eventName = client.eventName,
                         bookingID = bookingID
                     }, JsonRequestBehavior.AllowGet);
                 }
@@ -3370,7 +4737,7 @@ namespace IsabellaCateringWebApp.Controllers
             }
         }
 
-        //===================================================================Payment Management Start==================================================================
+        //===================================================================Payment Management End==================================================================
 
     }
 }

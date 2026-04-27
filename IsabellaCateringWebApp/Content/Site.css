@@ -355,6 +355,20 @@ textarea {
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
+.login-field[type="password"]::-ms-reveal,
+.login-field[type="password"]::-ms-clear {
+    display: none;
+}
+
+.login-field[type="password"]::-webkit-credentials-auto-fill-button,
+.login-field[type="password"]::-webkit-contacts-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}
+
 .login-field:hover {
     border-color: #eca1c2;
 }
@@ -1235,6 +1249,157 @@ textarea {
     color: #18181b;
 }
 
+.booking-form-shell {
+    margin-top: 0.25rem;
+}
+
+.booking-form-two-column {
+    display: grid;
+    gap: 1rem 1.1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.booking-form-field {
+    min-width: 0;
+}
+
+.booking-form-field--wide {
+    grid-column: span 1;
+}
+
+.booking-form-field--full {
+    grid-column: 1 / -1;
+}
+
+.booking-final-total-input {
+    font-size: 1.1rem !important;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    background: #ffffff !important;
+}
+
+.booking-inline-note {
+    margin: 0;
+    color: #71717a;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.booking-icon-button {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #f0d3e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #d6418b;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.booking-icon-button:hover {
+    border-color: #e5bdd1;
+    background: #fff7fb;
+    color: #bf2f78;
+}
+
+.booking-icon-button .material-symbols-outlined {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.booking-icon-button--danger {
+    color: #b91c1c;
+}
+
+.booking-icon-button--danger:hover {
+    border-color: #fecaca;
+    background: #fff5f5;
+    color: #991b1b;
+}
+
+.booking-additionals-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.95rem;
+}
+
+.booking-additionals-header__copy {
+    min-width: 0;
+}
+
+.booking-rate-strip {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid #f0d3e1;
+    border-radius: 10px;
+    background: #fffdfd;
+    padding: 0.95rem 1rem;
+}
+
+.booking-rate-strip__item {
+    display: grid;
+    gap: 0.12rem;
+}
+
+.booking-rate-strip__item span,
+.booking-additional-form-row__label {
+    color: #71717a;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.booking-rate-strip__item strong {
+    color: #18181b;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.booking-rate-strip__item small {
+    color: #a1a1aa;
+    font-size: 0.74rem;
+    line-height: 1.35;
+}
+
+.booking-additional-form-row {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem) auto;
+    align-items: end;
+}
+
+.booking-additional-form-row__field {
+    min-width: 0;
+}
+
+.booking-additional-form-row__action {
+    display: flex;
+    align-items: end;
+}
+
+.booking-additionals-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 76px;
+    border: 1px dashed #e6c7d7;
+    border-radius: 10px;
+    color: #71717a;
+    font-size: 0.84rem;
+    background: #fffdfd;
+    text-align: center;
+    padding: 1rem;
+}
+
+.booking-note-section__hint {
+    margin-bottom: 0.55rem;
+}
+
 .payment-summary-card {
     color: inherit;
 }
@@ -1318,6 +1483,23 @@ textarea {
         font-size: 0.8rem;
     }
 
+    .booking-form-two-column {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-additionals-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .booking-additional-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-additional-form-row__action {
+        justify-content: flex-start;
+    }
+
     .booking-calendar-page #days-container {
         grid-auto-rows: minmax(6rem, auto);
     }
@@ -1335,6 +1517,12 @@ textarea {
 
     .booking-calendar-page #days-container .current {
         min-height: 3.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .booking-form-field--wide {
+        grid-column: span 1;
     }
 }
 
@@ -1829,6 +2017,200 @@ textarea {
     opacity: 0.35;
     pointer-events: none;
     user-select: none;
+}
+
+.cancellation-stat-loader-label {
+    width: 9rem;
+    height: 0.875rem;
+}
+
+.cancellation-stat-loader-value {
+    width: 4rem;
+    height: 2.25rem;
+    border-radius: 0.875rem;
+}
+
+.cancellation-stat-loader-meta {
+    width: 5.75rem;
+    height: 1rem;
+}
+
+.cancellation-table-loader-cell {
+    height: 0.875rem;
+    border-radius: 9999px;
+}
+
+.cancellation-table-loader-cell-id {
+    width: 4.25rem;
+}
+
+.cancellation-table-loader-cell-name {
+    width: 8.5rem;
+}
+
+.cancellation-table-loader-cell-client {
+    width: 7rem;
+}
+
+.cancellation-table-loader-cell-date {
+    width: 6.25rem;
+}
+
+.cancellation-table-loader-cell-note {
+    width: min(100%, 13rem);
+}
+
+.cancellation-table-loader-cell-note-wide {
+    width: min(100%, 11rem);
+}
+
+.cancellation-table-loader-cell-action {
+    width: 4.75rem;
+    height: 2rem;
+    border-radius: 0.625rem;
+}
+
+.cancellation-table-loader-cell-link {
+    width: 5.5rem;
+}
+
+/* Request Booking Calendar Styling - Compact Version */
+.request-booking-panel {
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+#requestDaysContainer .request-calendar-day {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 45px;
+}
+
+#requestDaysContainer .request-date-cell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    border-radius: 0.375rem;
+    border: 2px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+    /* Available dates */
+    #requestDaysContainer .request-date-cell.available {
+        cursor: pointer;
+        background-color: #fff;
+        color: #1F2937;
+    }
+
+        #requestDaysContainer .request-date-cell.available:hover {
+            border-color: #D6418B;
+        }
+
+    /* Selected date */
+    #requestDaysContainer .request-date-cell.selected {
+        background-color: #EC4899 !important;
+        border-color: #D6418B !important;
+        color: white !important;
+        cursor: pointer;
+    }
+
+        #requestDaysContainer .request-date-cell.selected:hover {
+            background-color: #D6418B !important;
+        }
+
+    /* Full dates (5 bookings) - IMPORTANT: These styles must override available */
+    #requestDaysContainer .request-date-cell.full {
+        background-color: #E5E7EB !important;
+        color: #9CA3AF !important;
+        cursor: not-allowed !important;
+        border-color: transparent !important;
+    }
+
+        #requestDaysContainer .request-date-cell.full:hover {
+            background-color: #E5E7EB !important;
+            border-color: transparent !important;
+        }
+
+    /* Disabled dates (past or outside range) */
+    #requestDaysContainer .request-date-cell.disabled {
+        background-color: transparent !important;
+        color: #D1D5DB !important;
+        cursor: not-allowed !important;
+        border-color: transparent !important;
+    }
+
+        #requestDaysContainer .request-date-cell.disabled:hover {
+            background-color: transparent !important;
+            border-color: transparent !important;
+        }
+
+/* Previous/Next month days */
+#requestDaysContainer .request-prev-month-day,
+#requestDaysContainer .request-next-month-day {
+    aspect-ratio: 1;
+    min-height: 45px;
+}
+
+#requestDaysContainer .request-other-month-cell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #D1D5DB;
+    font-size: 0.875rem;
+}
+
+/* Booking count badge */
+.request-booking-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: #FEE2E2;
+    color: #991B1B;
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 9999px;
+    line-height: 1;
+    min-width: 16px;
+    text-align: center;
+    z-index: 10;
+}
+
+/* Badge for full dates */
+.request-calendar-day:has(.request-date-cell.full) .request-booking-count {
+    background-color: #DC2626;
+    color: white;
+}
+
+.request-booking-month-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    #requestDaysContainer .request-calendar-day {
+        min-height: 40px;
+    }
+
+    #requestDaysContainer .request-date-cell {
+        font-size: 0.75rem;
+        padding: 0.125rem;
+    }
+
+    .request-booking-count {
+        font-size: 0.5rem;
+        padding: 0px 3px;
+        min-width: 14px;
+    }
 }
 
 @media (min-width: 640px) {
