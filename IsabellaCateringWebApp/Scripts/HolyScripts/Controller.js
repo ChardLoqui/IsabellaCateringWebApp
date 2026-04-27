@@ -12,11 +12,17 @@
     $scope.redirectToAddBookingPage = function () {
         window.location.href = "/Main/AddBookingPage";
     };
+    $scope.redirectToRequestAddBookingPage = function () {
+        window.location.href = "/Main/RequestAddBookingPage";
+    };
     $scope.redirectToAddBookingPageEditMode = function (id) {
         window.location.href = `/Main/AddBookingPage?mode=edit&id=${id}`;
     };
     $scope.redirectToBookingCalendarPage = function () {
         window.location.href = "/Main/BookingCalendarTabPage";
+    }
+    $scope.redirectToRequestCalendarPage = function () {
+        window.location.href = "/Main/RequestCalendarPage";
     }
     $scope.redirectToLoginPage = function () {
         window.location.href = "/Main/LoginPage";
@@ -2731,8 +2737,7 @@
                     icon: "success",
                     confirmButtonColor: "#EC4899"
                 }).then(function () {
-                    // Redirect to booking request form page
-                    window.location.href = "/Main/BookingRequestForm";
+                    $scope.redirectToRequestAddBookingPage();
                 });
             } else {
                 Swal.fire({
@@ -3044,38 +3049,6 @@
         if (!group) return;
         group.expanded = !group.expanded;
     };
-
-    //create modal start
-    //$scope.openCreatePaymentModal = function () {
-    //    $scope.createPayment = {
-    //        bookingID: '',
-    //        paymentType: 'Down Payment',
-    //        amountDue: null,
-    //        amount: null,
-    //        dueDate: '',
-    //    };
-    //    $scope.createRestrictions = {
-    //        hasDownPayment: false,
-    //        hasFullPayment: false
-    //    };
-    //    $scope.createPaymentLoading = false;
-    //    $scope.availableBookings = [];
-
-    //    IsabellaCateringWebAppService.getBookingsWithoutPayments()
-    //        .then(function (res) {
-    //            $scope.availableBookings = res.data;
-    //        })
-    //        .catch(function () {
-    //            Swal.fire({
-    //                title: 'Error',
-    //                text: 'Could not load bookings.',
-    //                icon: 'error',
-    //                confirmButtonColor: "#EC4899"
-    //            });
-    //        });
-
-    //    $scope.showCreatePaymentModal = true;
-    //};
 
     $scope.onCreateBookingChanged = function () {
         var bID = Number($scope.createPayment.bookingID);
@@ -4661,6 +4634,7 @@
                 eventSetTime: $scope.eventSetTime,
                 eventMealTime: $scope.eventMealTime,
                 bookingNote: $scope.bookingNote ?? null,
+                customerNote: $scope.customerNote ?? null,
                 progressOne: $scope.progressOne ?? null,
                 progressTwo: $scope.progressTwo ?? null,
                 progressThree: $scope.progressThree ?? null,
@@ -4832,6 +4806,59 @@
                                     confirmButtonColor: '#ec4899',
                                 }).then(function () {
                                     $scope.redirectToBookingCalendarPage();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: returnedData.data.message,
+                                    icon: 'error',
+                                    confirmButtonColor: '#ec4899',
+                                });
+                            }
+                        });
+                    }
+                    else {
+                        Swal.fire({
+                            title: "Error",
+                            text: response.data.message,
+                            icon: "error",
+                            confirmButtonColor: "#EC4899"
+                        });
+                    }
+                });
+            }
+        });
+    };
+
+    $scope.requestBooking = function () {
+        if (!$scope.validateBookingDetailsStep(true, true)) {
+            return;
+        }
+
+        var payload = buildBookingSubmission();
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you want to save this booking for Isabella Events?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ec4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, save it!',
+            cancelButtonText: 'No, cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                IsabellaCateringWebAppService.validateRequestDateService($scope.dateOfEvent).then(function (response) {
+                    if (response.data.success) {
+                        IsabellaCateringWebAppService.insertRequestPackageService(payload.clientInfo, payload.bookingInfo, payload.paymentInfo, payload.bookingAdditionals, payload.packages, payload.sidesGrpTypes, payload.specialsGrpTypes, payload.staffGrpTypes, payload.equipGrpTypes, payload.entertainmentGrpTypes, payload.photoGrpTypes, payload.keepsakesGrpTypes, payload.debutGrpTypes).then(function (returnedData) {
+                            if (returnedData.data.success) {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: returnedData.data.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#ec4899',
+                                }).then(function () {
+                                    $scope.redirectToRequestCalendarPage();
                                 });
                             } else {
                                 Swal.fire({
@@ -5754,6 +5781,49 @@
     };
 
     //====================================================== CREATE BOOKING END ======================================================
+
+    //====================================================== REQUEST BOOKING START ======================================================
+
+    $scope.loadRequestPackageOptions = function () {
+        var editBookingID = getEditBookingId();
+        $scope.isEditMode = !!editBookingID;
+        $scope.bookingEditLoading = !!editBookingID;
+
+        IsabellaCateringWebAppService.getPackageBookingOptionsService().then(function (returnedData) {
+            if (returnedData.data.success) {
+                $scope.backdropTypesOpt = returnedData.data.backdropTypes;
+                $scope.centerPieceTypesOpt = returnedData.data.centerPieceTypes;
+                $scope.couchTypesOpt = returnedData.data.couchTypes;
+                $scope.debutTypesOpt = returnedData.data.debutTypes;
+                $scope.entertainmentTypesOpt = returnedData.data.entertainmentTypes;
+                $scope.entranceTypesOpt = returnedData.data.entranceTypes;
+                $scope.equipTypesOpt = returnedData.data.equipTypes;
+                $scope.keepsakesTypesOpt = returnedData.data.keepsakesTypes;
+                $scope.maincourseTypesOpt = returnedData.data.maincourseTypes;
+                $scope.photoTypesOpt = returnedData.data.photoTypes;
+                $scope.seatingTypesOpt = returnedData.data.seatingTypes;
+                $scope.sidesTypesOpt = returnedData.data.sidesTypes;
+                $scope.specialsTypesOpt = returnedData.data.specialsTypes;
+                $scope.staffTypesOpt = returnedData.data.staffTypes;
+
+                $scope.eventsOpt = returnedData.data.eventTypes;
+                $scope.packageTypesOpt = returnedData.data.packageTypes;
+            }
+            IsabellaCateringWebAppService.getCurrentSessionService().then(function (sessionData) {
+
+                if (sessionData.data.requestedDate) {
+                    var dateParts = sessionData.data.requestedDate.split("-");
+                    $scope.dateOfEvent = new Date(dateParts[0], (dateParts[1] - 1), dateParts[2]);
+                    $scope.changeSummaryDateOutput();
+                } else{
+                    $scope.redirectToRequestCalendarPage();
+                }
+            });
+        }).catch(function () {
+            $scope.bookingEditLoading = false;
+        });
+    };
+    //====================================================== REQUEST BOOKING END ======================================================
 
     //====================================================== CLICK OUTSIDE DIRECTIVE START ======================================================
 

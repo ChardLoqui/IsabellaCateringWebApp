@@ -88,6 +88,10 @@ namespace IsabellaCateringWebApp.Controllers
         {
             return View();
         }
+        public ActionResult RequestAddBookingPage()
+        {
+            return View();
+        }
 
         //===================================================================Pages End==================================================================
 
@@ -318,7 +322,7 @@ namespace IsabellaCateringWebApp.Controllers
                     var bookings = db.bookings_tbl
                                         .Where(b => b.bookingDate == csharpDate)
                                         .ToList();
-                    if (bookings.Count < 5)
+                    if (bookings.Count < 3)
                     {
                         Session["bookingSelectedDate"] = formattedDate;
                         return Json(new { success = true, selectedDate = Session["bookingSelectedDate"], message = "Create Request Granted!" }, JsonRequestBehavior.AllowGet);
@@ -1601,6 +1605,7 @@ Isabella Catering and Events
                     userID = Session["currentLog"]?.ToString() ?? string.Empty,
                     permID = Session["currentPerm"]?.ToString() ?? string.Empty,
                     selectedDate = Session["bookingSelectedDate"]?.ToString() ?? string.Empty,
+                    requestedDate = Session["requestSelectedDate"]?.ToString() ?? string.Empty,
                     isGuest = Session["isGuest"]?.ToString() ?? string.Empty,
                     bookingID = Session["currentBooking"]?.ToString() ?? string.Empty
                 };
@@ -2590,6 +2595,264 @@ Isabella Catering and Events
                 "LETHAL",
                 "Booking Management:",
                 "Attempted to create bookings. " + ex.Message + "" + ex.InnerException);
+                return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+        [HttpPost]
+        public JsonResult insertRequestPackage(tblClientsModel clientInfo, tblBookingsModel bookingInfo, tblPaymentsModel paymentInfo, List<tblBookingAdditionalsModel> bookingAdditionals, tblPackagesModel packages, tblSidesGrpTypesModel sidesGrpTypes, tblSpecialsGrpTypesModel specialsGrpTypes, tblStaffGrpTypesModel staffGrpTypes, tblEquipGrpTypesModel equipGrpTypes, tblEntertainmentGrpTypesModel entertainmentGrpTypes, tblPhotoGrpTypesModel photoGrpTypes, tblKeepsakesGrpTypesModel keepsakesGrpTypes, tblDebutGrpTypesModel debutGrpTypes)
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    if(bookingInfo.paxCount == 0)
+                    {
+                        return Json(new { success = false, message = "Please choose Guest Count!" }, JsonRequestBehavior.AllowGet);
+                    }
+                    var existingRequestBooking = db.bookingrequests_tbl
+                        .Where(x =>
+                        x.eventID == bookingInfo.eventID &&
+                        x.dsgnTheme == bookingInfo.dsgnTheme &&
+                        x.dsgnMotif == bookingInfo.dsgnMotif &&
+                        x.prepVenue == bookingInfo.prepVenue &&
+                        x.ceremTime == bookingInfo.ceremTime &&
+                        x.eventTime == bookingInfo.eventTime &&
+                        x.venue == bookingInfo.venue &&
+                        x.eventSetTime == bookingInfo.eventSetTime &&
+                        x.eventMealTime == bookingInfo.eventMealTime &&
+                        x.paxCount == bookingInfo.paxCount &&
+                        x.addAdult == bookingInfo.addAdult &&
+                        x.addKid == bookingInfo.addKid
+                        ).FirstOrDefault();
+
+                    if (existingRequestBooking != null)
+                    {
+                        var existingRequestClient = db.clientrequests_tbl
+                            .Where(x => x.cEmail == clientInfo.cEmail ||
+                            x.cContact == clientInfo.cContact 
+                            ).FirstOrDefault();
+
+                        if(existingRequestClient != null)
+                        {
+                            Logs(
+                               "WARN",
+                               "Booking Request:",
+                               $"Attempted to create multiple booking request data. clientRequestID: {existingRequestClient.clientRequestID}");
+                            return Json(new { success = false, message = "Request is already registered" }, JsonRequestBehavior.AllowGet);
+                        }
+                    }
+
+                    var currPackageID = ResolvePackageId(db, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes);
+
+                    //string datePart = DateTime.Now.ToString("yyMMdd");
+                    //string randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                    //string receiptCode = $"BK-{datePart}-{randomPart}";
+
+                    //var existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
+                    //while (existingReceipt != null)
+                    //{
+                    //    randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                    //    receiptCode = $"BK-{datePart}-{randomPart}";
+                    //    existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
+                    //}
+
+                    var newRequestClient = new tblClientRequestsModel()
+                    {
+                        eventName = clientInfo.eventName,
+                        cFName = clientInfo.cFName,
+                        cLName = clientInfo.cLName,
+                        cEmail = clientInfo.cEmail,
+                        cContact = clientInfo.cContact,
+                        cCeleb1FName = clientInfo.cCeleb1FName,
+                        cCeleb1LName = clientInfo.cCeleb1LName,
+                        cCeleb2FName = clientInfo.cCeleb2FName,
+                        cCeleb2LName = clientInfo.cCeleb2LName,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now
+                    };
+                    db.clientrequests_tbl.Add(newRequestClient);
+                    db.SaveChanges();
+
+                    Logs(
+                       "INFO",
+                       "Booking Management:",
+                       $"New Request Client Data has been created. clientID: {newRequestClient.clientRequestID}");
+
+                    var newRequestBooking = new tblBookingRequestsModel()
+                    {
+                        clientRequestID = newRequestClient.clientRequestID,
+                        packageID = currPackageID,
+                        eventID = bookingInfo.eventID,
+                        dsgnTheme = bookingInfo.dsgnTheme,
+                        dsgnMotif = bookingInfo.dsgnMotif,
+                        prepVenue = bookingInfo.prepVenue,
+                        bookingDate = bookingInfo.bookingDate,
+                        ceremTime = bookingInfo.ceremTime,
+                        eventTime = bookingInfo.eventTime,
+                        venue = bookingInfo.venue,
+                        eventSetTime = bookingInfo.eventSetTime,
+                        eventMealTime = bookingInfo.eventMealTime,
+                        dateCreated = DateTime.Now,
+                        dateUpdated = DateTime.Now,
+                        customerNote = bookingInfo.customerNote,
+                        paxCount = bookingInfo.paxCount,
+                        addAdult = bookingInfo.addAdult,
+                        addKid = bookingInfo.addKid,
+                    };
+                    db.bookingrequests_tbl.Add(newRequestBooking);
+                    db.SaveChanges();
+
+                    Logs(
+                       "INFO",
+                       "Booking Management:",
+                       $"New Booking Data has been created. bookingID: {newRequestBooking.bookingRequestID}");
+
+                    //SaveBookingAdditionals(db, newBooking.bookingID, bookingAdditionals);
+
+                    //var newReceipt = new tblBookingReceiptsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    receiptNum = receiptCode,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+                    //db.bookingreceipts_tbl.Add(newReceipt);
+                    //db.SaveChanges();
+
+                    //newClient.receiptID = newReceipt.receiptID;
+                    //newClient.entryCode = receiptCode;
+                    //db.SaveChanges();
+
+                    //Logs(
+                    //   "INFO",
+                    //   "Booking Management:",
+                    //   $"New Receipt Data has been created. receiptID: {newReceipt.receiptID}");
+
+                    //float downPayment = 5000;
+                    //float subtractedDownPayment = paymentInfo.amountDue - downPayment;
+                    //float halfPayment = subtractedDownPayment / 2;
+                    //float quarterPayment = subtractedDownPayment / 4;
+
+                    //DateTime today = DateTime.Today;
+                    //DateTime bookingDate = bookingInfo.bookingDate.Date;
+
+                    //DateTime firstHalfDate;
+                    //DateTime lastQuarterDate;
+
+                    //int totalDays = (int)(bookingDate - today).TotalDays;
+
+                    //if (totalDays < 120)
+                    //{
+                    //    firstHalfDate = today.AddDays(totalDays / 2);
+                    //    lastQuarterDate = bookingDate.AddDays(-(totalDays / 4));
+                    //}
+                    //else
+                    //{
+                    //    firstHalfDate = bookingDate.AddDays(-120);
+                    //    lastQuarterDate = bookingDate.AddDays(-14);
+                    //}
+
+                    //var newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = paymentInfo.amountDue,
+                    //    amount = 0,
+                    //    paymentType = "Initial",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 0,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = bookingInfo.bookingDate.AddDays(10),
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = paymentInfo.amountDue,
+                    //    amount = 5000,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 1,
+                    //    paymentStatus = "Complete",
+                    //    dueDate = DateTime.Now,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = subtractedDownPayment,
+                    //    amount = halfPayment,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 2,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = firstHalfDate,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = subtractedDownPayment,
+                    //    amount = quarterPayment,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 3,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = lastQuarterDate,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+                    //newPayment = new tblPaymentsModel()
+                    //{
+                    //    bookingID = newBooking.bookingID,
+                    //    amountDue = subtractedDownPayment,
+                    //    amount = quarterPayment,
+                    //    paymentType = "Payment",
+                    //    remainingBalance = subtractedDownPayment,
+                    //    transactionNum = 4,
+                    //    paymentStatus = "Incomplete",
+                    //    dueDate = bookingInfo.bookingDate.Date,
+                    //    dateCreated = DateTime.Now,
+                    //    dateUpdated = DateTime.Now
+                    //};
+
+                    //db.payments_tbl.Add(newPayment);
+
+
+                    //db.SaveChanges();
+
+                    //Logs(
+                    //   "INFO",
+                    //   "Booking Management:",
+                    //   $"New Payment Data has been created. paymentID: {newPayment.paymentID}");
+                }
+
+                Logs(
+                    "INFO",
+                    "Booking Request:",
+                    $"New Booking Request Set Data has been created.");
+                return Json(new { success = true, message = "Booking Request Completed Successfully!" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                "LETHAL",
+                "Booking Request:",
+                "Attempted to request bookings. " + ex.Message + "" + ex.InnerException);
                 return Json(new { success = false, message = "Error connecting to DB: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }

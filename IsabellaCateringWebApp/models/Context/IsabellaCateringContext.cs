@@ -21,8 +21,10 @@ namespace IsabellaCateringWebApp.Models.Context
         public virtual DbSet<tblBackdropTypesModel> backdroptypes_tbl { get; set; }
         public virtual DbSet<tblBookingAdditionalsModel> bookingadditionals_tbl { get; set; }
         public virtual DbSet<tblBookingReceiptsModel> bookingreceipts_tbl { get; set; }
+        public virtual DbSet<tblBookingRequestsModel> bookingrequests_tbl { get; set; }
         public virtual DbSet<tblBookingsModel> bookings_tbl { get; set; }
         public virtual DbSet<tblCenterPieceTypesModel> centerpiecetypes_tbl { get; set; }
+        public virtual DbSet<tblClientRequestsModel> clientrequests_tbl { get; set; }
         public virtual DbSet<tblClientsModel> clients_tbl { get; set; }
         public virtual DbSet<tblCouchTypesModel> couchtypes_tbl { get; set; }
         public virtual DbSet<tblDebutGrpTypesModel> debutgrptypes_tbl { get; set; }
@@ -64,8 +66,10 @@ namespace IsabellaCateringWebApp.Models.Context
             modelBuilder.Configurations.Add(new tblBackdropTypesMap());
             modelBuilder.Configurations.Add(new tblBookingAdditionalsMap());
             modelBuilder.Configurations.Add(new tblBookingReceiptsMap());
+            modelBuilder.Configurations.Add(new tblBookingRequestsMap());
             modelBuilder.Configurations.Add(new tblBookingsMap());
             modelBuilder.Configurations.Add(new tblCenterPieceTypesMap());
+            modelBuilder.Configurations.Add(new tblClientRequestsMap());
             modelBuilder.Configurations.Add(new tblClientsMap());
             modelBuilder.Configurations.Add(new tblCouchTypesMap());
             modelBuilder.Configurations.Add(new tblDebutGrpTypesMap());
