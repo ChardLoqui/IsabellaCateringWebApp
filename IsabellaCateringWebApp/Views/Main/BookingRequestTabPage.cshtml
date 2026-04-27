@@ -1,0 +1,318 @@
+﻿@{
+    Layout = "~/Views/Shared/_ManagementLayout.cshtml";
+    ViewBag.Title = "Booking Requests";
+}
+<script>
+    // flag used by your shared Angular controller file
+    var isAcceptBookingRequestsPage = true;
+</script>
+
+<div class="relative z-10 h-full overflow-y-auto">
+    <div class="management-page-shell">
+        <div class="space-y-8">
+            <div class="management-page-header">
+                <h1 class="management-page-title">Accept Booking Requests</h1>
+            </div>
+
+            <div class="management-section-card">
+
+                @* Loading toolbar skeleton (same display logic) *@
+                <div ng-if="bookingReqLoading" class="management-section-header management-toolbar-loading-shell" aria-hidden="true">
+                    <div class="management-section-header-row">
+                        <div class="management-section-toolbar">
+                            <span class="management-toolbar-loader-block management-toolbar-loader-title"></span>
+
+                            <div class="management-section-actions">
+                                <span class="management-toolbar-loader-block management-toolbar-loader-input"></span>
+                                <span class="management-toolbar-loader-block management-toolbar-loader-button"></span>
+                            </div>
+                        </div>
+
+                        <div class="management-toolbar-loader-pagination">
+                            <div class="management-toolbar-loader-icon-group">
+                                <span class="management-toolbar-loader-block management-toolbar-loader-icon"></span>
+                                <span class="management-toolbar-loader-block management-toolbar-loader-icon"></span>
+                            </div>
+
+                            <div class="management-toolbar-loader-selects">
+                                <span class="management-toolbar-loader-block management-toolbar-loader-select"></span>
+                                <span class="management-toolbar-loader-block management-toolbar-loader-select"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Real toolbar *@
+            <div ng-if="!bookingReqLoading" class="management-section-header management-content-fade">
+                <div class="rounded-xl bg-white p-3 m-3 shadow-sm ring-1 ring-gray-200">
+                    <p class="text-sm font-medium uppercase tracking-wider text-gray-500">Awaiting Approval</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <h2 class="text-3xl font-bold text-gray-900">{{getBookingReqPage().length}}</h2>
+                        <span class="text-sm font-medium text-pink-600">Requests</span>
+                    </div>
+                    <button ng-click="rejectFullyBookedDate(); getBookingRequestsForAcceptance()"
+                            ng-disabled="bookingReqLoading"
+                            class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
+                        <span class="material-symbols-outlined text-[20px]" ng-class="{'animate-spin': bookingReqLoading}"></span>
+                        {{ bookingReqLoading ? 'Refreshing...' : 'Reject All Fully Booked Date' }}
+                    </button>
+                </div>
+                <div class="management-section-header-row">
+                    <div class="management-section-toolbar">
+                        <h2 class="management-section-title">Requests</h2>
+
+                        <div class="management-section-actions">
+                            <div class="relative w-full sm:w-auto">
+                                <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-gray-400">search</span>
+                                <input type="text"
+                                       ng-model="searchState.bookingReq"
+                                       ng-change="searchBookingReq()"
+                                       placeholder="Search table data..."
+                                       class="management-toolbar-input management-section-search w-full pl-12 pr-4" />
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Same pagination cluster style *@
+                    <div class="management-section-pagination management-pagination-cluster">
+                        <div class="management-pagination-arrow-group">
+                            <button ng-click="bookingReqPrevPage()"
+                                    ng-disabled="bookingReqTable.currentPage === 1"
+                                    class="management-pagination-icon-button">
+                                <span class="material-symbols-outlined text-xl leading-none">chevron_left</span>
+                            </button>
+                            <button ng-click="bookingReqNextPage()"
+                                    ng-disabled="bookingReqTable.currentPage === getBookingReqTotalPages()"
+                                    class="management-pagination-icon-button">
+                                <span class="material-symbols-outlined text-xl leading-none">chevron_right</span>
+                            </button>
+                        </div>
+
+                        <div class="management-pagination-dropdowns">
+                            <div class="management-pagination-dropdown" ng-class="{'z-20': bookingReqPageDropOpen}">
+                                <button type="button"
+                                        ng-click="bookingReqPageDropOpen = !bookingReqPageDropOpen; bookingReqSizeDropOpen = false"
+                                        class="management-pagination-trigger">
+                                    <span class="text-xs">Page {{ bookingReqTable.currentPage }}/{{ getBookingReqTotalPages() }}</span>
+                                    <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                                </button>
+
+                                <div ng-if="bookingReqPageDropOpen" class="management-pagination-menu">
+                                    <button type="button"
+                                            ng-repeat="page in getBookingReqPageNumbers()"
+                                            ng-click="bookingReqGoToPage(page); bookingReqPageDropOpen = false"
+                                            class="management-pagination-item"
+                                            ng-class="{'is-active': page === bookingReqTable.currentPage}">
+                                        Page {{ page }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="management-pagination-dropdown" ng-class="{'z-20': bookingReqSizeDropOpen}">
+                                <button type="button"
+                                        ng-click="bookingReqSizeDropOpen = !bookingReqSizeDropOpen; bookingReqPageDropOpen = false"
+                                        class="management-pagination-trigger">
+                                    <span class="text-xs">{{ bookingReqTable.pageSize }} / page</span>
+                                    <span class="material-symbols-outlined text-sm text-gray-400">expand_more</span>
+                                </button>
+
+                                <div ng-if="bookingReqSizeDropOpen" class="management-pagination-menu">
+                                    <button type="button"
+                                            ng-repeat="size in bookingReqTable.pageSizeOptions"
+                                            ng-click="setBookingReqPageSize(size); bookingReqSizeDropOpen = false"
+                                            class="management-pagination-item"
+                                            ng-class="{'is-active': size === bookingReqTable.pageSize}">
+                                        {{ size }} rows
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                <div class="management-table-scroll">
+                    @* Loader *@
+                    <div ng-if="bookingReqLoading" class="management-loader-shell">
+                        <div class="management-loader">
+                            <span class="management-loader-spinner" aria-hidden="true"></span>
+                            <span>Loading requests</span>
+                        </div>
+                    </div>
+
+                    @* ONLY 1 table *@
+                    <table ng-if="!bookingReqLoading" class="management-content-fade w-full border-collapse bg-gray-100">
+                        <thead>
+                            <tr class="text-left text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 bg-white">
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'bookingRequestID'}"
+                                    ng-click="bookingReqSortBy('bookingRequestID')">
+                                    Booking Request ID
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'bookingRequestID'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'eventName'}"
+                                    ng-click="bookingReqSortBy('eventName')">
+                                    Event Name
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'eventName'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'eventDesc'}"
+                                    ng-click="bookingReqSortBy('eventDesc')">
+                                    Event Type
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'eventDesc'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'clientEmail'}"
+                                    ng-click="bookingReqSortBy('clientEmail')">
+                                    Client Email
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'clientEmail'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'venue'}"
+                                    ng-click="bookingReqSortBy('venue')">
+                                    Venue
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'venue'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'bookingDate'}"
+                                    ng-click="bookingReqSortBy('bookingDate')">
+                                    Booking Date
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'bookingDate'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'paxCount'}"
+                                    ng-click="bookingReqSortBy('paxCount')">
+                                    Pax
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'paxCount'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'addAdult'}"
+                                    ng-click="bookingReqSortBy('addAdult')">
+                                    Add Adult
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'addAdult'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500"
+                                    ng-class="{'text-pink-500': bookingReqTable.sortField === 'addKid'}"
+                                    ng-click="bookingReqSortBy('addKid')">
+                                    Add Kid
+                                    <span class="material-symbols-outlined text-[14px] align-middle"
+                                          ng-if="bookingReqTable.sortField === 'addKid'">
+                                        {{ bookingReqTable.sortReverse ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                                    </span>
+                                </th>
+
+                                <th class="p-4 cursor-pointer select-none hover:text-pink-500">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="text-sm text-gray-700 font-bold bg-white">
+                            <tr ng-repeat="req in getBookingReqPage()"
+                                class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+
+                                @* bookingRequestID + hoverable customerNote (no extra column) *@
+                                <td class="p-4">
+                                    {{ req.bookingRequestID }}
+                                    <div class="relative group inline-block">
+                                        <span class="material-symbols-outlined text-gray-400 hover:text-pink-500 cursor-help">
+                                            info
+                                        </span>
+                                        <div ng-if="req.customerNote"
+                                             class="absolute left-full top-1/2 -translate-y-1/2 ml-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 w-80 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-none">
+                                            <div class="font-bold text-gray-200 mb-1">Customer Note</div>
+                                            <div class="whitespace-pre-wrap break-words">{{ req.customerNote }}</div>
+                                        </div>
+                                        <div ng-if="!req.customerNote"
+                                             class="absolute left-full top-1/2 -translate-y-1/2 ml-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 w-80 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-none">
+                                            <div class="font-bold text-gray-200 mb-1">Customer Note</div>
+                                            <div class="whitespace-pre-wrap break-words">No note included</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="p-4">{{ req.eventName }}</td>
+                                <td class="p-4">{{ req.eventDesc }}</td>
+                                <td class="p-4">{{ req.clientEmail }}</td>
+                                <td class="p-4">{{ req.venue }}</td>
+                                <td class="p-4">{{ req.bookingDate | date:'MM/dd/yyyy' }}</td>
+                                <td class="p-4">{{ req.paxCount }}</td>
+                                <td class="p-4">{{ req.addAdult }}</td>
+                                <td class="p-4">{{ req.addKid }}</td>
+                                <td class="whitespace-nowrap px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <button ng-click="approveRequest(req.bookingRequestID)" class="inline-flex items-center rounded-md bg-pink-50 px-2.5 py-1.5 text-sm font-semibold text-pink-700 hover:bg-pink-100">
+                                            Approve
+                                        </button>
+                                        <button ng-click="rejectRequest(req.bookingRequestID)" class="inline-flex items-center rounded-md bg-gray-50 px-2.5 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-100">
+                                            Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            @* Placeholder if no data *@
+                            <tr ng-if="getBookingReqFiltered().length === 0">
+                                <td colspan="10" class="p-10 text-center text-gray-400">
+                                    <div class="flex flex-col items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined text-4xl">search_off</span>
+                                        <span class="font-bold">No requests found.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                @* Footer summary (same style) *@
+                <div ng-if="!bookingReqLoading"
+                     class="px-4 py-2 border-t bg-gray-50 text-xs text-gray-400 flex flex-wrap items-center justify-between gap-3">
+                    <span ng-if="getBookingReqFiltered().length > 0">
+                        Showing {{ (bookingReqTable.currentPage - 1) * bookingReqTable.pageSize + 1 }}
+                        – {{ [bookingReqTable.currentPage * bookingReqTable.pageSize, getBookingReqFiltered().length] | limitTo: 1 }}
+                        of {{ getBookingReqFiltered().length }} records
+                    </span>
+                    <span ng-if="getBookingReqFiltered().length === 0">0 records</span>
+                    <span>Page {{ bookingReqTable.currentPage }} of {{ getBookingReqTotalPages() }}</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+

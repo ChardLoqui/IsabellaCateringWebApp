@@ -152,6 +152,15 @@
 
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
+                   @(currentAction == "RequestTab" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                           href="@Url.Action("BookingRequestTabPage", "Main")">
+                            <span class="material-symbols-outlined nav-icon min-w-[24px]">forward_to_inbox</span>
+                            <span class="nav-text">Booking Requests</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="group flex items-center px-6 py-3 transition-all duration-200
                    @(currentAction == "PaymentReminderPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                            href="@Url.Action("PaymentReminderTabPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">account_balance_wallet</span>

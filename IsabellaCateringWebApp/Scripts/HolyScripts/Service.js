@@ -102,6 +102,32 @@
         });
         return response;
     };
+    this.getRequestBooking = function (booking) {
+        var response = $http({
+            method: "post",
+            url: "/Main/getRequestBooking",
+            data: booking
+        });
+        return response;
+    };
+
+    this.getBookingRequestsForAcceptanceService = function () {
+        return $http.get("/Main/GetBookingRequestsForAcceptance");
+    };
+    this.rejectFullyBookedDatesService = function () {
+        return $http.get("/Main/rejectFullyBookedDates");
+    };
+
+    this.acceptRequestSetDateService = function (requestID) {
+        return $http.get("/Main/setAcceptRequestSetDate", {
+            params: { requestID: requestID }
+        });
+    }
+    this.rejectRequestService = function (requestID) {
+        return $http.get("/Main/rejectRequest", {
+            params: { requestID: requestID }
+        });
+    }
 
     //========================================================CREATE BOOKING START=======================================================
     this.bookEvent = function (eventData) {
@@ -122,7 +148,7 @@
         });
     }
 
-    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, bookingAdditionals, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes) {
+    this.insertPackageService = function (clientInfo, bookingInfo, paymentInfo, bookingAdditionals, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes, toDeleteRequestID) {
         return $http.post("/Main/insertPackage", {
             clientInfo: clientInfo,
             bookingInfo: bookingInfo,
@@ -136,7 +162,8 @@
             entertainmentGrpTypes: entertainmentGrpTypes,
             photoGrpTypes: photoGrpTypes,
             keepsakesGrpTypes: keepsakesGrpTypes,
-            debutGrpTypes: debutGrpTypes
+            debutGrpTypes: debutGrpTypes,
+            toDeleteRequestID: toDeleteRequestID
         });
     }
 
@@ -238,6 +265,12 @@
 
     this.getBookingDetailsService = function (bookingID) {
         return $http.get("/Main/getBookingDetails", {
+            params: { bookingID: bookingID }
+        });
+    }
+
+    this.getBookingRequestDetailsService = function (bookingID) {
+        return $http.get("/Main/getBookingRequestDetails", {
             params: { bookingID: bookingID }
         });
     }
