@@ -84,6 +84,41 @@
                                 visibility_off
                             </span>
                         </div>
+
+                        @* Password Strength Meter *@
+                        <div ng-show="newPassword.length > 0" class="mt-2 space-y-1.5 transition-all duration-300">
+                            <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
+                                <span ng-class="getPasswordStrength(newPassword).textColor">{{ getPasswordStrength(newPassword).label }}</span>
+                                <span class="text-zinc-400">{{ getPasswordStrength(newPassword).score }}/5</span>
+                            </div>
+                            <div class="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
+                                <div class="h-full transition-all duration-500"
+                                     ng-class="getPasswordStrength(newPassword).color"
+                                     ng-style="{'width': getPasswordStrength(newPassword).percent}"></div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 pt-1">
+                                <div class="flex items-center gap-1 text-[9px]" ng-class="getPasswordStrength(newPassword).requirements.length ? 'text-emerald-600' : 'text-zinc-400'">
+                                    <span class="material-icons text-[10px]">{{ getPasswordStrength(newPassword).requirements.length ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                                    8+ chars
+                                </div>
+                                <div class="flex items-center gap-1 text-[9px]" ng-class="getPasswordStrength(newPassword).requirements.upper ? 'text-emerald-600' : 'text-zinc-400'">
+                                    <span class="material-icons text-[10px]">{{ getPasswordStrength(newPassword).requirements.upper ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                                    Uppercase
+                                </div>
+                                <div class="flex items-center gap-1 text-[9px]" ng-class="getPasswordStrength(newPassword).requirements.lower ? 'text-emerald-600' : 'text-zinc-400'">
+                                    <span class="material-icons text-[10px]">{{ getPasswordStrength(newPassword).requirements.lower ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                                    Lowercase
+                                </div>
+                                <div class="flex items-center gap-1 text-[9px]" ng-class="getPasswordStrength(newPassword).requirements.number ? 'text-emerald-600' : 'text-zinc-400'">
+                                    <span class="material-icons text-[10px]">{{ getPasswordStrength(newPassword).requirements.number ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                                    Number
+                                </div>
+                                <div class="flex items-center gap-1 text-[9px]" ng-class="getPasswordStrength(newPassword).requirements.special ? 'text-emerald-600' : 'text-zinc-400'">
+                                    <span class="material-icons text-[10px]">{{ getPasswordStrength(newPassword).requirements.special ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                                    Special
+                                </div>
+                            </div>
+                        </div>
                         <p class="login-error"
                            ng-if="shouldShowFieldError(changePasswordForm, 'newPasswordField', 'required')">
                             New password is required.
@@ -146,9 +181,13 @@
                         </p>
                     </div>
 
+                    <div ng-if="newPassword.length > 0 && getPasswordStrength(newPassword).score < 4" class="mb-2 text-center">
+                        <p class="text-[11px] font-semibold text-red-500">Password must be Strong to reset.</p>
+                    </div>
+
                     <button type="submit"
-                            ng-disabled="!resetTokenState.valid"
-                            ng-class="{'cursor-not-allowed opacity-60': !resetTokenState.valid}"
+                            ng-disabled="!resetTokenState.valid || getPasswordStrength(newPassword).score < 4"
+                            ng-class="{'cursor-not-allowed opacity-60': !resetTokenState.valid || getPasswordStrength(newPassword).score < 4}"
                             class="login-submit login-fade-delayed w-full rounded-lg bg-pink-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-900/10 hover:bg-pink-600">
                         Reset Password
                     </button>

@@ -17,6 +17,8 @@
 
     <!-- tailwind link -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
+    <script src="~/Scripts/angular.min.js"></script>
 
     <!-- google fonts n icons link -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -33,6 +35,11 @@
     <!-- PDFmaker -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/angular-chart.js@1.1.1/dist/angular-chart.min.js"></script>
+
 
     <style>
         .sidebar {
@@ -170,6 +177,15 @@
 
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
+                   @(currentAction == "CancelTab" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                           href="@Url.Action("CancelRequestTabPage", "Main")">
+                            <span class="material-symbols-outlined nav-icon min-w-[24px]">cancel</span>
+                            <span class="nav-text">Cancellations</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="group flex items-center px-6 py-3 transition-all duration-200
                    @(currentAction == "AccountsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
                            href="@Url.Action("AccountsTabPage", "Main")">
                             <span class="material-symbols-outlined nav-icon min-w-[24px]">groups</span>
@@ -177,14 +193,6 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="group flex items-center px-6 py-3 transition-all duration-200
-                   @(currentAction == "CancelTab" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                           href="@Url.Action("CancelRequestTabPage", "Main")">
-                            <span class="material-symbols-outlined nav-icon min-w-[24px]">cancel</span>
-                            <span class="nav-text">Cancellations</span>
-                        </a>
-                    </li>
 
                     <li class="nav-item">
                         <a class="group flex items-center px-6 py-3 transition-all duration-200
@@ -235,8 +243,6 @@
     <main class="main-content relative h-screen flex-1">
         @RenderBody()
     </main>
-    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
-    <script src="~/Scripts/angular.min.js"></script>
     <script src="~/Scripts/HolyScripts/Module.js?v=20260407b"></script>
     <script src="~/Scripts/HolyScripts/Service.js?v=20260407b"></script>
     <script src="~/Scripts/HolyScripts/Controller.js?v=20260422c"></script>

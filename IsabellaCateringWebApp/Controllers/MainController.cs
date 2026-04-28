@@ -4161,20 +4161,24 @@ Isabella Catering and Events";
             {
                 using (var db = new IsabellaCateringContext())
                 {
-                    var data = db.payments_tbl.Select(p => new
-                    {
-                        paymentID = p.paymentID,
-                        bookingID = p.bookingID,
-                        amountDue = p.amountDue,
-                        amount = p.amount,
-                        remainingBalance = p.remainingBalance,
-                        transactionNum = p.transactionNum,
-                        paymentType = p.paymentType,
-                        paymentStatus = p.paymentStatus,
-                        dueDate = p.dueDate,
-                        dateCreated = p.dateCreated,
-                        dateUpdated = p.dateUpdated
-                    }).ToList();
+                    var data = (from p in db.payments_tbl
+                                join b in db.bookings_tbl on p.bookingID equals b.bookingID
+                                join c in db.clients_tbl on b.clientID equals c.clientID
+                                select new
+                                {
+                                    paymentID = p.paymentID,
+                                    bookingID = p.bookingID,
+                                    eventName = c.eventName,
+                                    amountDue = p.amountDue,
+                                    amount = p.amount,
+                                    remainingBalance = p.remainingBalance,
+                                    transactionNum = p.transactionNum,
+                                    paymentType = p.paymentType,
+                                    paymentStatus = p.paymentStatus,
+                                    dueDate = p.dueDate,
+                                    dateCreated = p.dateCreated,
+                                    dateUpdated = p.dateUpdated
+                                }).ToList();
 
                     var jsonResult = Json(data, JsonRequestBehavior.AllowGet);
                     jsonResult.MaxJsonLength = int.MaxValue;

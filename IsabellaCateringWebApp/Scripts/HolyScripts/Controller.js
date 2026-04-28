@@ -3,6 +3,55 @@
     $scope.displayNavOptions = null;
     $scope.navStateResolved = false;
 
+    $scope.getPasswordStrength = function (password) {
+        if (!password) return null;
+
+        var requirements = {
+            length: password.length >= 8,
+            upper: /[A-Z]/.test(password),
+            lower: /[a-z]/.test(password),
+            number: /[0-9]/.test(password),
+            special: /[^A-Za-z0-9]/.test(password)
+        };
+
+        var score = 0;
+        if (requirements.length) score++;
+        if (requirements.upper) score++;
+        if (requirements.lower) score++;
+        if (requirements.number) score++;
+        if (requirements.special) score++;
+
+        var strength = {
+            score: score,
+            requirements: requirements,
+            percent: (score / 5 * 100) + '%'
+        };
+
+        if (score <= 1) {
+            strength.label = 'Very Weak';
+            strength.color = 'bg-red-500';
+            strength.textColor = 'text-red-500';
+        } else if (score === 2) {
+            strength.label = 'Weak';
+            strength.color = 'bg-orange-500';
+            strength.textColor = 'text-orange-500';
+        } else if (score === 3) {
+            strength.label = 'Fair';
+            strength.color = 'bg-yellow-500';
+            strength.textColor = 'text-yellow-600';
+        } else if (score === 4) {
+            strength.label = 'Strong';
+            strength.color = 'bg-green-500';
+            strength.textColor = 'text-green-600';
+        } else {
+            strength.label = 'Very Strong';
+            strength.color = 'bg-emerald-600';
+            strength.textColor = 'text-emerald-600';
+        }
+
+        return strength;
+    };
+
     $scope.redirectToHomePage = function () {
         window.location.href = "/Main/HomePage";
     }
@@ -242,7 +291,7 @@
         if (fieldKey === 'cEmail') {
             var emailValue = $scope.cEmail;
             var isInvalidEmail = emailValue && emailValue.indexOf('@') === -1;
-            return isInvalidEmail;
+            return isMissing || isInvalidEmail;
         }
 
         return isMissing;
@@ -3275,6 +3324,118 @@
     //====================================================== REQUEST BOOKING CALENDAR END ======================================================
 
     //====================================================== PAYMENT REMINDER START ======================================================
+
+    //piechart
+
+    // 1. Updated Configuration for 6 Slices
+    $scope.summaryChart = {
+        labels: [
+            'Initial Unpaid', 'Initial Overdue', 
+            'Payment Unpaid', 'Payment Overdue', 
+            'Excess Unpaid', 'Excess Overdue'
+        ],
+        data: [0, 0, 0, 0, 0, 0],
+        colors: [
+            '#4ADE80', '#166534', // Initial: Green (Lighter, Darker)
+            '#A855F7', '#6B21A8', // Payment: Purple (Lighter, Darker)
+            '#FB923C', '#9A3412'  // Excess: Orange (Lighter, Darker)
+        ],
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            legend: { display: false },
+            tooltips: {
+                callbacks: {
+                    label: function (item, data) {
+                        var label = data.labels[item.index];
+                        var value = data.datasets[0].data[item.index];
+                        return '  ' + label + ': ' + value;
+                    }
+                }
+            }
+        }
+    };
+
+    // 2. The Summary Function (Fixed logic)
+    $scope.getSummary = function () {
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        var counts = {
+            initialUnpaid: 0, initialOverdue: 0,
+            paymentUnpaid: 0, paymentOverdue: 0,
+            excessUnpaid: 0, excessOverdue: 0
+        };
+
+        if (!$scope.paymentData) {
+            console.warn("DEBUG: No paymentData found yet.");
+            return counts;
+        }
+
+        $scope.paymentData.forEach(function (p) {
+            var remBal = Number(p.remainingBalance) || 0;
+            var dueDate = new Date(p.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            var isComplete = (p.paymentStatus === 'Complete' || p.paymentStatus === 'Paid');
+
+            // Check if type matches exactly (Case Sensitive)
+            var type = (p.paymentType || '').trim();
+
+            if (remBal > 0 && !isComplete) {
+                if (type === 'Initial') {
+                    counts.initialUnpaid++;
+                    if (dueDate < today) counts.initialOverdue++;
+                }
+                else if (type === 'Payment') {
+                    counts.paymentUnpaid++;
+                    if (dueDate < today) counts.paymentOverdue++;
+                }
+                else if (type === 'Excess') {
+                    counts.excessUnpaid++;
+                    if (dueDate < today) counts.excessOverdue++;
+                } else {
+                    console.error("DEBUG: Found unknown payment type: '" + type + "' for ID: " + p.paymentID);
+                }
+            }
+        });
+        return counts;
+    };
+
+    function updateSummaryChart() {
+        var s = $scope.getSummary();
+        console.log("DEBUG: Chart is updating with data:", [s.initialUnpaid, s.initialOverdue, s.paymentUnpaid, s.paymentOverdue, s.excessUnpaid, s.excessOverdue]);
+
+        $scope.summaryChart.data = [
+            s.initialUnpaid, s.initialOverdue,
+            s.paymentUnpaid, s.paymentOverdue,
+            s.excessUnpaid, s.excessOverdue
+        ];
+    }
+
+    // 4. Updated Update Function (Maps 6 points)
+    function updateSummaryChart() {
+        var s = $scope.getSummary();
+        $scope.summaryChart.data = [
+            s.initialUnpaid, s.initialOverdue,
+            s.paymentUnpaid, s.paymentOverdue,
+            s.excessUnpaid, s.excessOverdue
+        ];
+    }
+
+    // 5. Updated Watcher (Watches all 6 keys)
+    $scope.$watch(
+        function () {
+            var s = $scope.getSummary();
+            // Log this to see if the numbers are actually changing from 0
+            console.log("Current Summary State:", s);
+            return s.initialUnpaid + '|' + s.initialOverdue + '|' +
+                s.paymentUnpaid + '|' + s.paymentOverdue + '|' +
+                s.excessUnpaid + '|' + s.excessOverdue;
+        },
+        function () {
+            updateSummaryChart();
+        }
+    );
     $scope.showIfAdd = true;
     $scope.showAdd = function () {
         if ($scope.newPayment.paymentType == "Additional")
@@ -3291,7 +3452,11 @@
 
     $scope.filteredDuePayments = [];
     $scope.filteredPaymentGroups = [];
-
+    $scope.paymentSummary = {
+        initialUnpaid: 0, initialOverdue: 0,
+        paymentUnpaid: 0, paymentOverdue: 0,
+        excessUnpaid: 0, excessOverdue: 0
+    };
     //date formatting
     function parseDate(dateStr) {
         if (!dateStr) return null;
@@ -3322,8 +3487,15 @@
     function diffDaysFromToday(dateStr) {
         var today = new Date();
         today.setHours(0, 0, 0, 0);
-        var d = parseDateLocal(dateStr);
-        if (!d) return null;
+        var d;
+        if (typeof dateStr === 'string' && dateStr.indexOf('/Date(') !== -1) {
+            var milli = parseInt(dateStr.replace(/\/Date\(([-+]?\d+)\)\//, '$1'));
+            d = new Date(milli);
+        } else {
+            d = new Date(dateStr);
+        }
+        if (!d || isNaN(d.getTime())) return null;
+        d.setHours(0, 0, 0, 0);
         return Math.ceil((d - today) / (1000 * 60 * 60 * 24));
     }
 
@@ -3374,11 +3546,13 @@
             if (!map[bID]) {
                 map[bID] = {
                     bookingID: bID,
+                    eventName: p.eventName,
                     payments: [],
                     expanded: false,
                     totalDue: 0,
                     totalPaid: 0,
                     totalRemBalance: 0,
+                    maxTransactionNum: -1,
                     unpaidCount: 0,
                     partialCount: 0,
                     hasUnpaid: false,
@@ -3390,68 +3564,64 @@
             }
             var g = map[bID];
             g.payments.push(p);
-            var maxTransactionNum = 0
+
             var due = Number(p.amountDue) || 0;
             var amount = Number(p.amount) || 0;
-            g.totalRemBalance = p.remainingBalance
-            if (p.transactionNum > maxTransactionNum) {
-                maxTransactionNum = p.transactionNum
-                g.totalRemBalance = p.remainingBalance
+            var rem = Number(p.remainingBalance) || 0;
+
+            if (p.transactionNum > g.maxTransactionNum) {
+                g.maxTransactionNum = p.transactionNum;
+                g.totalRemBalance = rem;
             }
-            if (p.paymentType == 'Initial') {
-                g.totalDue += due
-            } else if (p.paymentType == 'Additional') {
-                g.totalDue += amount
-            } else if (p.paymentType == 'Payment') {
-                g.totalPaid += amount
+
+            if (p.paymentType === 'Initial') {
+                g.totalDue += due;
+            } else if (p.paymentType === 'Additional') {
+                g.totalDue += amount;
             }
-            //g.totalDue += p.amountDue != null ? Number(p.amountDue) : 0;
             
-            if (g.totalRemBalance == 0) {
-                g.overallStatus = 'Fully Paid'
-            } else if (g.totalDue == g.totalRemBalance) {
-                g.overallStatus = 'Unpaid'
-                g.hasUnpaid = true
-            } else if(g.totalRemBalance < 0){
-                g.overallStatus = 'With Excess'
-            }else{
-                g.overallStatus = 'Partially Paid'
-                g.hasUnpaid = true
-            }
-            g.totalPaid = g.totalDue - g.totalRemBalance;
             if (p.dateUpdated && (!g.dateUpdated || new Date(p.dateUpdated) > new Date(g.dateUpdated))) {
                 g.dateUpdated = p.dateUpdated;
             }
-            
         });
 
         return Object.values(map).map(function (g) {
-            g.unpaidCount = g.payments.filter(function (p) { return p.paymentStatus === 'Unpaid'; }).length;
-            g.partialCount = g.payments.filter(function (p) { return p.paymentStatus === 'Partially Paid'; }).length;
-            var paidCount = g.payments.filter(function (p) { return p.paymentStatus === 'Paid'; }).length;
-            var total = g.payments.length;
+            g.totalPaid = g.totalDue - g.totalRemBalance;
 
-            if (g.unpaidCount === total) {
-                //g.overallStatus = 'Unpaid';
-                g.hasUnpaid = true;
-            } else if (paidCount === total) {
-                //g.overallStatus = 'Fully Paid';
-                g.hasUnpaid = false;
-                g.unpaidCount = 0;
-                g.partialCount = 0;
+            if (g.totalRemBalance <= 0 && g.totalDue > 0) {
+                g.overallStatus = 'Fully Paid';
+            } else if (g.totalRemBalance === g.totalDue) {
+                g.overallStatus = 'Unpaid';
+            } else if (g.totalRemBalance < 0) {
+                g.overallStatus = 'With Excess';
             } else {
-                //g.overallStatus = 'Partially Paid';
-                g.hasUnpaid = g.unpaidCount > 0 || g.partialCount > 0;
+                g.overallStatus = 'Partially Paid';
             }
 
-            //var typeOrder = { 'Initial': 1, 'Full Payment': 2, 'Additional': 3 };
-            //g.payments.sort(function (a, b) {
-            //    return (typeOrder[a.paymentType] || 99) - (typeOrder[b.paymentType] || 99);
-            //});
+            g.unpaidCount = g.payments.filter(function (p) { 
+                var isUnpaid = p.remainingBalance == p.amountDue;
+                var isComplete = (p.paymentStatus === 'Complete' || p.paymentStatus === 'Paid');
+                return !isComplete && isUnpaid;
+            }).length;
+            
+            g.partialCount = g.payments.filter(function (p) { 
+                var isPartial = p.remainingBalance != p.amountDue && p.remainingBalance > 0;
+                var isComplete = (p.paymentStatus === 'Complete' || p.paymentStatus === 'Paid');
+                return !isComplete && isPartial;
+            }).length;
+            
+            g.hasUnpaid = g.overallStatus === 'Unpaid' || g.overallStatus === 'Partially Paid';
 
-            var pending = g.payments.filter(function (p) { return p.paymentStatus !== 'Paid'; });
+            var pending = g.payments.filter(function (p) { 
+                var isComplete = (p.paymentStatus === 'Complete' || p.paymentStatus === 'Paid');
+                return !isComplete && p.remainingBalance > 0; 
+            });
             if (pending.length > 0) {
-                pending.sort(function (a, b) { return new Date(a.dueDate) - new Date(b.dueDate); });
+                pending.sort(function (a, b) { 
+                    var da = parseDate(a.dueDate);
+                    var db = parseDate(b.dueDate);
+                    return (da || 0) - (db || 0); 
+                });
                 g.nextDueDate = pending[0].dueDate;
             } else {
                 g.nextDueDate = null;
@@ -3493,31 +3663,71 @@
 
         IsabellaCateringWebAppService.getPaymentDataService()
             .then(function (returnedData) {
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                var s = {
+                    initialUnpaid: 0, initialOverdue: 0,
+                    paymentUnpaid: 0, paymentOverdue: 0,
+                    excessUnpaid: 0, excessOverdue: 0
+                };
+
                 $scope.paymentData = returnedData.data.map(function (payment) {
                     var rawDue = payment.dueDate != null ? payment.dueDate : payment.DueDate;
-                    return {
-                        paymentID: payment.paymentID != null ? payment.paymentID : payment.PaymentID,
-                        bookingID: payment.bookingID != null ? payment.bookingID : payment.BookingID,
-                        amountDue: payment.amountDue != null ? payment.amountDue : payment.AmountDue,
-                        amount: payment.amount != null ? payment.amount : payment.AmountPaid,
-                        remainingBalance: payment.remainingBalance != null ? payment.remainingBalance : payment.remainingBalance,
-                        transactionNum: payment.transactionNum != null ? payment.transactionNum : payment.transactionNum,
-                        paymentType: payment.paymentType != null ? payment.paymentType : payment.PaymentType,
-                        paymentStatus: payment.paymentStatus != null ? payment.paymentStatus : payment.PaymentStatus,
+                    var p = {
+                        paymentID: payment.paymentID || payment.PaymentID,
+                        bookingID: payment.bookingID || payment.BookingID,
+                        eventName: payment.eventName,
+                        amountDue: payment.amountDue,
+                        amount: payment.amount,
+                        transactionNum: payment.transactionNum,
+                        remainingBalance: payment.remainingBalance,
+                        paymentType: (payment.paymentType || '').trim(),
+                        paymentStatus: payment.paymentStatus || payment.PaymentStatus,
                         dueDate: toDateString(rawDue),
                         dateCreated: parseDate(payment.dateCreated != null ? payment.dateCreated : payment.DateCreated),
                         dateUpdated: parseDate(payment.dateUpdated != null ? payment.dateUpdated : payment.DateUpdated),
                     };
+
+                    // --- URGENCY LOGIC ---
+                    var remBal = Number(p.remainingBalance) || 0;
+                    var dueDateObj = new Date(p.dueDate);
+                    dueDateObj.setHours(0, 0, 0, 0);
+
+                    // Calculate difference in days
+                    var diffTime = dueDateObj - today;
+                    var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    var isComplete = (p.paymentStatus === 'Complete' || p.paymentStatus === 'Paid');
+
+                    // ONLY count if: Balance exists AND (Date is passed OR Date is within 7 days)
+                    // Inside getPaymentData...
+                    if (remBal > 0 && !isComplete && diffDays <= 7) {
+                        if (p.paymentType === 'Initial') {
+                            s.initialUnpaid++;
+                            if (diffDays < 0) s.initialOverdue++;
+                        }
+                        else if (p.paymentType === 'Payment' || p.paymentType === 'Additional') {
+                            // Grouping Additional with Payment for the chart
+                            s.paymentUnpaid++;
+                            if (diffDays < 0) s.paymentOverdue++;
+                        }
+                        else if (p.paymentType === 'Excess') {
+                            s.excessUnpaid++;
+                            if (diffDays < 0) s.excessOverdue++;
+                        }
+                    }
+                    return p;
                 });
+
+                $scope.paymentSummary = s;
+                $scope.summaryChart.data = [
+                    s.initialUnpaid, s.initialOverdue,
+                    s.paymentUnpaid, s.paymentOverdue,
+                    s.excessUnpaid, s.excessOverdue
+                ];
+
                 $scope.groupedPayments = buildGroupedPayments($scope.paymentData);
-                $scope.getSummary();
-                applyDuePaymentsSearch();
-                applyPaymentsSearch();
-            })
-            .catch(function (error) {
-                console.error('Error loading payments', error);
-                $scope.paymentData = [];
-                $scope.groupedPayments = [];
                 applyDuePaymentsSearch();
                 applyPaymentsSearch();
             })
@@ -3525,6 +3735,57 @@
                 $scope.paymentLoading = false;
             });
     };
+
+    // Simplified helpers for the HTML
+    $scope.getSummary = function () { return $scope.paymentSummary; };
+    $scope.isSummaryEmpty = function () {
+        var s = $scope.paymentSummary;
+        if (!s) return true;
+        // The chart only shows if there is at least one "Unpaid" (urgent) item
+        return (s.initialUnpaid + s.paymentUnpaid + s.excessUnpaid) === 0;
+    };
+    $scope.showEditPaymentModal = false;
+    $scope.editData = {};
+    if (isPaymentReminderPage) {
+        $scope.getPaymentData();
+    }
+
+    var duePag = makePagination({ defaultSort: 'paymentID', defaultSize: 5 });
+    $scope.duePayments = duePag.state;
+
+    function applyDuePaymentsSearch() {
+        if (!$scope.paymentData) {
+            $scope.filteredDuePayments = [];
+            return;
+        }
+
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Filter raw data based on the 7-day urgency rule
+        $scope.filteredDuePayments = $scope.paymentData.filter(function (p) {
+            var remBal = Number(p.remainingBalance) || 0;
+            var dueDateObj = new Date(p.dueDate);
+            dueDateObj.setHours(0, 0, 0, 0);
+
+            var diffTime = dueDateObj - today;
+            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            var isComplete = (p.paymentStatus === 'Complete' || p.paymentStatus === 'Paid');
+
+            // CONDITION: Must have balance, not complete, and be (Overdue OR Due within 7 days)
+            return remBal > 0 && !isComplete;
+        });
+
+        // Apply the text search (the search bar) on top of the filtered results
+        var query = normalizeSearchValue($scope.searchState.due);
+        if (query) {
+            $scope.filteredDuePayments = $scope.filteredDuePayments.filter(function (p) {
+                return matchesSearchValues(query, [
+                    p.paymentID, p.paymentType, p.remainingBalance, p.dueDate
+                ]);
+            });
+        }
+    }
     $scope.showEditPaymentModal = false;
     $scope.editData = {};
     if (isPaymentReminderPage) {
@@ -3533,22 +3794,25 @@
 
     //validations for due date
     $scope.isUpcomingDue = function (payment) {
-        if (!payment || payment.paymentStatus == 'Complete') return false;
-        var paid = Number(payment.amount) || 0;
-        var due = Number(payment.amountDue) || 0;
-        if (paid >= due) return false;
+        if (!payment || payment.paymentStatus == 'Complete' || payment.paymentStatus == 'Paid') return false;
+        var remBal = Number(payment.remainingBalance) || 0;
+        if (remBal <= 0) return false;
         var diff = diffDaysFromToday(payment.dueDate);
         return diff !== null && diff <= 7;
     };
 
     $scope.isOverdue = function (payment) {
-        if (!payment || payment.paymentStatus == 'Complete') return false;
+        if (!payment || payment.paymentStatus == 'Complete' || payment.paymentStatus == 'Paid') return false;
+        var remBal = Number(payment.remainingBalance) || 0;
+        if (remBal <= 0) return false;
         var diff = diffDaysFromToday(payment.dueDate);
         return diff !== null && diff < 0;
     };
 
     $scope.isDueSoon = function (payment) {
-        if (!payment || payment.paymentStatus == 'Complete') return false;
+        if (!payment || payment.paymentStatus == 'Complete' || payment.paymentStatus == 'Paid') return false;
+        var remBal = Number(payment.remainingBalance) || 0;
+        if (remBal <= 0) return false;
         var diff = diffDaysFromToday(payment.dueDate);
         return diff !== null && diff >= 0 && diff <= 7;
     };
@@ -6355,6 +6619,7 @@
             hour = 0;
         let hour24 = hour.toString().padStart(2, "0");
         $scope.eventSetTime = hour24 + ":" + $scope.setMinute;
+        $scope.validateEventTimes('Set Time');
     };
 
     $scope.updateMealTime = function () {
@@ -6367,6 +6632,7 @@
             hour = 0;
         let hour24 = hour.toString().padStart(2, "0");
         $scope.eventMealTime = hour24 + ":" + $scope.mealMinute;
+        $scope.validateEventTimes('Meal Time');
     };
 
     $scope.updateEventTime = function () {
@@ -6379,6 +6645,7 @@
             hour = 0;
         let hour24 = hour.toString().padStart(2, "0");
         $scope.eventEventTime = hour24 + ":" + $scope.eventMinute;
+        $scope.validateEventTimes('Event Time');
     };
 
     $scope.updateCeremTime = function () {
@@ -6391,6 +6658,105 @@
             hour = 0;
         let hour24 = hour.toString().padStart(2, "0");
         $scope.eventCeremTime = hour24 + ":" + $scope.ceremMinute;
+        $scope.validateEventTimes('Ceremony Time');
+    };
+
+    $scope.validateEventTimes = function (changedField) {
+        // Order: Set Time -> Ceremony Time (if Wedding) -> Event Time -> Meal Time
+        
+        let set = $scope.eventSetTime;
+        let isWedding = $scope.eventType && $scope.eventType.toLowerCase() === 'wedding';
+        let cerem = isWedding ? $scope.eventCeremTime : null;
+        let event = $scope.eventEventTime;
+        let meal = $scope.eventMealTime;
+
+        // If Set Time changed, check against all others
+        if (changedField === 'Set Time' && set) {
+            if (cerem && set >= cerem) {
+                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Ceremony Time.", icon: 'warning' });
+                clearTime('set');
+                return;
+            }
+            if (event && set >= event) {
+                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Event Time.", icon: 'warning' });
+                clearTime('set');
+                return;
+            }
+            if (meal && set >= meal) {
+                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Meal Time.", icon: 'warning' });
+                clearTime('set');
+                return;
+            }
+        }
+
+        // Ceremony Time validation
+        if (changedField === 'Ceremony Time' && cerem) {
+            if (set && cerem <= set) {
+                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be after Set Time.", icon: 'warning' });
+                clearTime('cerem');
+                return;
+            }
+            if (event && cerem >= event) {
+                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be before Event Time.", icon: 'warning' });
+                clearTime('cerem');
+                return;
+            }
+            if (meal && cerem >= meal) {
+                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be before Meal Time.", icon: 'warning' });
+                clearTime('cerem');
+                return;
+            }
+        }
+
+        // Event Time validation
+        if (changedField === 'Event Time' && event) {
+            if (set && event <= set) {
+                Swal.fire({ title: 'Invalid Time', text: "Event Time must be after Set Time.", icon: 'warning' });
+                clearTime('event');
+                return;
+            }
+            if (cerem && event <= cerem) {
+                Swal.fire({ title: 'Invalid Time', text: "Event Time must be after Ceremony Time.", icon: 'warning' });
+                clearTime('event');
+                return;
+            }
+            if (meal && event >= meal) {
+                Swal.fire({ title: 'Invalid Time', text: "Event Time must be before Meal Time.", icon: 'warning' });
+                clearTime('event');
+                return;
+            }
+        }
+
+        // Meal Time validation
+        if (changedField === 'Meal Time' && meal) {
+            if (set && meal <= set) {
+                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Set Time.", icon: 'warning' });
+                clearTime('meal');
+                return;
+            }
+            if (cerem && meal <= cerem) {
+                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Ceremony Time.", icon: 'warning' });
+                clearTime('meal');
+                return;
+            }
+            if (event && meal <= event) {
+                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Event Time.", icon: 'warning' });
+                clearTime('meal');
+                return;
+            }
+        }
+
+        function clearTime(type) {
+            if (type === 'set') {
+                $scope.setHour = $scope.setMinute = $scope.setPeriod = $scope.eventSetTime = null;
+            } else if (type === 'cerem') {
+                $scope.ceremHour = $scope.ceremMinute = $scope.ceremPeriod = $scope.eventCeremTime = null;
+            } else if (type === 'event') {
+                $scope.eventHour = $scope.eventMinute = $scope.eventPeriod = $scope.eventEventTime = null;
+            } else if (type === 'meal') {
+                $scope.mealHour = $scope.mealMinute = $scope.mealPeriod = $scope.eventMealTime = null;
+            }
+        }
     };
 
     //====================================================== CREATE BOOKING END ======================================================
