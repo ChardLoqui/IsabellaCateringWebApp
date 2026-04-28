@@ -84,6 +84,129 @@
                                     </div>
                                 </div>
 
+                                <!-- SECTION 1: Client & Celebrant Details -->
+                                <div class="col-span-3 bg-white shadow-sm border border-gray-200 rounded-lg p-6 mt-4">
+                                    <h3 class="text-lg font-bold text-pink-600 mb-6 border-b border-gray-100 pb-2">Client & Celebrant Details</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Client's Firstname <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Firstname"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cFirstName"
+                                                   ng-model="cFirstName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cFirstName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cFirstName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cFirstName')">{{ getBookingFieldErrorMessage('cFirstName') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Client's Lastname <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Lastname"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cLastName"
+                                                   ng-model="cLastName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cLastName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cLastName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cLastName')">{{ getBookingFieldErrorMessage('cLastName') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Email <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="E-mail"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cEmail"
+                                                   ng-model="cEmail"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cEmail')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cEmail')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cEmail')">{{ getBookingFieldErrorMessage('cEmail') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Contact Number <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="11"
+                                                   placeholder="Contact Number e.g 09*********"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cContactNum"
+                                                   ng-model="cContactNum"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cContactNum')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cContactNum')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cContactNum')">{{ getBookingFieldErrorMessage('cContactNum') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Celebrant's Firstname <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Firstname"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cCeleb1FirstName"
+                                                   ng-model="cCeleb1FirstName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cCeleb1FirstName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCeleb1FirstName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cCeleb1FirstName')">{{ getBookingFieldErrorMessage('cCeleb1FirstName') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Celebrant's Lastname <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Lastname"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cCeleb1LastName"
+                                                   ng-model="cCeleb1LastName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cCeleb1LastName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCeleb1LastName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cCeleb1LastName')">{{ getBookingFieldErrorMessage('cCeleb1LastName') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                2nd Celebrant's Firstname
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Firstname"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cCeleb2FirstName"
+                                                   ng-model="cCeleb2FirstName">
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                2nd Celebrant's Lastname
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Lastname"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cCeleb2LastName"
+                                                   ng-model="cCeleb2LastName">
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <!-- SECTION: Core Events Details -->
+                                <div class="col-span-3 mt-6 border-b border-gray-200 pb-2">
+                                    <h3 class="text-lg font-bold text-pink-600">Core Events Details</h3>
+                                </div>
 
                                 <div class="col-span-2 flex flex-col md:col-span-1">
                                     <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">

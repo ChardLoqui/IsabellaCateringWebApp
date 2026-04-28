@@ -9,6 +9,8 @@
     <title>@ViewBag.Title</title>
     <!-- tailwind link -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
+    <script src="~/Scripts/angular.min.js"></script>
 
     <!-- google fonts n icons link -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -22,6 +24,11 @@
     <script src="https://unpkg.com/flowbite@1.7.0/dist/flowbite.js"></script>
     <!-- Sweet Alert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/angular-chart.js@1.1.1/dist/angular-chart.min.js"></script>
+
 
 </head>
 
@@ -37,8 +44,8 @@
             <ul class="space-y-1">
                 <li class="nav-item">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "CustomerViewPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("CustomerViewPage", "Main")">
+               @(currentAction == "CustomerViewTabPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                       href="@Url.Action("CustomerViewTabPage", "Main")">
                         <span class="material-symbols-outlined nav-icon min-w-[24px]">timeline</span>
                         <span class="nav-text">Event Progress</span>
                     </a>
@@ -72,11 +79,9 @@
     <main class="main-content relative h-screen flex-1 overflow-hidden bg-white">
         @RenderBody()
     </main>
-    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
-    <script src="~/Scripts/angular.min.js"></script>
     <script src="~/Scripts/HolyScripts/Module.js?v=20260407b"></script>
     <script src="~/Scripts/HolyScripts/Service.js?v=20260407b"></script>
-    <script src="~/Scripts/HolyScripts/Controller.js?v=20260407b"></script>
+    <script src="~/Scripts/HolyScripts/Controller.js?v=20260428c"></script>
 
 </body>
 </html>

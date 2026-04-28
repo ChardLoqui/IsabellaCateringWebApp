@@ -1,1 +1,2 @@
-﻿var app = angular.module("IsabellaCateringWebApp", []);
+﻿var app = angular.module("IsabellaCateringWebApp", ['chart.js']);
+

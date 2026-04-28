@@ -9,6 +9,8 @@
 
     <!-- tailwind link -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
+    <script src="~/Scripts/angular.min.js"></script>
 
     <!-- google fonts n icons link -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -27,6 +29,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/angular-chart.js@1.1.1/dist/angular-chart.min.js"></script>
+
+
 </head>
 
 <body class="bg-white navbar-layout" ng-app="IsabellaCateringWebApp" ng-controller="IsabellaCateringWebAppController">
@@ -39,28 +46,37 @@
         @*Navbar*@
         <nav class="flex-1 py-4">
             <ul class="space-y-1">
+                <li class="nav-section-label px-6 py-2 mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    Booking
+                </li>
                 <li class="nav-item">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "BookingCalendarPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("BookingCalendarPage", "Main")">
+               @(currentAction == "BookingCalendarTabPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                       href="@Url.Action("BookingCalendarTabPage", "Main")">
                         <span class="material-icons nav-icon min-w-[24px]">calendar_month</span>
                         <span class="nav-text">Booking Calendar</span>
                     </a>
                 </li>
 
+                <li class="nav-section-label px-6 py-2 mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    Finance & Void
+                </li>
                 <li class="nav-item">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "PaymentReminderPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("PaymentReminderPage", "Main")">
+               @(currentAction == "PaymentReminderTabPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                       href="@Url.Action("PaymentReminderTabPage", "Main")">
                         <span class="material-icons nav-icon min-w-[24px]">payments</span>
                         <span class="nav-text">Manage Payment</span>
                     </a>
                 </li>
 
+                <li class="nav-section-label px-6 py-2 mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    System
+                </li>
                 <li class="nav-item">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "AccountsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("AccountsPage", "Main")">
+               @(currentAction == "AccountsTabPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                       href="@Url.Action("AccountsTabPage", "Main")">
                         <span class="material-icons nav-icon min-w-[24px]">group</span>
                         <span class="nav-text">Accounts</span>
                     </a>
@@ -68,8 +84,8 @@
 
                 <li class="nav-item">
                     <a class="group flex items-center px-6 py-3 transition-all duration-200
-               @(currentAction == "LogsPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
-                       href="@Url.Action("LogsPage", "Main")">
+               @(currentAction == "LogsTabPage" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                       href="@Url.Action("LogsTabPage", "Main")">
                         <span class="material-icons nav-icon min-w-[24px]">receipt_long</span>
                         <span class="nav-text">Logs</span>
                     </a>
@@ -103,11 +119,9 @@
     <main class="main-content relative h-screen flex-1 overflow-hidden bg-white">
         @RenderBody()
     </main>
-    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
-    <script src="~/Scripts/angular.min.js"></script>
     <script src="~/Scripts/HolyScripts/Module.js?v=20260407b"></script>
     <script src="~/Scripts/HolyScripts/Service.js?v=20260407b"></script>
-    <script src="~/Scripts/HolyScripts/Controller.js?v=20260407b"></script>
+    <script src="~/Scripts/HolyScripts/Controller.js?v=20260428c"></script>
 
 </body>
 </html>

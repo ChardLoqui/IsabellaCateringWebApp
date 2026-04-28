@@ -79,7 +79,7 @@ button,
 input,
 select,
 textarea {
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [ng-cloak] {
@@ -109,7 +109,7 @@ textarea {
 
 .sidebar {
     width: 80px;
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: #fcd1e5;
     font-family: var(--font-body);
 }
@@ -120,7 +120,7 @@ textarea {
 
 .main-content {
     margin-left: 80px;
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background:
         radial-gradient(circle at top right, rgba(252, 211, 229, 0.55), transparent 24%),
         linear-gradient(180deg, #fffdfd 0%, #fff7fb 100%);
@@ -136,7 +136,7 @@ textarea {
     margin-left: 0;
     overflow: hidden;
     white-space: nowrap;
-    transition: opacity 0.3s ease, width 0.3s ease, margin-left 0.3s ease;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: var(--font-heading);
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -148,10 +148,23 @@ textarea {
     margin-left: 1rem;
 }
 
+.nav-section-label {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar:hover .nav-section-label {
+    opacity: 1;
+    width: auto;
+}
+
 .main-layout .sidebar-logo img,
 .management-layout .sidebar-logo img {
     width: 130px;
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .main-layout .sidebar:hover .sidebar-logo img,
@@ -161,7 +174,7 @@ textarea {
 
 .navbar-layout .sidebar-logo img {
     width: 100px;
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .navbar-layout .sidebar:hover .sidebar-logo img {
@@ -172,7 +185,7 @@ textarea {
     opacity: 0;
     width: 0;
     overflow: hidden;
-    transition: opacity 0.3s ease, width 0.3s ease;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar:hover .profile-info {
@@ -206,7 +219,7 @@ textarea {
         width: 4px;
         background: #ff69b4;
         transform: scaleY(0);
-        transition: transform 0.3s ease;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .nav-item:hover::before {
@@ -1172,6 +1185,26 @@ textarea {
 .create-booking-section {
     border-bottom: 1px solid #f3d7e5;
     padding-bottom: 1rem;
+}
+
+.booking-section-header-refined {
+    grid-column: 1 / -1;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(to right, #fff1f7, transparent);
+    border-left: 4px solid #ec4899;
+    display: flex;
+    align-items: center;
+}
+
+.booking-section-header-refined h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #9d174d;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .create-booking-summary {
