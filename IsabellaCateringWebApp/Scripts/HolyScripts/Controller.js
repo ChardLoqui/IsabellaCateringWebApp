@@ -2425,8 +2425,8 @@
                 small: { fontSize: 9, italics: true }
             }
         };
-
-        pdfMake.createPdf(dd).download('file.pdf');
+        const fileName = ($scope.client.eventName?.replaceAll(' ', '_') || 'Client') + '-Booking_Summary';
+        pdfMake.createPdf(dd).download(`${fileName}-Booking_Summary`);
     }
 
     
