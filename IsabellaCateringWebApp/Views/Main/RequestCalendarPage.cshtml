@@ -1,97 +1,341 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_LogInLayout.cshtml";
-    ViewBag.Title = "Request Booking";
+    ViewBag.Title = "Request Booking - Isabella Catering";
 }
 
-<section class="request-booking-page min-h-screen"
-         ng-init="initializeRequestCalendar()">
-    <div class="relative z-10 h-full overflow-y-auto">
-        <div class="p-8 mb-5">
-            <h1 class="mb-6 text-2xl font-semibold text-black">Request a Booking</h1>
-            <p class="mb-6 text-sm font-medium text-rose-700">
-                Select an available date (starting 4 days from today) to request your booking. Dates with 3 or more bookings are disabled.
-            </p>
+<div class="min-h-screen bg-gray-50 font-['Montserrat'] text-gray-900" ng-init="initializeRequestCalendar()">
+    
+    <!-- Navigation (Consistent with Landing Page) -->
+    <header class="sticky top-0 z-[100] bg-pink-300 backdrop-blur-xl">
+        <nav class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-20 h-20 flex items-center justify-center shadow-pink-600/20">
+                    <img src="@Url.Content("~/Content/images/isabella.png")" alt="Logo" />
+                </div>
+                <div>
+                    <span class="text-2xl font-black text-gray-900 tracking-tighter">ISABELLA<span class="text-pink-600">.</span></span>
+                    <p class="text-[10px] font-bold text-white uppercase tracking-widest -mt-1">Catering & Events</p>
+                </div>
+            </div>
 
-            <section class="panel-surface management-surface request-calendar-panel relative rounded-lg max-w-2xl">
-                <div ng-show="requestCalendarLoading" class="management-loader-overlay">
-                    <div class="management-loader">
-                        <span class="management-loader-spinner" aria-hidden="true"></span>
-                        <span>Loading calendar</span>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="@Url.Action("LandingPage", "Main")#packages" class="text-sm font-bold text-black hover:text-pink-600 transition-colors uppercase tracking-widest">Packages</a>
+                <a href="@Url.Action("LandingPage", "Main")#regular" class="text-sm font-bold text-black hover:text-pink-600 transition-colors uppercase tracking-widest">Regular</a>
+                <a href="@Url.Action("LandingPage", "Main")#kiddie" class="text-sm font-bold text-black hover:text-pink-600 transition-colors uppercase tracking-widest">Kiddie</a>
+                <a href="@Url.Action("LandingPage", "Main")#debut" class="text-sm font-bold text-black hover:text-pink-600 transition-colors uppercase tracking-widest">Debut</a>
+            </div>
+
+            <a href="@Url.Action("LoginPage", "Main")" class="hidden md:flex items-center gap-2 px-6 py-3 bg-pink-600 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg shadow-pink-200">
+                <span class="material-symbols-outlined text-xl">login</span>
+                Login
+            </a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <div class="relative py-24 lg:py-32 overflow-hidden bg-pink-500/70">
+        <div class="absolute inset-0 z-0">
+            <img src="@Url.Content("~/Content/images/landingbg.jpg")" alt="Catering Background" class="w-full h-full object-cover opacity-40">
+
+            <div class="absolute inset-0"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-6 text-center">
+            <div class="flex items-center justify-center gap-3 mb-6 animate-fade-in">
+                <span class="h-px w-8 bg-pink-600"></span> <span class="text-white font-black uppercase tracking-[0.3em] text-[10px] [text-shadow:_0_1px_4px_rgba(0,0,0,0.2)]">Reservation Portal</span>
+                <span class="h-px w-8 bg-pink-600"></span>
+            </div>
+
+            <h1 class="text-5xl lg:text-7xl font-black text-white mb-8 font-['Josefin_Sans'] tracking-tight leading-tight [text-shadow:_0_4px_12px_rgba(0,0,0,0.1)]">
+                Secure Your Special Date
+            </h1>
+
+            <p class="text-gray-900 text-lg max-w-2xl mx-auto font-bold leading-relaxed">
+                Choose from our available slots and let us help you create a celebration that will be remembered for years to come.
+            </p>
+        </div>
+    </div>
+
+    <main class="max-w-5xl mx-auto px-6 -mt-16 pb-32 relative z-20">
+        <!-- Main Calendar Card -->
+        <section class="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden border border-gray-100 backdrop-blur-sm">
+            
+            <!-- Notice Banner -->
+            <div class="bg-pink-50/50 border-b border-pink-100 px-8 py-5 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 shrink-0">
+                        <span class="material-symbols-outlined text-xl">info</span>
+                    </div>
+                    <div>
+                        <p class="text-pink-900 text-sm font-bold">Booking Window</p>
+                        <p class="text-pink-600/70 text-xs font-medium">Please select a date at least 4 days in advance.</p>
                     </div>
                 </div>
+                <div class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-pink-100 text-[10px] font-black text-pink-600 uppercase tracking-widest">
+                    <span class="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></span>
+                    Live Availability
+                </div>
+            </div>
 
-                <div class="border-b border-rose-100 px-3 py-4 lg:px-4">
-                    <div class="flex flex-col gap-4">
-                        <div class="booking-month-nav flex items-center justify-center">
+            <div class="relative min-h-[500px]">
+                <!-- Loading Overlay -->
+                <div ng-show="requestCalendarLoading" class="absolute inset-0 z-50 bg-white/90 backdrop-blur-md flex flex-col items-center justify-center gap-4">
+                    <div class="relative">
+                        <div class="w-16 h-16 border-4 border-pink-100 border-t-pink-600 rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-pink-600 animate-pulse">calendar_today</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">Synchronizing Calendar</p>
+                </div>
+
+                <!-- Calendar Navigation -->
+                <div class="p-8 lg:p-10 border-b border-gray-50">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                        <div class="flex items-center gap-8 justify-center lg:justify-start">
                             <button id="requestPrevMonthBtn"
                                     type="button"
                                     ng-click="navigateToPreviousMonth()"
                                     ng-disabled="!canNavigateToPrevMonth()"
-                                    class="booking-nav-btn">
-                                <span class="material-icons text-[20px]">chevron_left</span>
+                                    class="w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-50 text-gray-900 hover:bg-pink-600 hover:text-white transition-all disabled:opacity-20 disabled:hover:bg-gray-50 disabled:hover:text-gray-900 shadow-sm border border-gray-100 active:scale-90">
+                                <span class="material-symbols-outlined">chevron_left</span>
                             </button>
 
-                            <span id="requestCurrentMonthLabel" class="booking-month-label text-lg font-semibold capitalize text-zinc-950 sm:text-xl px-6 min-w-[200px] text-center">
-                                Loading...
-                            </span>
+                            <div class="text-center min-w-[240px]">
+                                <span id="requestCurrentMonthLabel" class="text-3xl font-black text-gray-900 font-['Josefin_Sans'] uppercase tracking-tighter">
+                                    Loading...
+                                </span>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mt-1">Select your month</p>
+                            </div>
 
                             <button id="requestNextMonthBtn"
                                     type="button"
                                     ng-click="navigateToNextMonth()"
                                     ng-disabled="!canNavigateToNextMonth()"
-                                    class="booking-nav-btn">
-                                <span class="material-icons text-[20px]">chevron_right</span>
+                                    class="w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-50 text-gray-900 hover:bg-pink-600 hover:text-white transition-all disabled:opacity-20 disabled:hover:bg-gray-50 disabled:hover:text-gray-900 shadow-sm border border-gray-100 active:scale-90">
+                                <span class="material-symbols-outlined">chevron_right</span>
                             </button>
                         </div>
 
-                        <div class="flex justify-center">
-                            <button id="submitRequestBtn"
-                                    type="button"
-                                    ng-click="submitBookingRequest()"
-                                    ng-disabled="!isRequestDateSelected()"
-                                    class="booking-primary-action inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold">
-                                <span class="material-icons text-[18px]">event_available</span>
-                                <span>Request This Date</span>
-                            </button>
-                        </div>
+                        <button id="submitRequestBtn"
+                                type="button"
+                                ng-click="submitBookingRequest()"
+                                ng-disabled="!isRequestDateSelected()"
+                                class="flex items-center justify-center gap-4 px-10 py-5 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-pink-600 transition-all disabled:opacity-30 disabled:hover:bg-gray-900 shadow-2xl shadow-gray-200/50 active:scale-95 group">
+                            <span class="material-symbols-outlined group-hover:rotate-12 transition-transform">event_available</span>
+                            <span>Continue Booking</span>
+                        </button>
                     </div>
                 </div>
 
-                <div class="px-4 py-5" ng-class="{'management-content-muted': requestCalendarLoading}">
-                    <div class="grid grid-cols-7 gap-1 pb-3 text-center text-[11px] font-semibold text-zinc-500">
-                        <span class="py-1">Sun</span>
-                        <span class="py-1">Mon</span>
-                        <span class="py-1">Tue</span>
-                        <span class="py-1">Wed</span>
-                        <span class="py-1">Thu</span>
-                        <span class="py-1">Fri</span>
-                        <span class="py-1">Sat</span>
+                <!-- Calendar Grid -->
+                <div class="p-8 lg:p-12" ng-class="{'opacity-20 pointer-events-none blur-[2px]': requestCalendarLoading}">
+                    <!-- Week Days -->
+                    <div class="grid grid-cols-7 gap-4 mb-8">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">Sun</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">Mon</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">Tue</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">Wed</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">Thu</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">Fri</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">Sat</span>
                     </div>
 
-                    <div id="request-datepicker-container" class="mt-1">
-                        <div id="request-days-container" class="grid grid-cols-7 gap-1">
-                            <!-- Calendar days will be rendered here -->
+                    <!-- Days Container -->
+                    <div id="request-datepicker-container">
+                        <div id="request-days-container" class="grid grid-cols-7 gap-3 sm:gap-6">
+                            <!-- Dynamically injected by Controller.js -->
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="flex flex-wrap gap-3 justify-center text-xs">
-                            <div class="flex items-center gap-1.5">
-                                <div class="w-6 h-6 rounded-md border-2 border-[#D6418B] bg-white"></div>
-                                <span class="text-gray-600">Available</span>
+                    <!-- Legend -->
+                    <div class="mt-16 pt-10 border-t border-gray-50">
+                        <div class="flex flex-wrap gap-10 justify-center">
+                            <div class="flex items-center gap-4 group">
+                                <div class="w-6 h-6 rounded-lg border-2 border-pink-100 bg-white group-hover:border-pink-300 transition-colors"></div>
+                                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Available</span>
                             </div>
-                            <div class="flex items-center gap-1.5">
-                                <div class="w-6 h-6 rounded-md bg-[#EC4899]"></div>
-                                <span class="text-gray-600">Selected</span>
+                            <div class="flex items-center gap-4">
+                                <div class="w-6 h-6 rounded-lg bg-pink-600 shadow-lg shadow-pink-600/30"></div>
+                                <span class="text-[10px] font-black text-gray-900 uppercase tracking-widest">Your Selection</span>
                             </div>
-                            <div class="flex items-center gap-1.5">
-                                <div class="w-6 h-6 rounded-md bg-gray-100 border border-gray-200"></div>
-                                <span class="text-gray-600">Unavailable</span>
+                            <div class="flex items-center gap-4">
+                                <div class="w-6 h-6 rounded-lg bg-gray-50 border border-gray-100"></div>
+                                <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Fully Booked</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
+
+        <!-- Help/Info Section -->
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="group bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500">
+                <div class="w-16 h-16 bg-pink-50 text-pink-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">schedule</span>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 mb-4 font-['Josefin_Sans'] tracking-tight uppercase">Booking Policy</h3>
+                <p class="text-gray-500 text-sm font-medium leading-relaxed">
+                    To ensure the highest quality of service and the freshest ingredients, we require all reservations to be finalized at least 4 days prior to your event.
+                </p>
+            </div>
+            <div class="group bg-gray-900 p-10 rounded-[2.5rem] border border-gray-800 shadow-sm hover:shadow-2xl transition-all duration-500">
+                <div class="w-16 h-16 bg-white/10 text-white rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">support_agent</span>
+                </div>
+                <h3 class="text-2xl font-black text-white mb-4 font-['Josefin_Sans'] tracking-tight uppercase">Assistance</h3>
+                <p class="text-gray-400 text-sm font-medium leading-relaxed">
+                    Having trouble finding a date or have specific event requirements? Our event specialists are just a call away to help you coordinate your perfect menu.
+                </p>
+            </div>
         </div>
-    </div>
-</section>
+    </main>
+
+    <!-- Footer (Consistent with Landing Page) -->
+    <footer class="bg-pink-200 text-white py-24">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20">
+            <div>
+                <div class="flex items-center gap-6 mb-10">
+                    <div class="w-28 h-28 flex items-center justify-center shadow-pink-600/20">
+                        <img src="@Url.Content("~/Content/images/isabella.png")" alt="Alternate Text" class="w-full h-full object-contain" />
+                    </div>
+                    <div>
+                        <span class="text-4xl font-black text-gray-900 tracking-tighter">ISABELLA<span class="text-pink-600">.</span></span>
+                        <p class="text-xs font-bold text-pink-600 uppercase tracking-[0.25em] -mt-1">Catering & Events</p>
+                    </div>
+                </div>
+                <p class="text-black font-medium text-xl leading-relaxed mb-12 max-w-lg">
+                    Creating timeless memories through exquisite food and impeccable service. Your celebration deserves nothing less than perfection.
+                </p>
+                <div class="flex gap-6">
+                    <a href="https://www.facebook.com/profile.php?id=100054473649178" target="_blank"
+                       class="w-14 h-14 rounded-full bg-pink-600 flex items-center justify-center hover:bg-pink-700 transition-all text-white shadow-lg shadow-pink-600/30">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-40 justify-between">
+                <div class="max-w-md">
+                    <h4 class="text-lg font-bold mb-8 uppercase tracking-widest text-pink-500">Contact Us</h4>
+                    <ul class="space-y-6 text-black font-medium">
+                        <li class="flex items-start gap-4">
+                            <div class="flex items-center justify-center shrink-0"
+                                 style="width: 40px; height: 40px; background-color: #db2777; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(219, 39, 119, 0.3);">
+                                <span class="material-symbols-outlined" style="color: white !important;">location_on</span>
+                            </div>
+                            <span class="leading-relaxed text-sm pt-1">Ph 9A, Blk 48, L35 & 37, Savinhill St., Governor’s Hills Subdivision, General Trias, Cavite, Philippines</span>
+                        </li>
+
+                        <li class="flex items-start gap-4">
+                            <div class="flex items-center justify-center shrink-0"
+                                 style="width: 40px; height: 40px; background-color: #db2777; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(219, 39, 119, 0.3);">
+                                <span class="material-symbols-outlined" style="color: white !important;">call</span>
+                            </div>
+                            <div class="text-sm pt-1">
+                                <span class="block font-bold">Tel: (046) 482-3087</span>
+                                <span class="block mt-1 font-black" style="color: #db2777;">Mob: 0917-711-1401</span>
+                                <span class="block">0926-006-9234</span>
+                            </div>
+                        </li>
+
+                        <li class="flex items-center gap-4">
+                            <div class="flex items-center justify-center shrink-0"
+                                 style="width: 40px; height: 40px; background-color: #db2777; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(219, 39, 119, 0.3);">
+                                <span class="material-symbols-outlined" style="color: white !important;">mail</span>
+                            </div>
+                            <span class="text-sm font-bold">isabellacateringandevent@gmail.com</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="flex flex-col items-start">
+                    <h4 class="text-pink-600 font-bold uppercase tracking-widest mb-10">Quick Links</h4>
+                    <ul class="space-y-6 text-gray-900 font-black">
+                        <li><a href="#top" class="hover:text-pink-600 transition-all flex items-center gap-2">Home</a></li>
+                        <li><a href="#packages" class="hover:text-pink-600 transition-all flex items-center gap-2">Packages</a></li>
+                        <li><a href="@Url.Action("LoginPage", "Main")" class="hover:text-pink-600 transition-all flex items-center gap-2">Login</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 pt-20 mt-20 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p class="text-gray-500 font-medium">© 2026 Isabella Catering. All rights reserved.</p>
+            <p class="text-gray-500 font-medium flex items-center gap-2">
+                Made with <span class="material-symbols-outlined text-pink-600 text-sm">favorite</span> for special moments.
+            </p>
+        </div>
+    </footer>
+
+<style>
+    .request-calendar-day {
+        position: relative;
+        aspect-ratio: 1/1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .request-date-cell {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 64px;
+        max-height: 64px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        position: relative;
+    }
+
+    /* Selected state animation */
+    .selected-request-day .request-date-cell {
+        background: #DB2777 !important;
+        color: white !important;
+        transform: scale(1.1) translateY(-4px) !important;
+        box-shadow: 0 20px 25px -5px rgba(219, 39, 119, 0.4), 0 10px 10px -5px rgba(219, 39, 119, 0.1) !important;
+        z-index: 10;
+    }
+
+    .selected-request-day .request-date-cell::after {
+        content: "";
+        position: absolute;
+        bottom: 8px;
+        width: 4px;
+        height: 4px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    .request-calendar-day:not(.selected-request-day) .request-date-cell:not(.bg-gray-50):hover {
+        background-color: #FDF2F8 !important;
+        color: #DB2777 !important;
+        border-color: #FBCFE8 !important;
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+
+    .request-empty-day {
+        aspect-ratio: 1/1;
+    }
+
+    .request-empty-day div {
+        color: #F3F4F6 !important;
+        font-weight: 500 !important;
+    }
+
+    @@keyframes fade-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.8s ease-out forwards;
+    }
+</style>
+
