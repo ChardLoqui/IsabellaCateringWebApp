@@ -31,7 +31,7 @@ namespace IsabellaCateringWebApp.Controllers
      
 
         //===================================================================Pages Start==================================================================
-        public ActionResult HomePage()
+        public ActionResult TermsAndConditionsTabPage()
         {
             return View();
         }
@@ -2264,6 +2264,176 @@ Isabella Catering and Events";
             }
         }
         //===================================================================Account Page End==================================================================
+
+        //===================================================================Terms Accepted Start==================================================================
+
+        // GET: Get Terms Acceptance Status
+        [HttpGet]
+        public JsonResult GetTermsAcceptanceStatus()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    // Get the current client ID from session
+                    int clientId = Convert.ToInt32(Session["currentLog"] ?? 0);
+
+                    if (clientId == 0)
+                    {
+                        Logs(
+                            "WARN",
+                            "Terms Acceptance:",
+                            "Client ID not found in session");
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Client not found"
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    var client = db.clients_tbl
+                                .Where(c => c.clientID == clientId)
+                                .FirstOrDefault();
+
+                    if (client != null)
+                    {
+                        Logs(
+                            "INFO",
+                            "Terms Acceptance:",
+                            "Terms status retrieved for client ID: " + clientId);
+
+                        return Json(new
+                        {
+                            success = true,
+                            termsAccepted = client.termsAccepted == 1,
+                            termsAcceptedDate = client.dateUpdated.ToString("yyyy-MM-dd HH:mm:ss")
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        Logs(
+                            "WARN",
+                            "Terms Acceptance:",
+                            "Client not found with ID: " + clientId);
+
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Client not found"
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "ERROR",
+                    "Terms Acceptance:",
+                    "Error retrieving terms acceptance status: " + ex.Message);
+
+                return Json(new
+                {
+                    success = false,
+                    message = "An error occurred while retrieving terms acceptance status"
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        // POST: Accept Terms and Conditions
+        [HttpPost]
+        public JsonResult AcceptTermsAndConditions()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    // Get the current client ID from session
+                    int clientId = Convert.ToInt32(Session["currentLog"] ?? 0);
+
+                    if (clientId == 0)
+                    {
+                        Logs(
+                            "WARN",
+                            "Terms Acceptance:",
+                            "Client ID not found in session");
+
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Client not found"
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+
+                    var client = db.clients_tbl
+                                .Where(c => c.clientID == clientId)
+                                .FirstOrDefault();
+
+                    if (client != null)
+                    {
+                        // Check if already accepted
+                        if (client.termsAccepted == 1)
+                        {
+                            Logs(
+                                "WARN",
+                                "Terms Acceptance:",
+                                "Client ID " + clientId + " attempted to re-accept terms");
+
+                            return Json(new
+                            {
+                                success = false,
+                                message = "Terms and conditions have already been accepted"
+                            }, JsonRequestBehavior.AllowGet);
+                        }
+
+                        // Update terms acceptance
+                        client.termsAccepted = 1;
+                        client.termsAcceptedDate = DateTime.Now;
+                        client.dateUpdated = DateTime.Now;
+
+                        db.SaveChanges();
+
+                        Logs(
+                            "INFO",
+                            "Terms Acceptance:",
+                            "Terms accepted by client ID: " + clientId + " (" + client.cEmail + ")");
+
+                        return Json(new
+                        {
+                            success = true,
+                            message = "Terms and conditions accepted successfully"
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+                    else
+                    {
+                        Logs(
+                            "WARN",
+                            "Terms Acceptance:",
+                            "Client not found with ID: " + clientId);
+
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Client not found"
+                        }, JsonRequestBehavior.AllowGet);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs(
+                    "ERROR",
+                    "Terms Acceptance:",
+                    "Error accepting terms and conditions: " + ex.Message);
+
+                return Json(new
+                {
+                    success = false,
+                    message = "An error occurred while accepting terms and conditions"
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //===================================================================Terms Accepted End==================================================================
 
         //===================================================================Display Booking Start==================================================================
 

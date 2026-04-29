@@ -85,6 +85,9 @@
     $scope.redirectToCustomerViewPage = function () {
         window.location.href = "/Main/CustomerViewTabPage";
     }
+    $scope.redirectToTermsAndConditionsPage = function () {
+        window.location.href = "/Main/TermsAndConditionsTabPage";
+    }
     $scope.redirectToAdminViewPage = function () {
         window.location.href = "/Main/AdminViewTabPage";
     }
@@ -123,7 +126,7 @@
                 } else {
                     $scope.displayNavOptions = false;
                     $scope.navStateResolved = true;
-                    if (!isCurrentPage("CustomerViewTabPage")) {
+                    if (!isCurrentPage("CustomerViewTabPage") && !isCurrentPage("TermsAndConditionsTabPage")) {
                         $scope.redirectToCustomerViewPage();
                     }
                 }
@@ -510,7 +513,7 @@
                 const roles = { "1": "Admin", "2": "Staff", "3": "Customer" };
                 $scope.sessionInfo.role = roles[returnedData.data.permID] || "";
 
-                console.log("Logged in as User ID:", $scope.currentUserID);
+                //console.log("Logged in as User ID:", $scope.currentUserID);
             }
         }).catch(function (error) {
             console.error("Session fetch failed:", error);
@@ -1097,7 +1100,7 @@
                                 confirmButtonColor: '#EC4899',
                             });
                         }
-                        $scope.getBookingReqPage();
+                        $scope.getBookingRequestsForAcceptance();
                     });
             }
         }); 
@@ -1120,6 +1123,7 @@
                     });
                     $scope.bookingReqLoading = false;
                 }
+                $scope.getBookingRequestsForAcceptance();
             });
     }
 
@@ -1446,6 +1450,7 @@
                                 confirmButtonColor: '#EC4899'
                             });
                         }
+                        $scope.getBookingRequestsForAcceptance();
                     });
             }
         });
@@ -1694,6 +1699,133 @@
     }
 
     //======================================================== PASSWORD RESET END =======================================================
+
+    //======================================================== TERMS & CONDITION START =======================================================
+
+    $scope.termsLoading = false;
+    $scope.termsAccepted = false;
+    $scope.termsAcceptedDate = null;
+    $scope.submittingTerms = false;
+    $scope.formData = {
+        acceptTermsModel: false
+    };
+
+    // Load terms acceptance status
+    $scope.loadTermsAcceptance = function () {
+        $scope.termsLoading = true;
+
+        IsabellaCateringWebAppService.getTermsAcceptanceStatus()
+            .then(function (response) {
+                if (response.data.success) {
+                    $scope.termsAccepted = response.data.termsAccepted;
+                    if ($scope.termsAccepted) {
+                        $scope.termsAcceptedDate = new Date(response.data.dateUpdated);
+                    } else {
+                        if (!isCurrentPage("TermsAndConditionsTabPage")) {
+                            Swal.fire({
+                                title: 'Accept Terms & Conditions',
+                                text: 'Please read and accept the terms & conditions to proceed',
+                                icon: 'warning',
+                                confirmButtonColor: '#ec4899',
+                                confirmButtonText: 'Continue'
+                            }).then(function () {
+                                $scope.redirectToTermsAndConditionsPage();
+                            });
+                        }
+                    }
+                } else {
+                    showNotification('Error', response.data.message || 'Failed to load terms acceptance status', 'error');
+                }
+            })
+            .catch(function (error) {
+                console.error('Error loading terms acceptance:', error);
+                showNotification('Error', 'An error occurred while loading terms acceptance status', 'error');
+            })
+            .finally(function () {
+                $scope.termsLoading = false;
+            });
+    };
+
+    // Submit terms acceptance
+    $scope.submitTermsAcceptance = function () {
+        if (!$scope.formData.acceptTermsModel) {
+            showNotification('Warning', 'Please accept the terms and conditions to proceed', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Accept Terms & Conditions',
+            text: 'Are you sure you want to accept the terms and conditions? This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ec4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Accept',
+            cancelButtonText: 'Cancel'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                $scope.submittingTerms = true;
+
+                IsabellaCateringWebAppService.acceptTermsAndConditions()
+                    .then(function (response) {
+                        if (response.data.success) {
+                            $scope.termsAccepted = true;
+                            $scope.termsAcceptedDate = new Date();
+                            showNotification('Success', 'Terms and conditions accepted successfully', 'success');
+
+                            // Optional: Redirect after a delay
+                            // $timeout(function() {
+                            //     window.location.href = '/Dashboard';
+                            // }, 2000);
+                        } else {
+                            showNotification('Error', response.data.message || 'Failed to accept terms and conditions', 'error');
+                        }
+                    })
+                    .catch(function (error) {
+                        console.error('Error accepting terms:', error);
+                        showNotification('Error', 'An error occurred while accepting terms and conditions', 'error');
+                    })
+                    .finally(function () {
+                        $scope.submittingTerms = false;
+                    });
+            }
+        });
+    };
+
+    $scope.submitRequestTermsAcceptance = function () {
+        Swal.fire({
+            title: 'Accept Terms & Conditions',
+            text: 'Are you sure you want to accept the terms and conditions? This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ec4899',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Accept',
+            cancelButtonText: 'Cancel'
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                $scope.formData.acceptTermsModel = false;            }
+        });
+    };
+
+    // Helper function for notifications (adjust based on your notification system)
+    function showNotification(title, message, type) {
+        // Example using a custom notification system
+        // Replace with your actual notification implementation
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: title,
+                text: message,
+                icon: type,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#EC4899'
+            });
+        } else {
+            alert(title + ': ' + message);
+        }
+    }
+
+    //======================================================== TERMS & CONDITION END =======================================================
 
     //======================================================== CUSTOMER VIEW START =======================================================
 
@@ -2081,7 +2213,7 @@
             inputPlaceholder: 'Enter reason for rejection...',
             icon: 'info',
             showCancelButton: true,
-            confirmButtonColor: '#4b5563',
+            confirmButtonColor: '#ec4899',
             cancelButtonColor: '#6b7280',
             confirmButtonText: 'Reject Request',
             cancelButtonText: 'Close'
@@ -2880,7 +3012,8 @@
                 Swal.fire({
                     title: "Error",
                     text: bookingResponse.data.message || "Could not load calendar bookings.",
-                    icon: "error"
+                    icon: "error",
+                    confirmButtonColor: '#ec4899' 
                 });
                 return;
             }
@@ -3403,7 +3536,7 @@
 
     function updateSummaryChart() {
         var s = $scope.getSummary();
-        console.log("DEBUG: Chart is updating with data:", [s.initialUnpaid, s.initialOverdue, s.paymentUnpaid, s.paymentOverdue, s.excessUnpaid, s.excessOverdue]);
+        //console.log("DEBUG: Chart is updating with data:", [s.initialUnpaid, s.initialOverdue, s.paymentUnpaid, s.paymentOverdue, s.excessUnpaid, s.excessOverdue]);
 
         $scope.summaryChart.data = [
             s.initialUnpaid, s.initialOverdue,
@@ -3427,7 +3560,7 @@
         function () {
             var s = $scope.getSummary();
             // Log this to see if the numbers are actually changing from 0
-            console.log("Current Summary State:", s);
+            //console.log("Current Summary State:", s);
             return s.initialUnpaid + '|' + s.initialOverdue + '|' +
                 s.paymentUnpaid + '|' + s.paymentOverdue + '|' +
                 s.excessUnpaid + '|' + s.excessOverdue;
@@ -3987,23 +4120,6 @@
             }); return;
         }
 
-        //var group = $scope.groupedPayments.find(function (g) { return g.bookingID === $scope.newPayment.bookingID; });
-        //if (group) {
-        //    var types = group.payments.map(function (p) { return p.paymentType; });
-        //    if ($scope.newPayment.paymentType === 'Down Payment' && types.indexOf('Down Payment') !== -1) {
-        //        Swal.fire({
-        //            title: 'Already Exists', text: 'A Down Payment already exists.', icon: 'warning',
-        //            confirmButtonColor: "#EC4899"
-        //        }); return;
-        //    }
-        //    if ($scope.newPayment.paymentType === 'Full Payment' && types.indexOf('Full Payment') !== -1) {
-        //        Swal.fire({
-        //            title: 'Already Exists', text: 'A Full Payment already exists.', icon: 'warning',
-        //            confirmButtonColor: "#EC4899"
-        //        }); return;
-        //    }
-        //}
-
         $scope.addPaymentLoading = true;
         IsabellaCateringWebAppService.addPaymentService({
             bookingID: $scope.newPayment.bookingID,
@@ -4098,7 +4214,7 @@
                 $scope.closeEditPaymentModal();
                 $scope.getPaymentData();
             } else {
-                Swal.fire({ title: 'Error', text: res.data.message, icon: 'error' });
+                Swal.fire({ title: 'Error', text: res.data.message, icon: 'error', confirmButtonColor: '#ec4899' });
                 $scope.editPaymentLoading = false;
             }
         }).catch(function () {
@@ -4833,17 +4949,21 @@
                     
                     var due = Number(p.amountDue) || 0;
                     var amount = Number(p.amount) || 0;
+                    var remBalance = Number(p.remainingBalance) || 0;
 
                     if (p.transactionNum > maxTransactionNum) {
                         maxTransactionNum = p.transactionNum
-                        totalRemBalance = p.remainingBalance
                     }
                     if (p.paymentType == 'Initial') {
-                        totalDue += due
+                        totalRemBalance = remBalance;
+                        totalDue = due
+                        remBalance = due
                     } else if (p.paymentType == 'Additional') {
-                        totalDue += amount
+                        if (p.paymentStatus == 'Complete')
+                            totalDue += amount
                     } else if (p.paymentType == 'Payment') {
-                        totalPaid += amount
+                        if (p.paymentStatus == 'Complete')
+                            totalPaid += amount
                     }
 
                     var rowStyle = i % 2 === 0 ? 'tableRow' : 'tableRowAlt';
@@ -4851,7 +4971,7 @@
                         { text: p.paymentType, style: rowStyle, alignment: 'center' },
                         { text: formatPHP(due), style: rowStyle, alignment: 'center' },
                         { text: formatPHP(amount), style: rowStyle, alignment: 'center' },
-                        { text: formatPHP(totalRemBalance), style: rowStyle, alignment: 'center' },
+                        { text: formatPHP(remBalance), style: rowStyle, alignment: 'center' },
                         { text: formatDate(p.dueDate), style: rowStyle, alignment: 'center' },
                         { text: p.paymentStatus, style: statusStyle(p.paymentStatus), alignment: 'center' },
                     ]);
@@ -5709,6 +5829,17 @@
 
     $scope.requestBooking = function () {
         if (!$scope.validateBookingDetailsStep(true, true)) {
+            return;
+        }
+
+        if ($scope.formData.acceptTermsModel != true) {
+            Swal.fire({
+                title: 'Accept Terms & Conditions',
+                text: "Please read and accept the terms & conditions to proceed",
+                icon: 'warning',
+                confirmButtonColor: '#ec4899',
+                confirmButtonText: 'Continue'
+            });
             return;
         }
 
@@ -6673,17 +6804,17 @@
         // If Set Time changed, check against all others
         if (changedField === 'Set Time' && set) {
             if (cerem && set >= cerem) {
-                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Ceremony Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Ceremony Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('set');
                 return;
             }
             if (event && set >= event) {
-                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Event Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Event Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('set');
                 return;
             }
             if (meal && set >= meal) {
-                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Meal Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Set Time must be before Meal Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('set');
                 return;
             }
@@ -6692,17 +6823,17 @@
         // Ceremony Time validation
         if (changedField === 'Ceremony Time' && cerem) {
             if (set && cerem <= set) {
-                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be after Set Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be after Set Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('cerem');
                 return;
             }
             if (event && cerem >= event) {
-                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be before Event Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be before Event Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('cerem');
                 return;
             }
             if (meal && cerem >= meal) {
-                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be before Meal Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Ceremony Time must be before Meal Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('cerem');
                 return;
             }
@@ -6711,17 +6842,17 @@
         // Event Time validation
         if (changedField === 'Event Time' && event) {
             if (set && event <= set) {
-                Swal.fire({ title: 'Invalid Time', text: "Event Time must be after Set Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Event Time must be after Set Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('event');
                 return;
             }
             if (cerem && event <= cerem) {
-                Swal.fire({ title: 'Invalid Time', text: "Event Time must be after Ceremony Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Event Time must be after Ceremony Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('event');
                 return;
             }
             if (meal && event >= meal) {
-                Swal.fire({ title: 'Invalid Time', text: "Event Time must be before Meal Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Event Time must be before Meal Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('event');
                 return;
             }
@@ -6730,17 +6861,17 @@
         // Meal Time validation
         if (changedField === 'Meal Time' && meal) {
             if (set && meal <= set) {
-                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Set Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Set Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('meal');
                 return;
             }
             if (cerem && meal <= cerem) {
-                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Ceremony Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Ceremony Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('meal');
                 return;
             }
             if (event && meal <= event) {
-                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Event Time.", icon: 'warning' });
+                Swal.fire({ title: 'Invalid Time', text: "Meal Time must be after Event Time.", icon: 'warning', confirmButtonColor: '#ec4899' });
                 clearTime('meal');
                 return;
             }

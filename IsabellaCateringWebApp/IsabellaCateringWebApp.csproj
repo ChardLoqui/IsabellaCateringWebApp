@@ -292,12 +292,12 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
-    <Content Include="Content\images\img1.jpg" />
-    <Content Include="Content\images\img2.jpg" />
-    <Content Include="Content\images\img3.jpg" />
     <Content Include="Content\images\img4.jpg" />
+    <Content Include="Content\images\img2.jpg" />
     <Content Include="Content\images\img5.jpg" />
+    <Content Include="Content\images\img1.jpg" />
     <Content Include="Content\images\isabellaLogo.jpg" />
+    <Content Include="Content\images\img3.jpg" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -1138,6 +1138,7 @@
     <Content Include="Views\Main\RequestCalendarPage.cshtml" />
     <Content Include="Views\Main\RequestAddBookingPage.cshtml" />
     <Content Include="Views\Main\BookingRequestTabPage.cshtml" />
+    <Content Include="Views\Main\TermsAndConditionsTabPage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

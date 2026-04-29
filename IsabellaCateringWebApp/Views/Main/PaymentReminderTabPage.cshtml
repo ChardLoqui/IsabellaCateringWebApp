@@ -494,7 +494,7 @@
                                         ng-class="{ 'text-red-700': group.overallStatus === 'Unpaid' }">
                                         <div class="flex flex-col gap-1">
                                             <span>{{ group.eventName }}</span>
-                                            <div class="flex gap-1" ng-if="group.unpaidCount > 0 || group.partialCount > 0">
+                                            <div class="flex gap-1 flex-col" ng-if="group.unpaidCount > 0 || group.partialCount > 0">
                                                 <span ng-if="group.unpaidCount > 0"
                                                       class="ml-1 px-1.5 py-0.4 bg-red-600 text-white text-[10px] rounded-full font-bold">
                                                     {{ group.unpaidCount }} Unpaid

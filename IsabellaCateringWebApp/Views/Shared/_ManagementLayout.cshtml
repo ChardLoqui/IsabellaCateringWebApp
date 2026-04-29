@@ -213,6 +213,15 @@
                             <span class="nav-text">Event Progress</span>
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="group flex items-center px-6 py-3 transition-all duration-200
+                    @(currentAction == "TermsAndConditionPage" && currentController == "Main" ? "bg-pink-100 text-pink-600 border-r-4 border-pink-500 font-bold" : "text-black font-medium")"
+                           href="@Url.Action("TermsAndConditionsTabPage", "Main")">
+                            <span class="material-symbols-outlined nav-icon min-w-[24px]">policy</span>
+                            <span class="nav-text">Terms & Condition</span>
+                        </a>
+                    </li>
                 }
             </ul>
         </nav>

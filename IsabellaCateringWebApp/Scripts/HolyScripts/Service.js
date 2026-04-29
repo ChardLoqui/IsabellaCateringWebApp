@@ -362,5 +362,23 @@
     this.getEventPackagesService = function () {
         return $http.get("/Main/GetEventPackages");
     }
+
+    this.getTermsAcceptanceStatus = function () {
+        return $http({
+            method: 'GET',
+            url: '/Main/GetTermsAcceptanceStatus'
+        });
+    };
+
+    // Accept terms and conditions
+    this.acceptTermsAndConditions = function () {
+        return $http({
+            method: 'POST',
+            url: '/Main/AcceptTermsAndConditions',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+    };
 });
 

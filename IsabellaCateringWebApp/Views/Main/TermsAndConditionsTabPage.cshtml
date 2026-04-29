@@ -1,0 +1,239 @@
+﻿@{
+    Layout = "~/Views/Shared/_ManagementLayout.cshtml";
+    ViewBag.Title = "Terms & Condition";
+}
+
+<section class="terms-condition-page min-h-screen" ng-init="authenticateLoginCredentials(); loadTermsAcceptance()">
+    <div class="relative z-10 h-full overflow-y-auto">
+        <div class="p-8 mb-5">
+            <h1 class="mb-6 text-2xl font-semibold text-black">Terms & Conditions</h1>
+
+            <section class="panel-surface management-surface terms-panel relative rounded-lg">
+                <div ng-show="termsLoading" class="management-loader-overlay">
+                    <div class="management-loader">
+                        <span class="management-loader-spinner" aria-hidden="true"></span>
+                        <span>Loading terms and conditions</span>
+                    </div>
+                </div>
+
+                <div class="px-6 py-6 lg:px-8 lg:py-8" ng-class="{'management-content-muted': termsLoading}">
+
+                    <!-- Terms Content -->
+                    <div class="terms-content mb-8 max-h-[600px] overflow-y-auto rounded-lg border border-rose-100 bg-white p-6">
+
+                        <div class="mb-6 rounded-lg bg-rose-50 p-4">
+                            <p class="text-sm font-semibold text-rose-800">
+                                <span class="material-icons text-[18px] align-middle mr-1">info</span>
+                                Important Notice: Slot Reservation is moveable and transferrable but not refundable if the client terminates the contract.
+                            </p>
+                        </div>
+
+                        <h2 class="mb-4 text-xl font-bold text-zinc-900">EVENT TERMS AND MISCELLANEOUS PROVISIONS</h2>
+
+                        <!-- 1.2 Private Parking -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.2 Private Parking</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                Customer agrees to provide parking for the event. The parking area must allow clearance for at least two (2) vehicles.
+                                If private parking is not possible, the Caterer may opt for the parking areas within the vicinity of the venue.
+                                Any fee accumulated by the parking of the said vehicles would be chargeable to the Customer.
+                            </p>
+                        </div>
+
+                        <!-- 1.3 Service Time -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.3 Service Time</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                For event with venue and styling this requires 5-6 Hours ingress and 3-4 hours egress then for basic catering
+                                this requires 4 hours ingress and 2-3 hours egress. Caterer's service time for the event will last four (4) hours.
+                                This does not include the preparation and dismantling of the catering set-up. The Caterer shall charge 5% of the
+                                total contract price per hour that exceeds the aforementioned catering time and this includes for overtime of catering
+                                and sound system only. Separate overtime for Photo and Video Team, Host or Magician and Coordinator Team for Debut and Wedding.
+                            </p>
+                        </div>
+
+                        <!-- 1.4 Verification and Number of Attendees -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.4 Verification and Number of Attendees</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                It is agreed that the maximum meal guaranteed would be good for number of pax stated above. It is furthermore agreed
+                                that the Caterer would not prepare more than the said guarantee. Should the actual attendees exceed the said quantity
+                                the caterer will charge per head depends on the package.
+                            </p>
+                        </div>
+
+                        <!-- 1.5 Change of Event Date and Venue -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.5 Change of Event Date and Venue</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                Caterer will apply the entire balance of Customer's deposit towards another event subject to availability.
+                            </p>
+                        </div>
+
+                        <!-- 1.6 Caterers' Commitment -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.6 Caterers' Commitment</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                Unless otherwise prevented by possible fiascos either on the client side or the venue's administration,
+                                the Caterer shall have the full set-up as stipulated in this contract, completed thirty (30) minutes before
+                                the specified time herewith of the event.
+                            </p>
+                        </div>
+
+                        <!-- 1.7 Cancellation -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.7 Cancellation</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700 mb-3">
+                                The Slot Reservation is non-refundable but it is transferrable and moveable. The following terms should be
+                                observed should cancellation occur:
+                            </p>
+                            <ul class="list-disc pl-6 space-y-2 text-sm text-zinc-700">
+                                <li>If the event is cancelled more than one week (1) prior to event date, 20% of the contract price will be retained and/or owed to Caterer.</li>
+                                <li>If the event is cancelled less than one (1) week prior to the event date, 30% of the contract price will be retained and/or owed to Caterer.</li>
+                                <li>If the Event is cancelled on the day of the event date, 100% of the contract price will be retained and/or owed to Caterer.</li>
+                            </ul>
+                        </div>
+
+                        <!-- 1.8 Liability -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.8 Liability</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                The company would not be liable for any food provided by the client that may cause hazard for human consumption.
+                                Furthermore, the Customer agrees to indemnify and hold Caterer harmless against all claims for injury or damage to
+                                persons or property arising out of any act, omission, negligence or misconduct on the part of said Customer or any
+                                of its agents, guests, patrons or invitees.
+                            </p>
+                        </div>
+
+                        <!-- 1.9 Losses and Breakages & Fees -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.9 Losses and Breakages & Fees</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                Any losses, breakages, gate entrance fee and caterer's bond at the venue will be charged to the client.
+                                Furthermore, disposable items are neither included nor provided for the excess food.
+                            </p>
+                        </div>
+
+                        <!-- 1.10 Attorney's Fee -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.10 Attorney's Fee</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                Client agrees to pay all costs and attorney fees relied by Caterer for the purposes collecting any amounts due hereunder,
+                                including, but not limited to, reasonable attorney's fees, court costs and expenses. This is only applicable if client
+                                only want to scam the caterer. But please be informed that the caterer will deliver what have been agreed and caterer
+                                has no any record of scamming client.
+                            </p>
+                        </div>
+
+                        <!-- 1.11 Disasters and Calamities -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.11 Disasters and Calamities</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700">
+                                In case of extreme weather condition (such as typhoon, heavy rains, floods, etc.) the company would observe
+                                our "Cancellation" policy, mentioned in this contract.
+                            </p>
+                        </div>
+
+                        <!-- 1.12 Other Concerns -->
+                        <div class="mb-6">
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-800">1.12 Other Concerns</h3>
+                            <p class="text-sm leading-relaxed text-zinc-700 mb-3">
+                                Contracts and acknowledgement receipt are issued as per standard. However, requests of O.R. would be subjected
+                                to additional 3% VAT from total cost (for BIR).
+                            </p>
+                            <p class="text-sm font-semibold text-zinc-800 mb-2">There will be additional charge for the following:</p>
+                            <ul class="list-disc pl-6 space-y-2 text-sm text-zinc-700">
+                                <li>Succeeding Hour after 4 hours Catering (Overtime) - 5% of the total contract price</li>
+                                <li>Lechon Corkage – PHP 1,000.00</li>
+                                <li>No wash area at the venue – PHP 1,000.00</li>
+                                <li>Additional Waiter – PHP 1,000.00 per waiter</li>
+                                <li>Hauling Fee (If the event place will use stairs) – PHP 150.00 per staff per floor</li>
+                                <li>Distance Fee (From Loading / Unloading to Event Place) - PHP 50.00 per 50 meters from loading area</li>
+                                <li>Overflow charge - If food will excess and there will be additional guest more than 10 pax, there will be charge of PHP 100.00 per plate</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Acceptance Section -->
+                    <div class="terms-acceptance-section rounded-lg border-2 border-rose-200 bg-rose-50 p-6">
+
+                        <!-- Already Accepted Message -->
+                        <div ng-if="termsAccepted" class="text-center">
+                            <div class="mb-4 inline-flex items-center justify-center rounded-full bg-green-100 p-3">
+                                <span class="material-icons text-3xl text-green-600">check_circle</span>
+                            </div>
+                            <h3 class="mb-2 text-lg font-semibold text-zinc-900">Terms & Conditions Accepted</h3>
+                            <p class="text-sm text-zinc-600">
+                                You have already accepted the terms and conditions on
+                                <span class="font-semibold">{{ termsAcceptedDate | date:'MMMM dd, yyyy' }}</span>
+                            </p>
+                        </div>
+
+                        <!-- Acceptance Form -->
+                        <div ng-if="!termsAccepted">
+                            <h3 class="mb-4 text-lg font-semibold text-zinc-900">
+                                Accept Terms & Conditions
+                            </h3>
+
+                            <div class="mb-6">
+                                <label class="flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-all"
+                                       ng-class="formData.acceptTermsModel
+                    ? 'border-pink-600 bg-pink-50'
+                    : 'border-zinc-300 bg-white hover:border-pink-400'">
+
+                                    <!-- Hidden Native Radio -->
+                                    <input type="radio"
+                                           ng-model="formData.acceptTermsModel"
+                                           ng-value="true"
+                                           name="termsAcceptance"
+                                           class="sr-only" />
+
+                                    <!-- Custom Curved Square Radio -->
+                                    <span class="mt-1 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all"
+                                          ng-class="formData.acceptTermsModel
+                        ? 'border-pink-600'
+                        : 'border-zinc-400'">
+
+                                        <!-- Inner Indicator (with padding gap) -->
+                                        <span class="h-2.5 w-2.5 rounded-sm bg-pink-600"
+                                              ng-if="formData.acceptTermsModel">
+                                        </span>
+                                    </span>
+
+                                    <!-- Text -->
+                                    <span class="flex-1">
+                                        <span class="block text-sm font-semibold text-zinc-900">
+                                            I accept the Terms & Conditions
+                                        </span>
+                                        <span class="mt-1 block text-xs text-zinc-600">
+                                            By checking this box, I acknowledge that I have read, understood,
+                                            and agree to be bound by all the terms and conditions stated above.
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <p class="text-xs font-medium text-pink-700">
+                                    <span class="material-icons mr-1 align-middle text-[16px]">warning</span>
+                                    Note: Once accepted, this action cannot be changed.
+                                </p>
+
+                                <button type="button"
+                                        ng-click="submitTermsAcceptance()"
+                                        ng-disabled="!formData.acceptTermsModel || submittingTerms"
+                                        class="booking-primary-action inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50">
+                                    <span ng-if="!submittingTerms" class="material-icons text-[18px]">done</span>
+                                    <span ng-if="submittingTerms" class="material-icons animate-spin text-[18px]">refresh</span>
+                                    <span ng-if="!submittingTerms">Submit Acceptance</span>
+                                    <span ng-if="submittingTerms">Submitting...</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+    </div>
+</section>

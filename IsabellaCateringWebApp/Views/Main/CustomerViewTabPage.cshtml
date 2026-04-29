@@ -1,10 +1,10 @@
 ﻿@{
     Layout = "~/Views/Shared/_ManagementLayout.cshtml";
-    ViewBag.Title = "Admin Booking View";
+    ViewBag.Title = "Customer Booking View";
 }
 
 <main class="customer-view-shell min-h-screen bg-gray-50 text-gray-900 antialiased"
-      ng-init="getOrderInfo();">
+      ng-init="getOrderInfo(); loadTermsAcceptance()">
 
     <div class="relative z-10 h-full overflow-y-auto">
     <div class="mb-5 p-8">
