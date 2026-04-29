@@ -1,4 +1,4 @@
-﻿app.controller("IsabellaCateringWebAppController", function ($scope, $http, IsabellaCateringWebAppService) {
+﻿app.controller("IsabellaCateringWebAppController", function ($scope, $http, $interval, IsabellaCateringWebAppService) {
 
     $scope.displayNavOptions = null;
     $scope.navStateResolved = false;
@@ -3281,7 +3281,7 @@
         for (let i = (daysInPrevMonth - firstDayOfMonth + 1); i <= daysInPrevMonth; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'request-empty-day flex items-center justify-center';
-            emptyCell.innerHTML = `<div class="text-gray-300 flex h-10 w-10 items-center justify-center rounded-md text-sm font-medium">${i}</div>`;
+            emptyCell.innerHTML = `<div class="text-gray-200 flex h-10 w-10 items-center justify-center rounded-xl text-sm font-medium">${i}</div>`;
             requestDaysContainer.appendChild(emptyCell);
         }
 
@@ -3296,14 +3296,14 @@
             dayDiv.className = `request-calendar-day flex flex-col items-center ${isSelected ? 'selected-request-day' : ''}`;
             dayDiv.dataset.requestDate = dayString;
 
-            let cellClass = 'request-date-cell flex h-10 w-10 items-center justify-center rounded-md text-base font-semibold transition-all duration-200';
+            let cellClass = 'request-date-cell flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold transition-all duration-300';
 
             if (!isSelectable) {
-                cellClass += ' text-gray-300 bg-gray-50 cursor-not-allowed border border-gray-200';
+                cellClass += ' text-gray-300 bg-gray-50/50 cursor-not-allowed border border-gray-100';
             } else if (isSelected) {
-                cellClass += ' bg-[#EC4899] text-white border-2 border-[#D6418B] cursor-pointer scale-105 shadow-md';
+                cellClass += ' bg-pink-600 text-white shadow-lg shadow-pink-600/20 cursor-pointer scale-110 z-10';
             } else {
-                cellClass += ' border-2 border-transparent hover:border-[#D6418B] hover:scale-105 cursor-pointer text-gray-700';
+                cellClass += ' bg-white border-2 border-pink-100 hover:border-pink-500 hover:text-pink-600 hover:scale-105 cursor-pointer text-gray-700 shadow-sm';
             }
 
             const dateCell = document.createElement('div');
@@ -6962,14 +6962,35 @@
     $scope.selectedPackageDetails = null;
     $scope.packageCardLoading = false;
 
+    $scope.currentSlide = 0;
+    var carouselInterval;
+
+    $scope.startCarousel = function () {
+        $scope.stopCarousel();
+        carouselInterval = $interval(function () {
+            if ($scope.showPackageCardModal && !$scope.packageCardLoading) {
+                $scope.nextSlide(true);
+            }
+        }, 5000);
+    };
+
+    $scope.stopCarousel = function () {
+        if (angular.isDefined(carouselInterval)) {
+            $interval.cancel(carouselInterval);
+            carouselInterval = undefined;
+        }
+    };
+
     $scope.openPackageCard = function (packageName) {
         $scope.packageCardLoading = true;
         $scope.showPackageCardModal = true;
         $scope.selectedPackageDetails = { packageName: packageName };
+        $scope.currentSlide = 0;
 
         IsabellaCateringWebAppService.getPackageCardDetailsService(packageName).then(function (returnedData) {
             if (returnedData.data.success) {
                 $scope.selectedPackageDetails = returnedData.data;
+                $scope.startCarousel();
             } else {
                 Swal.fire({
                     title: "Error",
@@ -6992,10 +7013,34 @@
         });
     };
 
+    $scope.nextSlide = function (isAuto) {
+        if ($scope.selectedPackageDetails && $scope.selectedPackageDetails.carouselImages) {
+            $scope.currentSlide = ($scope.currentSlide + 1) % $scope.selectedPackageDetails.carouselImages.length;
+            if (!isAuto) $scope.startCarousel();
+        }
+    };
+
+    $scope.prevSlide = function () {
+        if ($scope.selectedPackageDetails && $scope.selectedPackageDetails.carouselImages) {
+            $scope.currentSlide = ($scope.currentSlide - 1 + $scope.selectedPackageDetails.carouselImages.length) % $scope.selectedPackageDetails.carouselImages.length;
+            $scope.startCarousel();
+        }
+    };
+
+    $scope.setSlide = function (index) {
+        $scope.currentSlide = index;
+        $scope.startCarousel();
+    };
+
     $scope.closePackageCardModal = function () {
         $scope.showPackageCardModal = false;
         $scope.selectedPackageDetails = null;
+        $scope.stopCarousel();
     };
+
+    $scope.$on('$destroy', function () {
+        $scope.stopCarousel();
+    });
 
     //====================================================== PACKAGE CARD END ======================================================
 

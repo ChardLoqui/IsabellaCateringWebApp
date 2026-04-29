@@ -798,6 +798,31 @@ namespace IsabellaCateringWebApp.Controllers
         //===================================================================Request Booking Calendar End==================================================================
 
         //===================================================================Landing Page Start==================================================================
+        private List<string> GetPackageImages(string folderName)
+        {
+            var images = new List<string>();
+            try
+            {
+                var folderPath = Server.MapPath("~/Content/images/" + folderName);
+                if (Directory.Exists(folderPath))
+                {
+                    var files = Directory.EnumerateFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
+                        .Where(s => s.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                                    s.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                                    s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase));
+                    foreach (var file in files)
+                    {
+                        images.Add(Url.Content("~/Content/images/" + folderName + "/" + Path.GetFileName(file)));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs("ERROR", "GetPackageImages:", "Error fetching images from " + folderName + ": " + ex.Message);
+            }
+            return images;
+        }
+
         public class EventPackage
         {
             public string Category { get; set; }
@@ -806,6 +831,74 @@ namespace IsabellaCateringWebApp.Controllers
             public string Image { get; set; }
             public List<string> Features { get; set; }
         }
+
+        [HttpGet]
+        public JsonResult GetEventPackages()
+        {
+            try
+            {
+                using (var db = new IsabellaCateringContext())
+                {
+                    var packageTypes = db.packagetypes_tbl.ToList();
+                    var eventPackages = new List<EventPackage>();
+
+                    foreach (var pt in packageTypes)
+                    {
+                        var category = "regular";
+                        var desc = pt.packageSet ?? "Exquisite catering for your special event.";
+
+                        string folder = "";
+                        if (pt.packageTypDesc.Contains("Joy")) { desc = "A delightful choice for simple yet elegant gatherings."; folder = "reg1"; }
+                        else if (pt.packageTypDesc.Contains("Grace")) { desc = "Infuse your event with grace and premium service,"; folder = "reg2"; }
+                        else if (pt.packageTypDesc.Contains("Cheerful")) { desc = "A bright and happy celebration for the little ones,"; folder = "kiddie1"; }
+                        else if (pt.packageTypDesc.Contains("Brightest")) { desc = "The ultimate celebration for a child's milestone,"; folder = "kiddie2"; }
+                        else if (pt.packageTypDesc.Contains("Harmony")) { desc = "A harmonious transition to a beautiful new chapter."; folder = "harmony"; }
+                        else if (pt.packageTypDesc.Contains("Precious")) { desc = "For the precious moments of your grand celebration."; folder = "precious"; }
+                        else if (pt.packageTypDesc.Contains("Majestic")) { desc = "The most grand and majestic celebration of all."; folder = "majestic"; }
+                        else if (pt.packageTypDesc.Contains("Silver")) desc = "A classic and beautiful start to your forever.";
+                        else if (pt.packageTypDesc.Contains("Gold")) desc = "Add a touch of gold to your special day.";
+                        else if (pt.packageTypDesc.Contains("Platinum High")) desc = "The pinnacle of wedding celebrations.";
+                        else if (pt.packageTypDesc.Contains("Platinum")) desc = "Exquisite luxury for an unforgettable union.";
+
+                        if (pt.packageTypDesc.Contains("Kiddie"))
+                        {
+                            category = "kiddie";
+                            if (string.IsNullOrEmpty(folder)) folder = "kiddie1";
+                        }
+                        else if (pt.packageTypDesc.Contains("Debut"))
+                        {
+                            category = "debut";
+                            if (string.IsNullOrEmpty(folder)) folder = "harmony";
+                        }
+                        else if (pt.packageTypDesc.Contains("Wedding"))
+                        {
+                            category = "wedding";
+                            if (string.IsNullOrEmpty(folder)) folder = "majestic";
+                        }
+
+                        var images = GetPackageImages(folder);
+                        var image = images.FirstOrDefault() ?? "https://images.unsplash.com/photo-1517457373958-b7bdd458ad20?auto=format&fit=crop&w=800&q=80";
+
+                        eventPackages.Add(new EventPackage
+                        {
+                            Category = category,
+                            Title = pt.packageTypDesc,
+                            Description = desc,
+                            Image = image,
+                            Features = new List<string>() 
+                        });
+                    }
+
+                    return Json(eventPackages, JsonRequestBehavior.AllowGet);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs("ERROR", "Landing Page:", "Error fetching event packages: " + ex.Message);
+                return Json(new { success = false, message = "Error: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
 
         [HttpGet]
         public JsonResult getPackageCardDetails(string packageName)
@@ -884,12 +977,76 @@ namespace IsabellaCateringWebApp.Controllers
                     if (!string.IsNullOrEmpty(packageDetails.incDnrWare)) inclusions.Add(packageDetails.incDnrWare);
                     if (!string.IsNullOrEmpty(packageDetails.incBftSet)) inclusions.Add(packageDetails.incBftSet);
 
+                    var desc = packageType.packageSet ?? "Exquisite catering for your special event.";
+
+                    // Fix descriptions based on package name
+                    if (packageType.packageTypDesc.Contains("Joy")) desc = "A delightful choice for simple yet elegant gatherings.";
+                    else if (packageType.packageTypDesc.Contains("Grace")) desc = "Infuse your event with grace and premium service,";
+                    else if (packageType.packageTypDesc.Contains("Cheerful")) desc = "A bright and happy celebration for the little ones,";
+                    else if (packageType.packageTypDesc.Contains("Brightest")) desc = "The ultimate celebration for a child's milestone,";
+                    else if (packageType.packageTypDesc.Contains("Harmony")) desc = "A harmonious transition to a beautiful new chapter.";
+                    else if (packageType.packageTypDesc.Contains("Precious")) desc = "For the precious moments of your grand celebration.";
+                    else if (packageType.packageTypDesc.Contains("Majestic")) desc = "The most grand and majestic celebration of all.";
+                    else if (packageType.packageTypDesc.Contains("Silver")) desc = "A classic and beautiful start to your forever.";
+                    else if (packageType.packageTypDesc.Contains("Gold")) desc = "Add a touch of gold to your special day.";
+                    else if (packageType.packageTypDesc.Contains("Platinum High")) desc = "The pinnacle of wedding celebrations.";
+                    else if (packageType.packageTypDesc.Contains("Platinum")) desc = "Exquisite luxury for an unforgettable union.";
+
+                    // IMAGE CAROUSEL SETTINGS:
+                    string folder = "";
+                    if (packageType.packageTypDesc.Contains("Joy")) folder = "reg1";
+                    else if (packageType.packageTypDesc.Contains("Grace")) folder = "reg2";
+                    else if (packageType.packageTypDesc.Contains("Cheerful")) folder = "kiddie1";
+                    else if (packageType.packageTypDesc.Contains("Brightest")) folder = "kiddie2";
+                    else if (packageType.packageTypDesc.Contains("Harmony")) folder = "harmony";
+                    else if (packageType.packageTypDesc.Contains("Precious")) folder = "precious";
+                    else if (packageType.packageTypDesc.Contains("Majestic")) folder = "majestic";
+
+                    if (string.IsNullOrEmpty(folder))
+                    {
+                        if (packageType.packageTypDesc.Contains("Kiddie")) folder = "kiddie1";
+                        else if (packageType.packageTypDesc.Contains("Debut")) folder = "harmony";
+                        else if (packageType.packageTypDesc.Contains("Wedding") || packageType.packageTypDesc.Contains("Silver") || packageType.packageTypDesc.Contains("Gold") || packageType.packageTypDesc.Contains("Platinum")) folder = "majestic";
+                    }
+
+                    var carouselImages = GetPackageImages(folder);
+
+                    if (carouselImages.Count == 0)
+                    {
+                        // Fallback to original unsplash images if folder is empty or not found
+                        if (packageType.packageTypDesc.Contains("Wedding") || packageType.packageTypDesc.Contains("Silver") || packageType.packageTypDesc.Contains("Gold") || packageType.packageTypDesc.Contains("Platinum"))
+                        {
+                            carouselImages.Add("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1465495910483-0d67410405fc?auto=format&fit=crop&w=1200&q=80");
+                        }
+                        else if (packageType.packageTypDesc.Contains("Kiddie") || packageType.packageTypDesc.Contains("Cheerful") || packageType.packageTypDesc.Contains("Brightest"))
+                        {
+                            carouselImages.Add("https://images.unsplash.com/photo-1530124560676-4ce5743f492b?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1533221216170-9109e214cc4d?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1472653453472-098a00160a4d?auto=format&fit=crop&w=1200&q=80");
+                        }
+                        else if (packageType.packageTypDesc.Contains("Debut") || packageType.packageTypDesc.Contains("Harmony") || packageType.packageTypDesc.Contains("Precious") || packageType.packageTypDesc.Contains("Majestic"))
+                        {
+                            carouselImages.Add("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1472653826315-bce9edbc0988?auto=format&fit=crop&w=1200&q=80");
+                        }
+                        else
+                        {
+                            carouselImages.Add("https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=1200&q=80");
+                            carouselImages.Add("https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&w=1200&q=80");
+                        }
+                    }
+
                     return Json(new
                     {
                         success = true,
                         packageName = packageType.packageTypDesc,
-                        description = packageType.packageSet ?? "Exquisite catering for your special event.",
+                        description = desc,
                         inclusions = inclusions,
+                        carouselImages = carouselImages,
                         message = "Package details retrieved successfully from database!"
                     }, JsonRequestBehavior.AllowGet);
                 }
