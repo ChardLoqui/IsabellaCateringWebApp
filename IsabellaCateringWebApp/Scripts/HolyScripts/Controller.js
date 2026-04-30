@@ -213,26 +213,34 @@
     $scope.bookingValidationAttempted = false;
     $scope.bookingTouchedFields = {};
 
-    const bookingRequiredFields = [
-        { key: 'eventName', label: 'Event Name' },
-        { key: 'packageTypeID', label: 'Package' },
-        { key: 'eventTypeID', label: 'Event Type' },
-        { key: 'cFirstName', label: "Client's Firstname" },
-        { key: 'cLastName', label: "Client's Lastname" },
-        { key: 'cEmail', label: 'Email' },
-        { key: 'cContactNum', label: 'Contact Number' },
-        { key: 'cCeleb1FirstName', label: "Celebrant's Firstname" },
-        { key: 'cCeleb1LastName', label: "Celebrant's Lastname" },
-        { key: 'eventVenue', label: 'Venue' },
-        { key: 'eventPrepVenue', label: 'Preparation Venue' },
-        { key: 'eventMotif', label: 'Motif' },
-        { key: 'eventTheme', label: 'Theme' },
-        { key: 'dateOfEvent', label: 'Date of Event' },
-        { key: 'eventCeremTime', label: 'Ceremony Time' },
-        { key: 'eventEventTime', label: 'Event Time' },
-        { key: 'eventMealTime', label: 'Meal Time' },
-        { key: 'eventSetTime', label: 'Set Time' }
-    ];
+    $scope.getBookingRequiredFields = function () {
+        const bookingRequiredFields = [
+            { key: 'eventName', label: 'Event Name' },
+            { key: 'packageTypeID', label: 'Package' },
+            { key: 'eventTypeID', label: 'Event Type' },
+            { key: 'cFirstName', label: "Client's Firstname" },
+            { key: 'cLastName', label: "Client's Lastname" },
+            { key: 'cEmail', label: 'Email' },
+            { key: 'cContactNum', label: 'Contact Number' },
+            { key: 'cCeleb1FirstName', label: "Celebrant's Firstname" },
+            { key: 'cCeleb1LastName', label: "Celebrant's Lastname" },
+            { key: 'eventVenue', label: 'Venue' },
+            { key: 'eventPrepVenue', label: 'Preparation Venue' },
+            { key: 'eventMotif', label: 'Motif' },
+            { key: 'eventTheme', label: 'Theme' },
+            { key: 'dateOfEvent', label: 'Date of Event' },
+            { key: 'eventCeremTime', label: 'Ceremony Time' },
+            { key: 'eventEventTime', label: 'Event Time' },
+            { key: 'eventMealTime', label: 'Meal Time' },
+            { key: 'eventSetTime', label: 'Set Time' }
+        ];
+
+        if ($scope.eventTypeID !== 3) {
+            return bookingRequiredFields.filter(field => field.key !== 'eventCeremTime');
+        }
+
+        return bookingRequiredFields;
+    };
 
     $scope.shouldShowFieldError = function (form, fieldName, errorKey) {
         if (!form || !form[fieldName]) {
@@ -305,7 +313,7 @@
             return 'Please select the number of guests.';
         }
 
-        var fieldConfig = bookingRequiredFields.find(function (field) {
+        var fieldConfig = $scope.getBookingRequiredFields().find(function (field) {
             return field.key === fieldKey;
         });
 
@@ -322,7 +330,7 @@
     };
 
     function getMissingBookingFields() {
-        return bookingRequiredFields.filter(function (field) {
+        return $scope.getBookingRequiredFields().filter(function (field) {
             return !hasBookingValue($scope[field.key]);
         });
     }
@@ -5065,6 +5073,12 @@
 
 
     //====================================================== CREATE BOOKING START ======================================================
+    if (isCurrentPage("AddBookingPage") || isCurrentPage("RequestAddBookingPage")) {
+        const dateLimit = new Date().toISOString().split('T')[0];
+        document.getElementById('event-date').min = dateLimit;
+    }
+
+
     $scope.progressOne = 0;
     $scope.progressTwo = 0;
     $scope.progressThree = 0;
@@ -6162,6 +6176,13 @@
         $scope.eventType = type;
         $scope.eventTypeID = id;
         $scope.activeDropdown = null;
+
+        $scope.cCeleb2FirstName = null;
+        $scope.cCeleb2LastName = null;
+        $scope.ceremHour = null;
+        $scope.ceremMinute = null;
+        $scope.ceremPeriod = null;
+        $scope.updateCeremTime();
         disableBookingInput();
     };
 
