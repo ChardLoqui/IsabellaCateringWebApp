@@ -5170,11 +5170,12 @@
 
 
     //====================================================== CREATE BOOKING START ======================================================
-    if (isCurrentPage("AddBookingPage") || isCurrentPage("RequestAddBooking")) {
+    if (isCurrentPage("AddBookingPage") || isCurrentPage("RequestAddBookingPage")) {
         const dateLimit = new Date().toISOString().split('T')[0];
         document.getElementById('event-date').min = dateLimit;
     }
-    
+
+
     $scope.progressOne = 0;
     $scope.progressTwo = 0;
     $scope.progressThree = 0;
@@ -6283,6 +6284,13 @@
         $scope.eventType = type;
         $scope.eventTypeID = id;
         $scope.activeDropdown = null;
+
+        $scope.cCeleb2FirstName = null;
+        $scope.cCeleb2LastName = null;
+        $scope.ceremHour = null;
+        $scope.ceremMinute = null;
+        $scope.ceremPeriod = null;
+        $scope.updateCeremTime();
         disableBookingInput();
     };
 
