@@ -111,14 +111,18 @@ namespace IsabellaCateringWebApp.Controllers
             public string DesignTheme { get; set; }
             public string DesignMotif { get; set; }
             public string PrepVenue { get; set; }
+            public string ChurchVenue { get; set; }
             public string ClientFirstName { get; set; }
             public string ClientLastName { get; set; }
             public string ClientEmail { get; set; }
             public string ClientContact { get; set; }
+            public string ClientAddress { get; set; }
             public string CelebrantOneFirstName { get; set; }
             public string CelebrantOneLastName { get; set; }
             public string CelebrantTwoFirstName { get; set; }
             public string CelebrantTwoLastName { get; set; }
+            public string CelebrantNickname { get; set; }
+            public string CelebrantPreferredName { get; set; }
             public int PaxCount { get; set; }
             public int AddAdult { get; set; }
             public int AddKid { get; set; }
@@ -615,14 +619,18 @@ namespace IsabellaCateringWebApp.Controllers
                                         DesignTheme = booking.dsgnTheme,
                                         DesignMotif = booking.dsgnMotif,
                                         PrepVenue = booking.prepVenue,
+                                        ChurchVenue = booking.churchVenue,
                                         ClientFirstName = client != null ? client.cFName : string.Empty,
                                         ClientLastName = client != null ? client.cLName : string.Empty,
                                         ClientEmail = client != null ? client.cEmail : string.Empty,
                                         ClientContact = client != null ? client.cContact : string.Empty,
+                                        ClientAddress = client != null ? client.cAddress : string.Empty,
                                         CelebrantOneFirstName = client != null ? client.cCeleb1FName : string.Empty,
                                         CelebrantOneLastName = client != null ? client.cCeleb1LName : string.Empty,
                                         CelebrantTwoFirstName = client != null ? client.cCeleb2FName : string.Empty,
                                         CelebrantTwoLastName = client != null ? client.cCeleb2LName : string.Empty,
+                                        CelebrantNickname = client != null ? client.cCelebNName : string.Empty,
+                                        CelebrantPreferredName = client != null ? client.cCelebPrefName : string.Empty,
                                         PaxCount = booking.paxCount,
                                         AddAdult = booking.addAdult,
                                         AddKid = booking.addKid,
@@ -3429,10 +3437,13 @@ Isabella Catering and Events";
                         cLName = clientInfo.cLName,
                         cEmail = clientInfo.cEmail,
                         cContact = clientInfo.cContact,
+                        cAddress = clientInfo.cAddress,
                         cCeleb1FName = clientInfo.cCeleb1FName,
                         cCeleb1LName = clientInfo.cCeleb1LName,
                         cCeleb2FName = clientInfo.cCeleb2FName,
                         cCeleb2LName = clientInfo.cCeleb2LName,
+                        cCelebNName = clientInfo.cCelebNName,
+                        cCelebPrefName = clientInfo.cCelebPrefName,
                         entryCode = "0",
                         password = "0",
                         dateCreated = DateTime.Now,
@@ -3457,6 +3468,7 @@ Isabella Catering and Events";
                         dsgnTheme = bookingInfo.dsgnTheme,
                         dsgnMotif = bookingInfo.dsgnMotif,
                         prepVenue = bookingInfo.prepVenue,
+                        churchVenue = bookingInfo.churchVenue,
                         bookingDate = bookingInfo.bookingDate,
                         ceremTime = bookingInfo.ceremTime,
                         eventTime = bookingInfo.eventTime,
@@ -3466,6 +3478,7 @@ Isabella Catering and Events";
                         dateCreated = DateTime.Now,
                         dateUpdated = DateTime.Now,
                         bookingNote = bookingInfo.bookingNote,
+                        customerNote = bookingInfo.customerNote,
                         progressOne = 0,
                         progressTwo = 0,
                         progressThree = 0,
@@ -3639,17 +3652,17 @@ Isabella Catering and Events";
                                     db.bookingrequests_tbl.Remove(booking);
                                 }
                                 db.SaveChanges();
+                                return Json(new { success = true, message = "Booking Completed Successfully! Email Sent to All Rejected Requests!" }, JsonRequestBehavior.AllowGet);
                             }
                             else
                             {
                                 var relatedClientRequest = db.clientrequests_tbl.Where(x => x.clientRequestID == bookingRequest.clientRequestID).FirstOrDefault();
-                                sendRequestRejection(relatedClientRequest.cEmail, bookingRequest.bookingRequestID);
                                 db.clientrequests_tbl.Remove(relatedClientRequest);
                                 db.bookingrequests_tbl.Remove(bookingRequest);
                                 db.SaveChanges();
+                                return Json(new { success = true, message = "Booking Completed Successfully!" }, JsonRequestBehavior.AllowGet);
                             }
 
-                            return Json(new { success = true, message = "Booking Completed Successfully! Email Sent to All Rejected Requests!" }, JsonRequestBehavior.AllowGet);
                         }
                     }
                 }
@@ -3732,18 +3745,6 @@ Isabella Catering and Events";
 
                     var currPackageID = ResolvePackageId(db, packages, sidesGrpTypes, specialsGrpTypes, staffGrpTypes, equipGrpTypes, entertainmentGrpTypes, photoGrpTypes, keepsakesGrpTypes, debutGrpTypes);
 
-                    //string datePart = DateTime.Now.ToString("yyMMdd");
-                    //string randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
-                    //string receiptCode = $"BK-{datePart}-{randomPart}";
-
-                    //var existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
-                    //while (existingReceipt != null)
-                    //{
-                    //    randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
-                    //    receiptCode = $"BK-{datePart}-{randomPart}";
-                    //    existingReceipt = db.bookingreceipts_tbl.Where(p => p.receiptNum == receiptCode).FirstOrDefault();
-                    //}
-
                     var newRequestClient = new tblClientRequestsModel()
                     {
                         eventName = clientInfo.eventName,
@@ -3751,10 +3752,13 @@ Isabella Catering and Events";
                         cLName = clientInfo.cLName,
                         cEmail = clientInfo.cEmail,
                         cContact = clientInfo.cContact,
+                        cAddress = clientInfo.cAddress,
                         cCeleb1FName = clientInfo.cCeleb1FName,
                         cCeleb1LName = clientInfo.cCeleb1LName,
                         cCeleb2FName = clientInfo.cCeleb2FName,
                         cCeleb2LName = clientInfo.cCeleb2LName,
+                        cCelebNName = clientInfo.cCelebNName,
+                        cPrefName = clientInfo.cCelebPrefName,
                         dateCreated = DateTime.Now,
                         dateUpdated = DateTime.Now
                     };
@@ -3765,7 +3769,7 @@ Isabella Catering and Events";
                        "INFO",
                        "Booking Request:",
                        $"New Request Client Data has been created. clientID: {newRequestClient.clientRequestID}");
-
+                    
                     var newRequestBooking = new tblBookingRequestsModel()
                     {
                         clientRequestID = newRequestClient.clientRequestID,
@@ -3774,6 +3778,7 @@ Isabella Catering and Events";
                         dsgnTheme = bookingInfo.dsgnTheme,
                         dsgnMotif = bookingInfo.dsgnMotif,
                         prepVenue = bookingInfo.prepVenue,
+                        churchVenue = bookingInfo.churchVenue,
                         bookingDate = bookingInfo.bookingDate,
                         ceremTime = bookingInfo.ceremTime,
                         eventTime = bookingInfo.eventTime,
@@ -3794,140 +3799,7 @@ Isabella Catering and Events";
                        "INFO",
                        "Booking Request:",
                        $"New Booking Request Data has been created. bookingRequestID: {newRequestBooking.bookingRequestID}");
-
-                    
-                    //SaveBookingAdditionals(db, newBooking.bookingID, bookingAdditionals);
-
-                    //var newReceipt = new tblBookingReceiptsModel()
-                    //{
-                    //    bookingID = newBooking.bookingID,
-                    //    receiptNum = receiptCode,
-                    //    dateCreated = DateTime.Now,
-                    //    dateUpdated = DateTime.Now
-                    //};
-                    //db.bookingreceipts_tbl.Add(newReceipt);
-                    //db.SaveChanges();
-
-                    //newClient.receiptID = newReceipt.receiptID;
-                    //newClient.entryCode = receiptCode;
-                    //db.SaveChanges();
-
-                    //Logs(
-                    //   "INFO",
-                    //   "Booking Management:",
-                    //   $"New Receipt Data has been created. receiptID: {newReceipt.receiptID}");
-
-                    //float downPayment = 5000;
-                    //float subtractedDownPayment = paymentInfo.amountDue - downPayment;
-                    //float halfPayment = subtractedDownPayment / 2;
-                    //float quarterPayment = subtractedDownPayment / 4;
-
-                    //DateTime today = DateTime.Today;
-                    //DateTime bookingDate = bookingInfo.bookingDate.Date;
-
-                    //DateTime firstHalfDate;
-                    //DateTime lastQuarterDate;
-
-                    //int totalDays = (int)(bookingDate - today).TotalDays;
-
-                    //if (totalDays < 120)
-                    //{
-                    //    firstHalfDate = today.AddDays(totalDays / 2);
-                    //    lastQuarterDate = bookingDate.AddDays(-(totalDays / 4));
-                    //}
-                    //else
-                    //{
-                    //    firstHalfDate = bookingDate.AddDays(-120);
-                    //    lastQuarterDate = bookingDate.AddDays(-14);
-                    //}
-
-                    //var newPayment = new tblPaymentsModel()
-                    //{
-                    //    bookingID = newBooking.bookingID,
-                    //    amountDue = paymentInfo.amountDue,
-                    //    amount = 0,
-                    //    paymentType = "Initial",
-                    //    remainingBalance = subtractedDownPayment,
-                    //    transactionNum = 0,
-                    //    paymentStatus = "Incomplete",
-                    //    dueDate = bookingInfo.bookingDate.AddDays(10),
-                    //    dateCreated = DateTime.Now,
-                    //    dateUpdated = DateTime.Now
-                    //};
-
-                    //db.payments_tbl.Add(newPayment);
-
-                    //newPayment = new tblPaymentsModel()
-                    //{
-                    //    bookingID = newBooking.bookingID,
-                    //    amountDue = paymentInfo.amountDue,
-                    //    amount = 5000,
-                    //    paymentType = "Payment",
-                    //    remainingBalance = subtractedDownPayment,
-                    //    transactionNum = 1,
-                    //    paymentStatus = "Complete",
-                    //    dueDate = DateTime.Now,
-                    //    dateCreated = DateTime.Now,
-                    //    dateUpdated = DateTime.Now
-                    //};
-
-                    //db.payments_tbl.Add(newPayment);
-
-                    //newPayment = new tblPaymentsModel()
-                    //{
-                    //    bookingID = newBooking.bookingID,
-                    //    amountDue = subtractedDownPayment,
-                    //    amount = halfPayment,
-                    //    paymentType = "Payment",
-                    //    remainingBalance = subtractedDownPayment,
-                    //    transactionNum = 2,
-                    //    paymentStatus = "Incomplete",
-                    //    dueDate = firstHalfDate,
-                    //    dateCreated = DateTime.Now,
-                    //    dateUpdated = DateTime.Now
-                    //};
-
-                    //db.payments_tbl.Add(newPayment);
-
-                    //newPayment = new tblPaymentsModel()
-                    //{
-                    //    bookingID = newBooking.bookingID,
-                    //    amountDue = subtractedDownPayment,
-                    //    amount = quarterPayment,
-                    //    paymentType = "Payment",
-                    //    remainingBalance = subtractedDownPayment,
-                    //    transactionNum = 3,
-                    //    paymentStatus = "Incomplete",
-                    //    dueDate = lastQuarterDate,
-                    //    dateCreated = DateTime.Now,
-                    //    dateUpdated = DateTime.Now
-                    //};
-
-                    //db.payments_tbl.Add(newPayment);
-
-                    //newPayment = new tblPaymentsModel()
-                    //{
-                    //    bookingID = newBooking.bookingID,
-                    //    amountDue = subtractedDownPayment,
-                    //    amount = quarterPayment,
-                    //    paymentType = "Payment",
-                    //    remainingBalance = subtractedDownPayment,
-                    //    transactionNum = 4,
-                    //    paymentStatus = "Incomplete",
-                    //    dueDate = bookingInfo.bookingDate.Date,
-                    //    dateCreated = DateTime.Now,
-                    //    dateUpdated = DateTime.Now
-                    //};
-
-                    //db.payments_tbl.Add(newPayment);
-
-
-                    //db.SaveChanges();
-
-                    //Logs(
-                    //   "INFO",
-                    //   "Booking Management:",
-                    //   $"New Payment Data has been created. paymentID: {newPayment.paymentID}");
+                                       
                 }
 
                 Logs(
@@ -3973,10 +3845,13 @@ Isabella Catering and Events";
                     existingClient.cLName = clientInfo.cLName;
                     existingClient.cEmail = clientInfo.cEmail;
                     existingClient.cContact = clientInfo.cContact;
+                    existingClient.cAddress = clientInfo.cAddress;
                     existingClient.cCeleb1FName = clientInfo.cCeleb1FName;
                     existingClient.cCeleb1LName = clientInfo.cCeleb1LName;
                     existingClient.cCeleb2FName = clientInfo.cCeleb2FName;
                     existingClient.cCeleb2LName = clientInfo.cCeleb2LName;
+                    existingClient.cCelebNName = clientInfo.cCelebNName;
+                    existingClient.cCelebPrefName = clientInfo.cCelebPrefName;
                     existingClient.dateUpdated = DateTime.Now;
 
                     existingBooking.packageID = resolvedPackageID;
@@ -3984,6 +3859,7 @@ Isabella Catering and Events";
                     existingBooking.dsgnTheme = bookingInfo.dsgnTheme;
                     existingBooking.dsgnMotif = bookingInfo.dsgnMotif;
                     existingBooking.prepVenue = bookingInfo.prepVenue;
+                    existingBooking.churchVenue = bookingInfo.churchVenue;
                     existingBooking.bookingDate = bookingInfo.bookingDate;
                     existingBooking.ceremTime = bookingInfo.ceremTime;
                     existingBooking.eventTime = bookingInfo.eventTime;
@@ -4060,6 +3936,21 @@ Isabella Catering and Events";
                         "INFO",
                         "Booking Management:",
                         $"Booking Payment Set has been deleted. bookingID: {existingBooking.bookingID}");
+
+                    var additionalIds = db.bookingadditionals_tbl.Where(p => p.bookingID == bookingID).Select(p => p.bookingAdditionalID).ToList();
+                    if (additionalIds.Any())
+                    {
+                        var additionals = db.bookingadditionals_tbl.Where(p => p.bookingID == bookingID).ToList();
+                        foreach (var additional in additionals)
+                        {
+                            db.bookingadditionals_tbl.Remove(additional);
+                        }
+                    }
+
+                    Logs(
+                        "INFO",
+                        "Booking Management:",
+                        $"Booking Additonals Set has been deleted. bookingID: {existingBooking.bookingID}");
 
                     var tasks = db.tasks_tbl.Where(t => t.bookingID == bookingID).ToList();
                     if (tasks.Any())

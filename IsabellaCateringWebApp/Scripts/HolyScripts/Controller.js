@@ -213,26 +213,89 @@
     $scope.bookingValidationAttempted = false;
     $scope.bookingTouchedFields = {};
 
-    const bookingRequiredFields = [
-        { key: 'eventName', label: 'Event Name' },
-        { key: 'packageTypeID', label: 'Package' },
-        { key: 'eventTypeID', label: 'Event Type' },
-        { key: 'cFirstName', label: "Client's Firstname" },
-        { key: 'cLastName', label: "Client's Lastname" },
-        { key: 'cEmail', label: 'Email' },
-        { key: 'cContactNum', label: 'Contact Number' },
-        { key: 'cCeleb1FirstName', label: "Celebrant's Firstname" },
-        { key: 'cCeleb1LastName', label: "Celebrant's Lastname" },
-        { key: 'eventVenue', label: 'Venue' },
-        { key: 'eventPrepVenue', label: 'Preparation Venue' },
-        { key: 'eventMotif', label: 'Motif' },
-        { key: 'eventTheme', label: 'Theme' },
-        { key: 'dateOfEvent', label: 'Date of Event' },
-        { key: 'eventCeremTime', label: 'Ceremony Time' },
-        { key: 'eventEventTime', label: 'Event Time' },
-        { key: 'eventMealTime', label: 'Meal Time' },
-        { key: 'eventSetTime', label: 'Set Time' }
-    ];
+
+    //update validationssss
+    $scope.getBookingRequiredFields = function () {
+        const baseFields = [
+            { key: 'eventName', label: 'Event Name' },
+            { key: 'packageTypeID', label: 'Package' },
+            { key: 'eventTypeID', label: 'Event Type' },
+            { key: 'cFirstName', label: "Client's Firstname" },
+            { key: 'cLastName', label: "Client's Lastname" },
+            { key: 'cEmail', label: 'Email' },
+            { key: 'cAddress', label: 'Address' },
+            { key: 'cContactNum', label: 'Contact Number' },
+            { key: 'cCeleb1FirstName', label: $scope.eventTypeID === 3 ? "Groom's Firstname" : "Celebrant's Firstname" },
+            { key: 'cCeleb1LastName', label: $scope.eventTypeID === 3 ? "Groom's Lastname" : "Celebrant's Lastname" },
+            { key: 'cCeleb2FirstName', label: $scope.eventTypeID === 3 ? "Bride's Firstname" : "Celebrant's Lastname" },
+            { key: 'cCeleb2LastName', label: $scope.eventTypeID === 3 ? "Bride's Lastname" : "Celebrant's Lastname" },
+            { key: 'cCelebNName', label: "Celebrant's Nickname" },
+            { key: 'cCelebPrefName', label: "Preferred Name for Backdrop" },
+            { key: 'eventVenue', label: $scope.eventTypeID === 3 ? "Reception Venue" : "Venue" },
+            { key: 'eventPrepVenue', label: 'Preparation Venue' },
+            { key: 'eventChurchVenue', label: 'Church Venue' },
+            { key: 'eventMotif', label: 'Motif' },
+            { key: 'eventTheme', label: 'Theme' },
+            { key: 'dateOfEvent', label: 'Date of Event' },
+            { key: 'eventCeremTime', label: 'Ceremony Time' },
+            { key: 'eventEventTime', label: 'Event Time' },
+            { key: 'eventMealTime', label: 'Meal Time' },
+            { key: 'eventSetTime', label: 'Set Time' }
+        ];
+
+        if ($scope.eventTypeID !== 3) {
+
+            if ($scope.eventTypeID >= 4) {
+                return baseFields.filter(field =>
+                    field.key !== 'eventCeremTime' &&
+                    field.key !== 'eventChurchVenue' &&
+                    field.key !== 'cCeleb2FirstName' &&
+                    field.key !== 'cCeleb2LastName' &&
+                    field.key !== 'cCelebNName'
+                );
+            } else if ($scope.eventTypeID <= 2) {
+                return baseFields.filter(field =>
+                    field.key !== 'eventCeremTime' &&
+                    field.key !== 'eventChurchVenue' &&
+                    field.key !== 'cCeleb2FirstName' &&
+                    field.key !== 'cCeleb2LastName'&&
+                    field.key !== 'eventPrepVenue'
+                );
+            }
+        }else {
+            return baseFields.filter(field => field.key !== 'cCelebPrefName' && field.key !== 'cCelebNName' );
+        }
+
+        return baseFields;
+    };
+
+    $scope.$watch('eventTypeID', function () {
+        if ($scope.eventTypeID !== 3) {
+
+            if ($scope.eventTypeID >= 4) {
+                $scope.cCeleb2FirstName = null;
+                $scope.cCeleb2LastName = null;
+                $scope.eventChurchVenue = null;
+                $scope.cCelebNName = null;
+                $scope.ceremHour = null;
+                $scope.ceremMinute = null;
+                $scope.ceremPeriod = null;
+                $scope.updateCeremTime();
+            } else if ($scope.eventTypeID <= 2) {
+                $scope.cCeleb2FirstName = null;
+                $scope.cCeleb2LastName = null;
+                $scope.eventChurchVenue = null;
+                $scope.eventPrepVenue = null;
+                $scope.ceremHour = null;
+                $scope.ceremMinute = null;
+                $scope.ceremPeriod = null;
+                $scope.updateCeremTime();
+            }
+        } else {
+            $scope.cCelebNName = null;
+            $scope.cCelebPrefName = null;
+        }
+    });
 
     $scope.shouldShowFieldError = function (form, fieldName, errorKey) {
         if (!form || !form[fieldName]) {
@@ -305,7 +368,7 @@
             return 'Please select the number of guests.';
         }
 
-        var fieldConfig = bookingRequiredFields.find(function (field) {
+        var fieldConfig = $scope.getBookingRequiredFields().find(function (field) {
             return field.key === fieldKey;
         });
 
@@ -322,7 +385,7 @@
     };
 
     function getMissingBookingFields() {
-        return bookingRequiredFields.filter(function (field) {
+        return $scope.getBookingRequiredFields().filter(function (field) {
             return !hasBookingValue($scope[field.key]);
         });
     }
@@ -1169,6 +1232,7 @@
                             packageID: res.data.packageID,
                             bookingDate: convertDate(res.data.bookingDate),
                             prepVenue: res.data.prepVenue,
+                            churchVenue: res.data.churchVenue,
                             venue: res.data.venue,
                             eventSetTime: convertTime(res.data.eventSetTime),
                             eventTime: convertTime(res.data.eventTime),
@@ -1397,8 +1461,11 @@
                     fullName: [client.cFName, client.cLName].filter(Boolean).join(' ') || 'Not set',
                     email: client.cEmail || 'Not set',
                     contact: client.cContact || 'Not set',
+                    address: client.cAddress || 'Not set',
                     celebrantOne: [client.cCeleb1FName, client.cCeleb1LName].filter(Boolean).join(' ') || 'Not set',
-                    celebrantTwo: [client.cCeleb2FName, client.cCeleb2LName].filter(Boolean).join(' ') || 'Not set'
+                    celebrantTwo: [client.cCeleb2FName, client.cCeleb2LName].filter(Boolean).join(' ') || 'Not set',
+                    celebrantNickname: client.cCelebNName,
+                    celebrantPrefName: client.cCelebPrefName
                 };
 
                 $scope.package = {
@@ -1719,7 +1786,7 @@
                 if (response.data.success) {
                     $scope.termsAccepted = response.data.termsAccepted;
                     if ($scope.termsAccepted) {
-                        $scope.termsAcceptedDate = new Date(response.data.dateUpdated);
+                        $scope.termsAcceptedDate = new Date(response.data.termsAcceptedDate);
                     } else {
                         if (!isCurrentPage("TermsAndConditionsTabPage")) {
                             Swal.fire({
@@ -1869,8 +1936,10 @@
                             bookingID: res.data.bookingID,
                             clientID: res.data.clientID,
                             packageID: res.data.packageID,
+                            eventID: res.data.eventID,
                             bookingDate: convertDate(res.data.bookingDate),
                             prepVenue: res.data.prepVenue,
+                            churchVenue: res.data.churchVenue,
                             venue: res.data.venue,
                             eventSetTime: convertTime(res.data.eventSetTime),
                             eventTime: convertTime(res.data.eventTime),
@@ -2099,8 +2168,11 @@
                     fullName: [client.cFName, client.cLName].filter(Boolean).join(' ') || 'Not set',
                     email: client.cEmail || 'Not set',
                     contact: client.cContact || 'Not set',
+                    address: client.cAddress || 'Not set',
                     celebrantOne: [client.cCeleb1FName, client.cCeleb1LName].filter(Boolean).join(' ') || 'Not set',
-                    celebrantTwo: [client.cCeleb2FName, client.cCeleb2LName].filter(Boolean).join(' ') || 'Not set'
+                    celebrantTwo: [client.cCeleb2FName, client.cCeleb2LName].filter(Boolean).join(' ') || 'Not set',
+                    celebrantNickname: client.cCelebNName,
+                    celebrantPrefName: client.cCelebPrefName
                 };
 
                 $scope.package = {
@@ -2311,26 +2383,61 @@
                     margin: [0, 10, 0, 10]
                 },
 
-                // --- EVENT DETAILS ---
+                // --- EVENT DETAILS --- update thissss
                 {
-                    text: [
-                        { text: 'Event: ', bold: true }, ($scope.client.eventName || '__________________') + '\n',
-                        { text: '1st Celebrant: ', bold: true }, ($scope.client.celebrantOne || '__________________') + '\n',
-                        { text: '2nd Celebrant: ', bold: true }, ($scope.client.celebrantTwo || '__________________') + '\n',
-                        { text: 'Theme: ', bold: true }, ($scope.order.dsgnTheme || 'TBA') + '\n',
-                        { text: 'Motif: ', bold: true }, ($scope.order.dsgnMotif || 'TBA') + '\n',
-                        { text: 'Venue Preparation: ', bold: true }, ($scope.order.prepVenue || '__________________') + '\n',
-                        { text: 'Event Date: ', bold: true }, ($scope.order.bookingDate || '__________________') + '\n',
-                        { text: 'Event Time: ', bold: true }, ($scope.order.eventTime || '__________________') + '\n',
-                        { text: 'Venue: ', bold: true }, ($scope.order.venue || '__________________') + '\n',
-                        { text: 'Ceremony Time: ', bold: true }, ($scope.order.ceremTime || 'TBA') + '\n',
-                        { text: 'Venue: ', bold: true }, ($scope.order.venue || '__________________') + '\n',
-                        { text: 'Set-up Time: ', bold: true }, ($scope.order.eventSetTime || '__________________') + '\n',
-                        { text: 'Meal Time: ', bold: true }, ($scope.order.eventMealTime || 'TBD') + '\n',
-                        { text: 'Package Avail: ', bold: true },
-                        ($scope.packageTypeInfo || 'High Class Platinum Wedding Package') +
-                        ' (' + ($scope.order.paxCount || '100') + ' pax - Adult)\n'
-                    ],
+                    text: (function () {
+                        var eventID = $scope.order.eventID;
+                        var fields = [
+                            { text: 'Event: ', bold: true }, ($scope.client.eventName || '__________________') + '\n',
+                            { text: 'Contact Person: ', bold: true }, ($scope.client.fullName || '__________________') + '\n',
+                            { text: 'Email: ', bold: true }, ($scope.client.email || '__________________') + '\n',
+                            { text: 'Contact Number: ', bold: true }, ($scope.client.contact || '__________________') + '\n',
+                            { text: 'Address: ', bold: true }, ($scope.client.address || '__________________') + '\n',
+                            { text: 'Type of Event: ', bold: true }, '__________________\n'
+                        ];
+
+                        if (eventID === 3) {
+                            fields.push(
+                                { text: 'Groom: ', bold: true }, ($scope.client.celebrantOne || '__________________') + '\n',
+                                { text: 'Bride: ', bold: true }, ($scope.client.celebrantTwo || '__________________') + '\n',
+                                { text: 'Date: ', bold: true }, ($scope.order.bookingDate || '__________________') + '\n',
+                                { text: 'Ceremony Time: ', bold: true }, ($scope.order.ceremTime || '__________________') + '\n',
+                                { text: 'Venue of Church: ', bold: true }, ($scope.order.churchVenue || '__________________') + '\n',
+                                { text: 'Hotel Preparation: ', bold: true }, ($scope.order.prepVenue || '__________________') + '\n',
+                                { text: 'Venue of Reception: ', bold: true }, ($scope.order.venue || '__________________') + '\n'
+                            );
+                        } else if (eventID <= 2) {
+                            fields.push(
+                                { text: 'Celebrant: ', bold: true }, ($scope.client.celebrantOne || '__________________') + '\n',
+                                { text: 'Nickname: ', bold: true }, ($scope.client.celebrantNickname || '__________________') + '\n',
+                                { text: 'Preferred Name for Backdrop: ', bold: true }, ($scope.client.celebrantPrefName || '__________________') + '\n',
+                                { text: 'Date: ', bold: true }, ($scope.order.bookingDate || '__________________') + '\n',
+                                { text: 'Venue: ', bold: true }, ($scope.order.venue || '__________________') + '\n'
+                            );
+                        } else {
+                            fields.push(
+                                { text: 'Celebrant: ', bold: true }, ($scope.client.celebrantOne || '__________________') + '\n',
+                                { text: 'Preferred Name for Backdrop: ', bold: true }, ($scope.client.celebrantPrefName || '__________________') + '\n',
+                                { text: 'Date: ', bold: true }, ($scope.order.bookingDate || '__________________') + '\n',
+                                { text: 'Hotel Preparation: ', bold: true }, ($scope.order.prepVenue || '__________________') + '\n',
+                                { text: 'Venue: ', bold: true }, ($scope.order.venue || '__________________') + '\n'
+                            );
+                        }
+
+                        fields.push(
+                            { text: 'Theme: ', bold: true }, ($scope.order.dsgnTheme || 'TBA') + '\n',
+                            { text: 'Motif: ', bold: true }, ($scope.order.dsgnMotif || 'TBA') + '\n',
+                            { text: 'Set-up Time: ', bold: true }, ($scope.order.eventSetTime || '__________________') + '\n',
+                            { text: 'Start Time of Catering: ', bold: true }, ($scope.order.eventMealTime || 'TBD') + '\n',
+                            { text: 'Start of Program: ', bold: true }, ($scope.order.eventTime || '__________________') + '\n',
+                            { text: 'Meal Time: ', bold: true }, ($scope.order.eventMealTime || 'TBD') + '\n',
+                            { text: 'Package Avail: ', bold: true },
+                            ($scope.packageTypeInfo || '__________________') +
+                            ' (' + ($scope.order.paxCount || '100') + ' pax - Adult)\n'
+                        );
+
+                        return fields;
+                    })(),
                     style: 'details'
                 },
 
@@ -2426,10 +2533,8 @@
             }
         };
         const fileName = ($scope.client.eventName?.replaceAll(' ', '_') || 'Client') + '-Booking_Summary';
-        pdfMake.createPdf(dd).download(`${fileName}-Booking_Summary`);
+        pdfMake.createPdf(dd).download(`${fileName}.pdf`);
     }
-
-    
 
     //======================================================== ADMIN VIEW END =======================================================
 
@@ -5065,6 +5170,11 @@
 
 
     //====================================================== CREATE BOOKING START ======================================================
+    if (isCurrentPage("AddBookingPage") || isCurrentPage("RequestAddBooking")) {
+        const dateLimit = new Date().toISOString().split('T')[0];
+        document.getElementById('event-date').min = dateLimit;
+    }
+    
     $scope.progressOne = 0;
     $scope.progressTwo = 0;
     $scope.progressThree = 0;
@@ -5348,8 +5458,10 @@
             bookingID: bookingData.bookingID,
             clientID: bookingData.clientID,
             packageID: bookingData.packageID,
+            eventID: bookingData.eventID,
             bookingDate: convertDate(bookingData.bookingDate),
             prepVenue: bookingData.prepVenue,
+            churchVenue: bookingData.churchVenue,
             venue: bookingData.venue,
             eventSetTime: convertTime(bookingData.eventSetTime),
             eventTime: convertTime(bookingData.eventTime),
@@ -5373,15 +5485,20 @@
         $scope.cLastName = client.cLName || '';
         $scope.cEmail = client.cEmail || '';
         $scope.cContactNum = client.cContact || '';
+        $scope.cAddress = client.cAddress || '';
         $scope.cCeleb1FirstName = client.cCeleb1FName || '';
         $scope.cCeleb1LastName = client.cCeleb1LName || '';
         $scope.cCeleb2FirstName = client.cCeleb2FName || '';
         $scope.cCeleb2LastName = client.cCeleb2LName || '';
+        $scope.cCelebNName = client.cCelebNName || '';
+        $scope.cCelebPrefName = client.cPrefName || '';
         $scope.eventTheme = bookingData.dsgnTheme || '';
         $scope.eventMotif = bookingData.dsgnMotif || '';
         $scope.eventPrepVenue = bookingData.prepVenue || '';
+        $scope.eventChurchVenue = bookingData.churchVenue || '';
         $scope.eventVenue = bookingData.venue || '';
         $scope.bookingNote = bookingData.bookingNote || '';
+        $scope.customerNote = bookingData.customerNote || '';
         $scope.bookingAdditionals = (detailsData.bookingAdditionals || []).map(function (item) {
             return {
                 bookingAdditionalID: item.bookingAdditionalID || 0,
@@ -5555,10 +5672,13 @@
                 cLName: $scope.cLastName,
                 cEmail: $scope.cEmail,
                 cContact: $scope.cContactNum,
+                cAddress: $scope.cAddress,
                 cCeleb1FName: $scope.cCeleb1FirstName,
                 cCeleb1LName: $scope.cCeleb1LastName,
                 cCeleb2FName: $scope.cCeleb2FirstName ?? null,
-                cCeleb2LName: $scope.cCeleb2LastName ?? null
+                cCeleb2LName: $scope.cCeleb2LastName ?? null,
+                cCelebNName: $scope.cCelebNName ?? null,
+                cCelebPrefName: $scope.cCelebPrefName ?? null
             },
             bookingInfo: {
                 bookingID: $scope.editBookingID || 0,
@@ -5566,6 +5686,7 @@
                 dsgnTheme: $scope.eventTheme,
                 dsgnMotif: $scope.eventMotif,
                 prepVenue: $scope.eventPrepVenue,
+                churchVenue: $scope.eventChurchVenue,
                 bookingDate: $scope.dateOfEvent,
                 ceremTime: $scope.eventCeremTime,
                 eventTime: $scope.eventEventTime,
