@@ -185,9 +185,14 @@
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.venue || 'Not set' }}</dd>
                         </div>
 
-                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4" ng-show="order.eventID >= 3">
                             <dt class="text-sm font-medium text-gray-500">Preparation Venue</dt>
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.prepVenue || 'Not set' }}</dd>
+                        </div>
+
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4" ng-show="order.eventID === 3">
+                            <dt class="text-sm font-medium text-gray-500">Church Venue</dt>
+                            <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.churchVenue || 'Not set' }}</dd>
                         </div>
 
                         <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -195,7 +200,7 @@
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.eventSetTime || 'Not set' }}</dd>
                         </div>
 
-                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4" ng-show="order.eventID === 3">
                             <dt class="text-sm font-medium text-gray-500">Ceremony</dt>
                             <dd class="mt-1 text-base font-semibold text-gray-900">{{ order.ceremTime || 'Not set' }}</dd>
                         </div>
@@ -239,13 +244,28 @@
                         </div>
 
                         <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3">
-                            <dt class="text-sm font-medium text-gray-500">Celebrant 1</dt>
-                            <dd class="text-right text-sm font-semibold text-gray-900">{{ client.celebrantOne || 'Not set' }}</dd>
+                            <dt class="text-sm font-medium text-gray-500">Address</dt>
+                            <dd class="text-right text-sm font-semibold text-gray-900">{{ client.address || 'Not set' }}</dd>
                         </div>
 
                         <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3">
-                            <dt class="text-sm font-medium text-gray-500">Celebrant 2</dt>
+                            <dt class="text-sm font-medium text-gray-500">{{order.eventID === 3? "Groom" : "Celebrant"}}</dt>
+                            <dd class="text-right text-sm font-semibold text-gray-900">{{ client.celebrantOne || 'Not set' }}</dd>
+                        </div>
+
+                        <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3" ng-show="order.eventID === 3">
+                            <dt class="text-sm font-medium text-gray-500">{{order.eventID === 3? "Bride" : "Celebrant"}}</dt>
                             <dd class="text-right text-sm font-semibold text-gray-900">{{ client.celebrantTwo || 'Not set' }}</dd>
+                        </div>
+
+                        <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3" ng-show="order.eventID <= 2">
+                            <dt class="text-sm font-medium text-gray-500">Nickname</dt>
+                            <dd class="text-right text-sm font-semibold text-gray-900">{{ client.celebrantNickname || 'Not set' }}</dd>
+                        </div>
+
+                        <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3" ng-show="order.eventID !== 3">
+                            <dt class="text-sm font-medium text-gray-500">Preferred Name for Backdrop</dt>
+                            <dd class="text-right text-sm font-semibold text-gray-900">{{ client.celebrantPrefName || 'Not set' }}</dd>
                         </div>
 
                         <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-3">

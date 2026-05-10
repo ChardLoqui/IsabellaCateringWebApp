@@ -15,6 +15,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public string dsgnTheme { get; set; }
         public string dsgnMotif { get; set; }
         public string prepVenue { get; set; }
+        public string churchVenue { get; set; } //add new
 
         public DateTime bookingDate { get; set; }
 
@@ -45,4 +46,5 @@ namespace IsabellaCateringWebApp.Models.Models
         public string acceptedCancelNote { get; set; }
         public string customerNote { get; set; }
     }
+
 }

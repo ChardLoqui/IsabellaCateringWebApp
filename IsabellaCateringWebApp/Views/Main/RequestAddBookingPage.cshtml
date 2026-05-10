@@ -67,22 +67,14 @@
 
                     <div ng-init="loadRequestPackageOptions()">
                         <div class="contents" ng-show="bookingStep === 1">
-                            <div class="create-booking-section col-span-3">
-                                    <h2 class="text-xl font-semibold text-zinc-950 sm:text-2xl">Event Details</h2>
-                                    <p class="mt-2 text-sm leading-6 text-zinc-500">
-                                        Capture the event schedule, client information, and package inclusions before review.
-                                    </p>
-
-                                    <!-- NOTE Section -->
-                                    <div class="mt-4 border-l-2 border-zinc-300 bg-zinc-50 px-4 py-3">
-                                        <p class="text-xs leading-5 text-zinc-600">
-                                            <span class="font-semibold text-pink-600">NOTE:</span> Please be advised that requests are strictly limited to one (1) per email address. All submissions are subject to a review period spanning from one day to one week. Upon completion, a representative will contact you via email or telephone to validate your booking request. Please ensure you read the Terms and Conditions provided at the end of the review.
-                                        </p>
-                                    </div>
-                                </div>
+                            <div class="management-surface col-span-3 my-6 p-5">
+                                <h2 class="text-xl font-semibold sm:text-2xl text-pink-600">Event Details</h2>
+                                <p class="mt-2 text-sm leading-6 text-zinc-500">
+                                    Capture the event schedule, client information, and package inclusions before review.
+                                </p>
+                            </div>
 
                             <div class="col-span-3 space-y-6">
-
                                 <!-- Box 1: Core Event Information -->
                                 <section class="management-surface p-6 rounded-lg">
                                     <h3 class="text-lg font-bold text-gray-800 mb-6 pb-2 border-b">Core Event Information</h3>
@@ -155,7 +147,7 @@
                                                 Motif <i class="font-label text-red-500">*</i>
                                             </label>
                                             <input type="text"
-                                                   placeholder="e.g Disney"
+                                                   placeholder="e.g Disney or write TBA if undecided"
                                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                                    ng-model="eventMotif"
                                                    name="motif"
@@ -170,7 +162,7 @@
                                                 Theme <i class="font-label text-red-500">*</i>
                                             </label>
                                             <input type="text"
-                                                   placeholder="e.g Disney"
+                                                   placeholder="e.g Disney or write TBA if undecided"
                                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                                    ng-model="eventTheme"
                                                    name="theme"
@@ -231,6 +223,21 @@
                                             <p class="booking-error" ng-if="shouldShowBookingFieldError('cEmail')">{{ getBookingFieldErrorMessage('cEmail') }}</p>
                                         </div>
 
+                                        <div class="col-span-3 flex flex-col md:col-span-3">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Address <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cAddress"
+                                                   placeholder="Client's Address"
+                                                   ng-model="cAddress"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cAddress')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cAddress')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cAddress')">{{ getBookingFieldErrorMessage('cAddress') }}</p>
+                                        </div>
+
                                         <div class="col-span-2 flex flex-col md:col-span-1">
                                             <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                                                 {{eventTypeID ===  3 ? "Groom's Firstname" : "Celebrant's Firstname"}} <i class="font-label text-red-500">*</i>
@@ -284,7 +291,12 @@
                                                    placeholder="Firstname"
                                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                                    name="cCeleb2FirstName"
-                                                   ng-model="cCeleb2FirstName">
+                                                   ng-model="cCeleb2FirstName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cCeleb2FirstName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCeleb2FirstName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cCeleb2FirstName')">{{ getBookingFieldErrorMessage('cCeleb2FirstName') }}</p>
+
                                         </div>
 
                                         <div class="col-span-2 flex flex-col md:col-span-1" ng-show="eventTypeID === 3">
@@ -295,18 +307,68 @@
                                                    placeholder="Lastname"
                                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                                    name="cCeleb2LastName"
-                                                   ng-model="cCeleb2LastName">
+                                                   ng-model="cCeleb2LastName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cCeleb2LastName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCeleb2LastName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cCeleb2LastName')">{{ getBookingFieldErrorMessage('cCeleb2LastName') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1" ng-show="eventTypeID <= 2">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Celebrant's Nickname <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Nickname"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cCelebNName"
+                                                   ng-model="cCelebNName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cCelebNName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCelebNName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cCelebNName')">{{ getBookingFieldErrorMessage('cCelebNName') }}</p>
+                                        </div>
+
+                                        <div class="col-span-2 flex flex-col md:col-span-1" ng-show="eventTypeID !== 3">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Preferred Name for Backdrop <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   placeholder="Preferred Name"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="cPrefName"
+                                                   ng-model="cCelebPrefName"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('cCelebPrefName')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('cCelebPrefName')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('cCelebPrefName')">{{ getBookingFieldErrorMessage('cCelebPrefName') }}</p>
                                         </div>
                                     </div>
                                 </section>
+
 
                                 <!-- Box 3: Logistics & Scheduling -->
                                 <section class="management-surface p-6 rounded-lg">
                                     <h3 class="text-lg font-bold text-gray-800 mb-6 pb-2 border-b">Logistics & Scheduling</h3>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div class="col-span-3 flex flex-col md:col-span-3" ng-show="eventTypeID === 3">
+                                            <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
+                                                Church Venue <i class="font-label text-red-500">*</i>
+                                            </label>
+                                            <input type="text"
+                                                   class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
+                                                   name="churchVenue"
+                                                   placeholder="Church Address"
+                                                   ng-model="eventChurchVenue"
+                                                   required
+                                                   ng-blur="markBookingFieldTouched('eventVenue')"
+                                                   ng-class="{'booking-field-invalid': shouldShowBookingFieldError('eventChurchVenue')}">
+                                            <p class="booking-error" ng-if="shouldShowBookingFieldError('eventChurchVenue')">{{ getBookingFieldErrorMessage('eventChurchVenue') }}</p>
+                                        </div>
+
                                         <div class="col-span-3 flex flex-col md:col-span-3">
                                             <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
-                                                Venue <i class="font-label text-red-500">*</i>
+                                                {{eventTypeID ===  3 ? "Reception Venue" : "Venue"}} <i class="font-label text-red-500">*</i>
                                             </label>
                                             <input type="text"
                                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
@@ -319,7 +381,7 @@
                                             <p class="booking-error" ng-if="shouldShowBookingFieldError('eventVenue')">{{ getBookingFieldErrorMessage('eventVenue') }}</p>
                                         </div>
 
-                                        <div class="col-span-3 flex flex-col md:col-span-3">
+                                        <div class="col-span-3 flex flex-col md:col-span-3" ng-show="eventTypeID >= 3">
                                             <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                                                 Preparation Venue <i class="font-label text-red-500">*</i>
                                             </label>
@@ -1053,8 +1115,11 @@
                                                 <li><b>Client's Name:</b> {{cFirstName || "-"}} {{cLastName}}</li>
                                                 <li><b>Email:</b> {{cEmail || "-"}}</li>
                                                 <li><b>Contact Number:</b> {{cContactNum || "-"}}</li>
-                                                <li><b>{{eventTypeID ===  3 ? "Groom's Name" : "Celebrant's Name"}}</b> {{cCeleb1FirstName || "-"}} {{cCeleb1LastName}}</li>
-                                                <li ng-show="eventTypeID === 3"><b>{{eventTypeID ===  3 ? "Bride's Name" : "2nd Celebrant's Name"}}</b> {{cCeleb2FirstName || "-"}} {{cCeleb2LastName}}</li>
+                                                <li><b>Address:</b> {{cAddress || "-"}}</li>
+                                                <li><b>{{eventTypeID === 3? "Groom's Name:" : "Celebrant's Name:"}}</b> {{cCeleb1FirstName || "-"}} {{cCeleb1LastName}}</li>
+                                                <li ng-show="eventTypeID === 3"><b>{{eventTypeID === 3? "Bride's Name:" : "2nd Celebrant's Name:"}}</b> {{cCeleb2FirstName || "-"}} {{cCeleb2LastName}}</li>
+                                                <li ng-show="eventTypeID <= 2"><b>Celebrant's Nickname:</b> {{cCelebNName || "-"}}</li>
+                                                <li ng-show="eventTypeID !== 3"><b>Preferred Name for Backdrop:</b> {{cCelebPrefName || "-"}}</li>
                                             </ul>
                                             <br>
                                             <label class="font-label mb-1 text-sm font-bold text-gray-400 md:text-base">
@@ -1065,7 +1130,8 @@
                                                 <li><b>Package Type:</b> {{packageType || "-"}}</li>
                                                 <li><b>Event Type:</b> {{eventType || "-"}}</li>
                                                 <li><b>Venue:</b> {{eventVenue || "-"}}</li>
-                                                <li><b>Preparation Venue:</b> {{eventPrepVenue || "-"}}</li>
+                                                <li ng-show="eventTypeID >= 3"><b>Preparation Venue:</b> {{eventPrepVenue || "-"}}</li>
+                                                <li ng-show="eventTypeID === 3"><b>Church Venue:</b> {{eventChurchVenue || "-"}}</li>
                                                 <li><b>Motif:</b> {{eventMotif || "-"}}</li>
                                                 <li><b>Theme:</b> {{eventTheme || "-"}}</li>
                                                 <li><b>Date of Event:</b> {{formattedDateOfEvent || "No Date"}}</li>
@@ -1097,7 +1163,7 @@
                                                 <li><b>Entertainment:</b> {{entertainmentType || "-"}}</li>
                                                 <li><b>Photo Operations:</b> {{photoType || "-"}}</li>
                                                 <li><b>Keepsakes:</b> {{keepsakesType || "-"}}</li>
-                                                <li ng-hide="addDebutInput"><b>Debut Additionals:</b> {{debutType || "-"}}</li>
+                                                <li ng-show="eventTypeID === 5"><b>Debut Additionals:</b> {{debutType || "-"}}</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -1179,7 +1245,7 @@
                                                        name="adult">
                                             </div>
 
-                                            <div class="booking-form-field" ng-hide="addKdInput">
+                                            <div class="booking-form-field" ng-show="eventTypeID <= 2">
                                                 <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                                                     Kid Additional
                                                 </label>
@@ -1210,7 +1276,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-
+                                           
                                             <div class="booking-form-field booking-form-field--full">
                                                 <label class="font-label mb-1 text-sm font-bold text-gray-600 sm:text-base">
                                                     Booking Note
@@ -1221,7 +1287,7 @@
                                                 <textarea class="w-full h-auto max-h-40 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 sm:text-base"
                                                           name="bookingNote"
                                                           placeholder="Add Note Here..."
-                                                          ng-model="bookingNote">
+                                                          ng-model="customerNote">
                         </textarea>
                                             </div>
                                         </div>
@@ -1402,8 +1468,8 @@
                                                                 <div class="mb-6" ng-click="submitRequestTermsAcceptance()">
                                                                     <label class="flex cursor-pointer items-start gap-3 rounded-lg border-2 p-4 transition-all"
                                                                            ng-class="formData.acceptTermsModel
-                                                                            ? 'border-pink-600 bg-pink-50'
-                                                                            : 'border-zinc-300 bg-white hover:border-pink-400'">
+                                                ? 'border-pink-600 bg-pink-50'
+                                                : 'border-zinc-300 bg-white hover:border-pink-400'">
 
                                                                         <!-- Hidden Native Radio -->
                                                                         <input type="radio"
@@ -1415,8 +1481,8 @@
                                                                         <!-- Custom Curved Square Radio -->
                                                                         <span class="mt-1 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all"
                                                                               ng-class="formData.acceptTermsModel
-                                                                            ? 'border-pink-600'
-                                                                            : 'border-zinc-400'">
+                                                    ? 'border-pink-600'
+                                                    : 'border-zinc-400'">
 
                                                                             <!-- Inner Indicator (with padding gap) -->
                                                                             <span class="h-2.5 w-2.5 rounded-sm bg-pink-600"
@@ -1469,6 +1535,7 @@
                                         </button>
                                     </div>
                                 </div>
+
                             </div>
                         </section>
                     </div>

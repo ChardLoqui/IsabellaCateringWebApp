@@ -14,6 +14,7 @@ namespace IsabellaCateringWebApp.Models.Models
         public string dsgnTheme { get; set; }
         public string dsgnMotif { get; set; }
         public string prepVenue { get; set; }
+        public string churchVenue { get; set; }
 
         public DateTime bookingDate { get; set; }
 

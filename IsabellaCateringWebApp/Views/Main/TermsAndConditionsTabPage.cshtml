@@ -157,7 +157,6 @@
                     <!-- Acceptance Section -->
                     <div class="terms-acceptance-section rounded-lg border-2 border-rose-200 bg-rose-50 p-6">
 
-                        <!-- Already Accepted Message -->
                         <div ng-if="termsAccepted" class="text-center">
                             <div class="mb-4 inline-flex items-center justify-center rounded-full bg-green-100 p-3">
                                 <span class="material-icons text-3xl text-green-600">check_circle</span>
@@ -165,11 +164,10 @@
                             <h3 class="mb-2 text-lg font-semibold text-zinc-900">Terms & Conditions Accepted</h3>
                             <p class="text-sm text-zinc-600">
                                 You have already accepted the terms and conditions on
-                                <span class="font-semibold">{{ termsAcceptedDate | date:'MMMM dd, yyyy' }}</span>
+                                <span class="font-semibold">{{ termsAcceptedDate | date:'(EEEE) MMMM dd, yyyy hh:mm a' }}</span>
                             </p>
                         </div>
 
-                        <!-- Acceptance Form -->
                         <div ng-if="!termsAccepted">
                             <h3 class="mb-4 text-lg font-semibold text-zinc-900">
                                 Accept Terms & Conditions
@@ -181,26 +179,22 @@
                     ? 'border-pink-600 bg-pink-50'
                     : 'border-zinc-300 bg-white hover:border-pink-400'">
 
-                                    <!-- Hidden Native Radio -->
                                     <input type="radio"
                                            ng-model="formData.acceptTermsModel"
                                            ng-value="true"
                                            name="termsAcceptance"
                                            class="sr-only" />
 
-                                    <!-- Custom Curved Square Radio -->
                                     <span class="mt-1 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all"
                                           ng-class="formData.acceptTermsModel
                         ? 'border-pink-600'
                         : 'border-zinc-400'">
 
-                                        <!-- Inner Indicator (with padding gap) -->
                                         <span class="h-2.5 w-2.5 rounded-sm bg-pink-600"
                                               ng-if="formData.acceptTermsModel">
                                         </span>
                                     </span>
 
-                                    <!-- Text -->
                                     <span class="flex-1">
                                         <span class="block text-sm font-semibold text-zinc-900">
                                             I accept the Terms & Conditions
