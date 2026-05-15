@@ -1,6 +1,5 @@
 ﻿using IsabellaCateringWebApp.Models.Maps;
 using IsabellaCateringWebApp.Models.Models;
-using MySql.Data.EntityFramework;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -9,7 +8,6 @@ using System.Web;
 
 namespace IsabellaCateringWebApp.Models.Context
 {
-    [DbConfigurationType(typeof(MySqlEFConfiguration))]
     public class IsabellaCateringContext : DbContext
     {
         static IsabellaCateringContext()
