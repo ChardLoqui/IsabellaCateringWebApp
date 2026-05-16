@@ -3885,6 +3885,7 @@ Isabella Catering and Events";
                         $"Booking Data Set has been updated. bookingID: {existingBooking.bookingID}" );
                     transaction.Commit();
 
+                    recomputePayment(existingBooking.bookingID, "Transactions Updated");
                     return Json(new { success = true, message = "Booking updated successfully!" });
                 }
             }
