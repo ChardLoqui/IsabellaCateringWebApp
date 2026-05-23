@@ -6284,7 +6284,6 @@
         $scope.eventType = type;
         $scope.eventTypeID = id;
         $scope.activeDropdown = null;
-
         $scope.cCeleb2FirstName = null;
         $scope.cCeleb2LastName = null;
         $scope.ceremHour = null;

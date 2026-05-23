@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Web;
+using System.Data.SqlClient;
 
 namespace IsabellaCateringWebApp.Models.Context
 {
@@ -12,9 +13,12 @@ namespace IsabellaCateringWebApp.Models.Context
     {
         static IsabellaCateringContext()
         {
-            Database.SetInitializer<IsabellaCateringContext>(null); 
+            Database.SetInitializer<IsabellaCateringContext>(null);
         }
+
+        // Keep this perfectly plain and clean
         public IsabellaCateringContext() : base("Name=isabellacms_db") { }
+
         public virtual DbSet<tblActivityLogsModel> activitylogs_tbl { get; set; }
         public virtual DbSet<tblBackdropTypesModel> backdroptypes_tbl { get; set; }
         public virtual DbSet<tblBookingAdditionalsModel> bookingadditionals_tbl { get; set; }
@@ -56,7 +60,7 @@ namespace IsabellaCateringWebApp.Models.Context
         public virtual DbSet<tblTaskHistoryModel> taskhistory_tbl { get; set; }
         public virtual DbSet<tblTasksModel> tasks_tbl { get; set; }
         public virtual DbSet<tblUsersModel> users_tbl { get; set; }
-        
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -101,7 +105,15 @@ namespace IsabellaCateringWebApp.Models.Context
             modelBuilder.Configurations.Add(new tblTaskHistoryMap());
             modelBuilder.Configurations.Add(new tblTasksMap());
             modelBuilder.Configurations.Add(new tblUsersMap());
-            
+        }
+    }
+
+    // This handles Azure SQL's connections natively without requiring external assemblies
+    public class SqlAzureExecutionStrategyConfiguration : DbConfiguration
+    {
+        public SqlAzureExecutionStrategyConfiguration()
+        {
+            SetExecutionStrategy("System.Data.SqlClient", () => new System.Data.Entity.SqlServer.SqlAzureExecutionStrategy());
         }
     }
 }
