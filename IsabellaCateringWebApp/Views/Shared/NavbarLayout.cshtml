@@ -1,6 +1,9 @@
 ﻿@{
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var actionVal = ViewContext.RouteData.Values["action"];
+    var currentAction = actionVal != null ? actionVal.ToString() : null;
+
+    var controllerVal = ViewContext.RouteData.Values["controller"];
+    var currentController = controllerVal != null ? controllerVal.ToString() : null;
 }
 <!DOCTYPE html>
 <html>

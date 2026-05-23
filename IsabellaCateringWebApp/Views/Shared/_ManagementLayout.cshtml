@@ -1,7 +1,12 @@
 @{
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-    var currentPerm = Session["currentPerm"]?.ToString();
+    var actionVal = ViewContext.RouteData.Values["action"];
+    var currentAction = actionVal != null ? actionVal.ToString() : null;
+
+    var controllerVal = ViewContext.RouteData.Values["controller"];
+    var currentController = controllerVal != null ? controllerVal.ToString() : null;
+
+    var permVal = Session["currentPerm"];
+    var currentPerm = permVal != null ? permVal.ToString() : null;
     var showManagementNav = false;
     int parsedPerm;
 
