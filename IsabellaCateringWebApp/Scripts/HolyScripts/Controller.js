@@ -5492,7 +5492,7 @@
         $scope.cCeleb2FirstName = client.cCeleb2FName || '';
         $scope.cCeleb2LastName = client.cCeleb2LName || '';
         $scope.cCelebNName = client.cCelebNName || '';
-        $scope.cCelebPrefName = client.cPrefName || '';
+        $scope.cCelebPrefName = client.cCelebPrefName || '';
         $scope.eventTheme = bookingData.dsgnTheme || '';
         $scope.eventMotif = bookingData.dsgnMotif || '';
         $scope.eventPrepVenue = bookingData.prepVenue || '';
