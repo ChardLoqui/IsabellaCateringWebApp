@@ -401,12 +401,57 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
-    <Content Include="Content\images\img4.jpg" />
-    <Content Include="Content\images\img2.jpg" />
-    <Content Include="Content\images\img5.jpg" />
+    <Content Include="Content\images\harmony\VINZ0719.jpg" />
+    <Content Include="Content\images\harmony\VINZ0725.jpg" />
+    <Content Include="Content\images\harmony\VINZ0752.jpg" />
+    <Content Include="Content\images\harmony\VINZ0830.jpg" />
+    <Content Include="Content\images\harmony\VINZ0833.jpg" />
+    <Content Include="Content\images\harmony\VINZ1092.jpg" />
     <Content Include="Content\images\img1.jpg" />
-    <Content Include="Content\images\isabellaLogo.jpg" />
+    <Content Include="Content\images\img2.jpg" />
     <Content Include="Content\images\img3.jpg" />
+    <Content Include="Content\images\img4.jpg" />
+    <Content Include="Content\images\img5.jpg" />
+    <Content Include="Content\images\isabella.png" />
+    <Content Include="Content\images\isabellaLogo.jpg" />
+    <Content Include="Content\images\kiddie1\TIAN6805.jpg" />
+    <Content Include="Content\images\kiddie1\TIAN6812.jpg" />
+    <Content Include="Content\images\kiddie1\TIAN6842.jpg" />
+    <Content Include="Content\images\kiddie1\TIAN7356.jpg" />
+    <Content Include="Content\images\kiddie1\TIAN7937.jpg" />
+    <Content Include="Content\images\kiddie2\EVIE0007.jpg" />
+    <Content Include="Content\images\kiddie2\EVIE0021.jpg" />
+    <Content Include="Content\images\kiddie2\EVIE0049.jpg" />
+    <Content Include="Content\images\kiddie2\EVIE0268.jpg" />
+    <Content Include="Content\images\kiddie2\EVIE1359.jpg" />
+    <Content Include="Content\images\kiddie2\EVIE1514.jpg" />
+    <Content Include="Content\images\landingbg.jpg" />
+    <Content Include="Content\images\majestic\VINZ0502.jpg" />
+    <Content Include="Content\images\majestic\VINZ0508.jpg" />
+    <Content Include="Content\images\majestic\VINZ0789.jpg" />
+    <Content Include="Content\images\majestic\VINZ0793.jpg" />
+    <Content Include="Content\images\majestic\VINZ1192.jpg" />
+    <Content Include="Content\images\majestic\VINZ1451.jpg" />
+    <Content Include="Content\images\precious\1X2A0524.jpg" />
+    <Content Include="Content\images\precious\1X2A0541.jpg" />
+    <Content Include="Content\images\precious\1X2A0545.jpg" />
+    <Content Include="Content\images\precious\1X2A0558.jpg" />
+    <Content Include="Content\images\precious\1X2A0590.jpg" />
+    <Content Include="Content\images\precious\1X2A0592.jpg" />
+    <Content Include="Content\images\precious\1X2A0931.jpg" />
+    <Content Include="Content\images\precious\1X2A0950.jpg" />
+    <Content Include="Content\images\reg1\VINZ0494.jpg" />
+    <Content Include="Content\images\reg1\VINZ0533.jpg" />
+    <Content Include="Content\images\reg1\VINZ0538.jpg" />
+    <Content Include="Content\images\reg1\VINZ0545.jpg" />
+    <Content Include="Content\images\reg1\VINZ0796.jpg" />
+    <Content Include="Content\images\reg1\VINZ0798.jpg" />
+    <Content Include="Content\images\reg2\VINZ0035.jpg" />
+    <Content Include="Content\images\reg2\VINZ0737.jpg" />
+    <Content Include="Content\images\reg2\VINZ0742.jpg" />
+    <Content Include="Content\images\reg2\VINZ0825.jpg" />
+    <Content Include="Content\images\reg2\VINZ0832.jpg" />
+    <Content Include="Content\images\reg2\VINZ1156.jpg" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -1283,6 +1328,10 @@
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
