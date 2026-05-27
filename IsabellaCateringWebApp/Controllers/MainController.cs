@@ -3515,10 +3515,10 @@ Isabella Catering and Events";
                        "Booking Management:",
                        $"New Receipt Data has been created. receiptID: {newReceipt.receiptID}");
 
-                    float downPayment = 5000;
-                    float subtractedDownPayment = paymentInfo.amountDue - downPayment;
-                    float halfPayment = subtractedDownPayment / 2;
-                    float quarterPayment = subtractedDownPayment / 4;
+                    double downPayment = 5000;
+                    double subtractedDownPayment = paymentInfo.amountDue - downPayment;
+                    double halfPayment = subtractedDownPayment / 2;
+                    double quarterPayment = subtractedDownPayment / 4;
 
                     DateTime today = DateTime.Today;
                     DateTime bookingDate = bookingInfo.bookingDate.Date;
