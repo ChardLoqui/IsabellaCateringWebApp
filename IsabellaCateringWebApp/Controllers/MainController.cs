@@ -1275,7 +1275,7 @@ namespace IsabellaCateringWebApp.Controllers
                 return Url.Action("ChangePassPage", "Main", new { token }, Request.Url.Scheme);
             }
 
-            return "https://localhost:44323/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
+            return "https://isabellacateringwebapp20260524032132-fvdfe7h5hnhhh2bw.southeastasia-01.azurewebsites.net/Main/ChangePassPage?token=" + HttpUtility.UrlEncode(token);
         }
 
         public JsonResult SendEmail(string toEmail, string token, string purpose)
